@@ -8,6 +8,7 @@ package states
 
 import (
 	"context"
+	"encoding/json"
 
 	"github.com/eclipse-symphony/symphony/coa/pkg/apis/v1alpha2/contexts"
 	providers "github.com/eclipse-symphony/symphony/coa/pkg/apis/v1alpha2/providers"
@@ -73,4 +74,13 @@ func JsonPathMatch(jsonData interface{}, path string, target string) bool {
 		return false
 	}
 	return res.(string) == target
+}
+
+func (entry *StateEntry) DeepCopy() StateEntry {
+	ret := StateEntry{}
+	ret.ID = entry.ID
+	ret.ETag = entry.ETag
+	b, _ := json.Marshal(entry.Body)
+	json.Unmarshal(b, &ret.Body)
+	return ret
 }

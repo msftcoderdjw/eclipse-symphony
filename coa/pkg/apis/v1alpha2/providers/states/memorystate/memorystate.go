@@ -104,7 +104,7 @@ func (s *MemoryStateProvider) Upsert(ctx context.Context, entry states.UpsertReq
 		}
 	}
 
-	s.Data[entry.Value.ID] = entry.Value
+	s.Data[entry.Value.ID] = s.cloneStateEntry(entry.Value)
 
 	return entry.Value.ID, nil
 }
@@ -127,7 +127,7 @@ func (s *MemoryStateProvider) List(ctx context.Context, request states.ListReque
 			if request.Filter != "" {
 				//TODO: support filters in the future
 			}
-			entities = append(entities, vE)
+			entities = append(entities, s.cloneStateEntry(vE))
 		} else {
 			err = v1alpha2.NewCOAError(nil, "found invalid state entry", v1alpha2.InternalError)
 			return entities, "", err
@@ -172,7 +172,7 @@ func (s *MemoryStateProvider) Get(ctx context.Context, request states.GetRequest
 		vE, ok := v.(states.StateEntry)
 		if ok {
 			err = nil
-			return vE, nil
+			return s.cloneStateEntry(vE), nil
 		} else {
 			err = v1alpha2.NewCOAError(nil, fmt.Sprintf("entry '%s' is not a valid state entry", request.ID), v1alpha2.InternalError)
 			return states.StateEntry{}, err
@@ -191,6 +191,10 @@ func toMemoryStateProviderConfig(config providers.IProviderConfig) (MemoryStateP
 	err = json.Unmarshal(data, &ret)
 	//ret.Name = providers.LoadEnv(ret.Name)
 	return ret, err
+}
+
+func (a *MemoryStateProvider) cloneStateEntry(entry states.StateEntry) states.StateEntry {
+	return entry.DeepCopy()
 }
 
 func (a *MemoryStateProvider) Clone(config providers.IProviderConfig) (providers.IProvider, error) {

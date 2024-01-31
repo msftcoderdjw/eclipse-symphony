@@ -8,6 +8,7 @@ package users
 
 import (
 	"context"
+	"encoding/json"
 	"fmt"
 	"hash/fnv"
 
@@ -100,15 +101,25 @@ func (t *UsersManager) CheckUser(ctx context.Context, name string, password stri
 	}
 	user, err := t.StateProvider.Get(ctx, getRequest)
 	if err != nil {
-		log.Debugf(" M (Users) : failed to read user - %s", err)
+		log.Errorf(" M (Users) : failed to read user - %s", err)
 		return nil, false
 	}
 
-	if v, ok := user.Body.(UserState); ok {
-		if hash(name, password) == v.PasswordHash {
-			log.Debug(" M (Users) : user authenticated")
-			return v.Roles, true
-		}
+	var userState UserState
+	data, err := json.Marshal(user.Body)
+	if err != nil {
+		log.Errorf(" M (Users) : failed to marshal user.Body - %s", err)
+		return nil, false
+	}
+	err = json.Unmarshal(data, &userState)
+	if err != nil {
+		log.Errorf(" M (Users) : failed to unmarshal userState - %s", err)
+		return nil, false
+	}
+
+	if hash(name, password) == userState.PasswordHash {
+		log.Debug(" M (Users) : user authenticated")
+		return userState.Roles, true
 	}
 	log.Debug(" M (Users) : authentication failed")
 	return nil, false
