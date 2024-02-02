@@ -9,6 +9,7 @@ package http
 import (
 	"crypto/tls"
 	"encoding/json"
+	"fmt"
 	"io/ioutil"
 	"net/http"
 	"os"
@@ -18,6 +19,7 @@ import (
 	v1alpha2 "github.com/eclipse-symphony/symphony/coa/pkg/apis/v1alpha2"
 	autogen "github.com/eclipse-symphony/symphony/coa/pkg/apis/v1alpha2/providers/certs/autogen"
 	"github.com/eclipse-symphony/symphony/coa/pkg/apis/v1alpha2/providers/pubsub/memory"
+	jwt "github.com/golang-jwt/jwt/v4"
 	"github.com/stretchr/testify/assert"
 	"github.com/valyala/fasthttp"
 )
@@ -185,6 +187,16 @@ func TestHTTPEchoWithTLS(t *testing.T) {
 	assert.Equal(t, string(bodyBytes), "Hi there!!")
 }
 
+type TestCustomClaims struct {
+	UserName string `json:"username"`
+	jwt.RegisteredClaims
+}
+
+type TestAuthRequest struct {
+	UserName string `json:"username"`
+	Password string `json:"password"`
+}
+
 func TestHTTEchoWithPipeline(t *testing.T) {
 	pubsub := &memory.InMemoryPubSubProvider{}
 	err := pubsub.Init(memory.InMemoryPubSubConfig{})
@@ -218,7 +230,44 @@ func TestHTTEchoWithPipeline(t *testing.T) {
 		},
 	}
 	binding := HttpBinding{}
+	fakeUserName := "adminusername"
+	signingKey := "TestKey"
 	endpoints := []v1alpha2.Endpoint{
+		{
+			Methods: []string{"POST"},
+			Route:   "auth",
+			Version: "v1",
+			Handler: func(c v1alpha2.COARequest) v1alpha2.COAResponse {
+				var authRequest TestAuthRequest
+				_ = json.Unmarshal(c.Body, &authRequest)
+
+				mySigningKey := []byte(signingKey)
+				claims := TestCustomClaims{
+					authRequest.UserName,
+					jwt.RegisteredClaims{
+						// A usual scenario is to set the expiration time relative to the current time
+						ExpiresAt: jwt.NewNumericDate(time.Now().Add(24 * time.Hour)),
+						IssuedAt:  jwt.NewNumericDate(time.Now()),
+						NotBefore: jwt.NewNumericDate(time.Now()),
+						Issuer:    "test",
+						Subject:   "test",
+						ID:        "1",
+						Audience:  []string{"*"},
+					},
+				}
+
+				token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
+				ss, _ := token.SignedString(mySigningKey)
+
+				rolesJSON, _ := json.Marshal([]string{"admin"})
+				resp := v1alpha2.COAResponse{
+					State:       v1alpha2.OK,
+					Body:        []byte(fmt.Sprintf(`{"accessToken":"%s", "tokenType": "Bearer", "username": "%s", "roles": %s}`, ss, fakeUserName, rolesJSON)),
+					ContentType: "application/json",
+				}
+				return resp
+			},
+		},
 		{
 			Methods: []string{"GET"},
 			Route:   "greetings",
