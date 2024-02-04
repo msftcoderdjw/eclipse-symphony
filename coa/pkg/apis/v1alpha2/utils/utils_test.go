@@ -39,7 +39,7 @@ func TestUnmarshalDuration(t *testing.T) {
 	duration, err = UnmarshalDuration("true") // bool type
 	assert.NotNil(t, err)
 	assert.Equal(t, 1*time.Microsecond, duration)
-	assert.Errorf(t, err, "invalid duration format")
+	assert.EqualError(t, err, "invalid duration format")
 }
 
 func TestParseProperty(t *testing.T) {

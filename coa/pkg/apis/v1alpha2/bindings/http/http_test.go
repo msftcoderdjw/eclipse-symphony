@@ -24,6 +24,16 @@ import (
 	"github.com/valyala/fasthttp"
 )
 
+type TestCustomClaims struct {
+	User string `json:"user"`
+	jwt.RegisteredClaims
+}
+
+type TestAuthRequest struct {
+	UserName string `json:"username"`
+	Password string `json:"password"`
+}
+
 func testHttpRequestHelper(t *testing.T, method string, url string, body []byte, expectedStatusCode int, expectedBody string) {
 	client := &http.Client{}
 	req, err := http.NewRequest(method, url, bytes.NewBuffer(body))
@@ -194,16 +204,6 @@ func TestHTTPEchoWithTLS(t *testing.T) {
 	assert.Nil(t, err)
 
 	assert.Equal(t, string(bodyBytes), "Hi there!!")
-}
-
-type TestCustomClaims struct {
-	User string `json:"user"`
-	jwt.RegisteredClaims
-}
-
-type TestAuthRequest struct {
-	UserName string `json:"username"`
-	Password string `json:"password"`
 }
 
 func TestHTTEchoWithPipeline(t *testing.T) {
