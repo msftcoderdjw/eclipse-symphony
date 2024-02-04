@@ -38,7 +38,7 @@ func initClient(properties map[string]interface{}) {
 		}
 	}
 	telemetryConfig.MaxBatchInterval = 2 * time.Second
-	if batchInterval, ok := properties["maxBatchInterval"]; ok {
+	if batchInterval, ok := properties["maxBatchIntervalSeconds"]; ok {
 		if batchIntervalFloat, fok := batchInterval.(float64); fok {
 			telemetryConfig.MaxBatchInterval = time.Duration(int(batchIntervalFloat)) * time.Second
 		}
