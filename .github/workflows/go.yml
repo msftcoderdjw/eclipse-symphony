@@ -91,6 +91,7 @@ jobs:
         color: ${{ steps.target-api-testcoverage-app.outcome == 'cancelled' && 'yellow' || steps.target-api-testcoverage-app.outcome == 'skipped' && 'gray' || steps.target-api-testcoverage-app.outputs.coverage >= 70 && 'green' || steps.target-api-testcoverage-app.outputs.coverage >= 50 && 'orange' || steps.target-api-testcoverage-app.outputs.coverage < 50 && 'red' }}
         status: ${{ steps.target-api-testcoverage-app.outcome == 'cancelled' && 'CANCELLED' || steps.target-api-testcoverage-app.outcome == 'skipped' && 'SKIPPED' || steps.target-api-testcoverage-app.outputs.coverage }}
         github_token: ${{ secrets.GITHUB_TOKEN }}
+        branch: "badges"
         path: "/go-shields.json"
       continue-on-error: true
 
@@ -112,6 +113,7 @@ jobs:
         color: ${{ steps.target-k8s-testcoverage-app.outcome == 'cancelled' && 'yellow' || steps.target-k8s-testcoverage-app.outcome == 'skipped' && 'gray' || steps.target-k8s-testcoverage-app.outputs.coverage >= 70 && 'green' || steps.target-k8s-testcoverage-app.outputs.coverage >= 50 && 'orange' || steps.target-k8s-testcoverage-app.outputs.coverage < 50 && 'red' }}
         status: ${{ steps.target-k8s-testcoverage-app.outcome == 'cancelled' && 'CANCELLED' || steps.target-k8s-testcoverage-app.outcome == 'skipped' && 'SKIPPED' || steps.target-k8s-testcoverage-app.outputs.coverage }}
         github_token: ${{ secrets.GITHUB_TOKEN }}
+        branch: "badges"
         path: "/go-shields.json"
       continue-on-error: true
 
@@ -133,6 +135,7 @@ jobs:
         color: ${{ steps.target-coa-testcoverage-app.outcome == 'cancelled' && 'yellow' || steps.target-coa-testcoverage-app.outcome == 'skipped' && 'gray' || steps.target-coa-testcoverage-app.outputs.coverage >= 70 && 'green' || steps.target-coa-testcoverage-app.outputs.coverage >= 50 && 'orange' || steps.target-coa-testcoverage-app.outputs.coverage < 50 && 'red' }}
         status: ${{ steps.target-coa-testcoverage-app.outcome == 'cancelled' && 'CANCELLED' || steps.target-coa-testcoverage-app.outcome == 'skipped' && 'SKIPPED' || steps.target-coa-testcoverage-app.outputs.coverage }}
         github_token: ${{ secrets.GITHUB_TOKEN }}
+        branch: "badges"
         path: "/go-shields.json"
       continue-on-error: true
 
