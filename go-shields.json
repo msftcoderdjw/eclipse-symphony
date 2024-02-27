@@ -1,1 +1,1 @@
-{"target-api-testcoverage-app":{"label":"TestCoverage","status":"71.2","color":"green"},"target-k8s-testcoverage-app":{"label":"TestCoverage","status":"7.9","color":"red"},"target-coa-testcoverage-app":{"label":"TestCoverage","status":"47.1","color":"red"}}
+{"target-api-testcoverage-app":{"label":"TestCoverage","status":"71.1","color":"green"},"target-k8s-testcoverage-app":{"label":"TestCoverage","status":"7.9","color":"red"},"target-coa-testcoverage-app":{"label":"TestCoverage","status":"47.1","color":"red"}}
