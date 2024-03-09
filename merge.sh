@@ -1,0 +1,19 @@
+# Read the file in parameter and fill the array named "array"
+getArray() {
+    array=() # Create array
+    while IFS= read -r line # Read a line
+    do
+        array+=("$line") # Append line to the array
+    done < "$1"
+}
+
+getArray "done"
+
+DEST_PATH=~/github/msftcoderdjw/staging-eclipse-symphony/api
+SRC_PATH=~/github/msftcoderdjw/eclipse-symphony/api
+
+for e in "${array[@]}"
+do
+    echo "Copying $e"
+    cp $SRC_PATH/$e $DEST_PATH/$e
+done
