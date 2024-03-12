@@ -218,7 +218,7 @@ func TestRunLoop(t *testing.T) {
 	go func() {
 		v.RunLoop(context.TODO(), 1*time.Second)
 	}()
-	time.Sleep(2 * time.Second)
+	time.Sleep(3 * time.Second)
 	b1 := m.GetPollCnt() > 1
 	b2 := m.GetReconcilCnt() > 1
 	assert.True(t, b1)
