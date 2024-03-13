@@ -169,7 +169,7 @@ func TestValidateComponentType(t *testing.T) {
 		},
 	}
 	equal := validationRule.Validate(components)
-	assert.EqualError(t, equal, "provider requires component type 'requiredComponentType', but 'requiredComponentType1' is found instead")
+	assert.EqualError(t, equal, "Bad Request: provider requires component type 'requiredComponentType', but 'requiredComponentType1' is found instead")
 }
 
 func TestValidateInputs(t *testing.T) {
