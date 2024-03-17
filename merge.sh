@@ -17,3 +17,7 @@ do
     echo "Copying $e"
     cp $SRC_PATH/$e $DEST_PATH/$e
 done
+
+# cp -rf /home/jiadu/github/msftcoderdjw/eclipse-symphony/api/pkg/apis/v1alpha1/managers/* api/pkg/apis/v1alpha1/managers/
+# cp -rf /home/jiadu/github/msftcoderdjw/eclipse-symphony/api/pkg/apis/v1alpha1/models/* api/pkg/apis/v1alpha1/models/
+# cp -rf /home/jiadu/github/msftcoderdjw/eclipse-symphony/api/pkg/apis/v1alpha1/providers/* api/pkg/apis/v1alpha1/providers/

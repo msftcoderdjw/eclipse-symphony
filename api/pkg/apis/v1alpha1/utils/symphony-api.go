@@ -595,14 +595,16 @@ func MatchTargets(instance model.InstanceState, targets []model.TargetState) []m
 	return slice
 }
 
-func CreateSymphonyDeploymentFromTarget(target model.TargetState) (model.DeploymentSpec, error) {
+func CreateSymphonyDeploymentFromTarget(target model.TargetState, namespace string) (model.DeploymentSpec, error) {
 	key := fmt.Sprintf("%s-%s", "target-runtime", target.ObjectMeta.Name)
 	scope := target.Spec.Scope
 	if scope == "" {
 		scope = constants.DefaultScope
 	}
 
-	ret := model.DeploymentSpec{}
+	ret := model.DeploymentSpec{
+		ObjectNamespace: namespace,
+	}
 	solution := model.SolutionState{
 		ObjectMeta: model.ObjectMeta{
 			Name:      key,
@@ -663,8 +665,10 @@ func CreateSymphonyDeploymentFromTarget(target model.TargetState) (model.Deploym
 	return ret, nil
 }
 
-func CreateSymphonyDeployment(instance model.InstanceState, solution model.SolutionState, targets []model.TargetState, devices []model.DeviceState) (model.DeploymentSpec, error) {
-	ret := model.DeploymentSpec{}
+func CreateSymphonyDeployment(instance model.InstanceState, solution model.SolutionState, targets []model.TargetState, devices []model.DeviceState, namespace string) (model.DeploymentSpec, error) {
+	ret := model.DeploymentSpec{
+		ObjectNamespace: namespace,
+	}
 	ret.Generation = instance.Spec.Generation
 
 	// convert targets

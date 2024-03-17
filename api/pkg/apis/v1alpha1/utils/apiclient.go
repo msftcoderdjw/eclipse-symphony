@@ -49,6 +49,7 @@ type (
 	ApiClient interface {
 		SummaryGetter
 		Dispatcher
+		GetInstancesForAllNamespaces() ([]model.InstanceState, error)
 		GetInstances(scope string) ([]model.InstanceState, error)
 		GetInstance(instance string, scope string) (model.InstanceState, error)
 		CreateInstance(instance string, payload []byte) error
@@ -58,10 +59,11 @@ type (
 		GetSolution(solution string, scope string) (model.SolutionState, error)
 		CreateSolution(solution string, payload []byte) error
 		DeleteSolution(solution string, scope string) error
+		GetTargetsForAllNamespaces() ([]model.TargetState, error)
 		GetTarget(target string, scope string) (model.TargetState, error)
 		GetTargets(scope string) ([]model.TargetState, error)
 		CreateTarget(target string, payload []byte) error
-		Reconcile(deployment model.DeploymentSpec, isDelete bool) (model.SummarySpec, error)
+		Reconcile(deployment model.DeploymentSpec, isDelete bool, namespace string) (model.SummarySpec, error)
 	}
 )
 
@@ -145,6 +147,26 @@ func (a *apiClient) GetInstances(scope string) ([]model.InstanceState, error) {
 		return ret, err
 	}
 	response, err := a.callRestAPI("instances?scope="+url.QueryEscape(scope), "GET", nil, token)
+	if err != nil {
+		return ret, err
+	}
+
+	err = json.Unmarshal(response, &ret)
+	if err != nil {
+		return ret, err
+	}
+
+	return ret, nil
+}
+
+func (a *apiClient) GetInstancesForAllNamespaces() ([]model.InstanceState, error) {
+	ret := make([]model.InstanceState, 0)
+	token, err := a.tokenProvider(a.baseUrl, a.client)
+	if err != nil {
+		return ret, err
+	}
+
+	response, err := a.callRestAPI("instances", "GET", nil, token)
 	if err != nil {
 		return ret, err
 	}
@@ -328,6 +350,26 @@ func (a *apiClient) GetTargets(scope string) ([]model.TargetState, error) {
 	return ret, nil
 }
 
+func (a *apiClient) GetTargetsForAllNamespaces() ([]model.TargetState, error) {
+	ret := []model.TargetState{}
+	token, err := a.tokenProvider(a.baseUrl, a.client)
+	if err != nil {
+		return ret, err
+	}
+
+	response, err := a.callRestAPI("targets/registry", "GET", nil, token)
+	if err != nil {
+		return ret, err
+	}
+
+	err = json.Unmarshal(response, &ret)
+	if err != nil {
+		return ret, err
+	}
+
+	return ret, nil
+}
+
 func (a *apiClient) CreateTarget(target string, payload []byte) error {
 	token, err := a.tokenProvider(a.baseUrl, a.client)
 	if err != nil {
@@ -416,13 +458,13 @@ func (a *apiClient) QueueJob(id string, scope string, isDelete bool, isTarget bo
 	return nil
 }
 
-func (a *apiClient) Reconcile(deployment model.DeploymentSpec, isDelete bool) (model.SummarySpec, error) {
+func (a *apiClient) Reconcile(deployment model.DeploymentSpec, isDelete bool, namespace string) (model.SummarySpec, error) {
 	summary := model.SummarySpec{}
 	payload, _ := json.Marshal(deployment)
 
-	path := "solution/reconcile"
+	path := "solution/reconcile" + "?namespace=" + namespace
 	if isDelete {
-		path = "solution/reconcile?delete=true"
+		path = path + "&delete=true"
 	}
 	token, err := a.tokenProvider(a.baseUrl, a.client)
 	if err != nil {
