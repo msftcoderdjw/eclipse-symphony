@@ -523,7 +523,7 @@ func TestCreateSymphonyDeploymentFromTarget(t *testing.T) {
 				"key2": "value2",
 			},
 		},
-	})
+	}, "default")
 	require.NoError(t, err)
 
 	ret, err := res.DeepEquals(model.DeploymentSpec{
@@ -674,7 +674,7 @@ func TestCreateSymphonyDeployment(t *testing.T) {
 				},
 			},
 		},
-	})
+	}, "default")
 	require.NoError(t, err)
 
 	jData, _ := json.Marshal(res)
