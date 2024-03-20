@@ -17,7 +17,7 @@ import (
 	"sync"
 	"time"
 
-	solution "github.com/eclipse-symphony/symphony/api/pkg/apis/v1alpha1/managers/solution/metrics"
+	"github.com/eclipse-symphony/symphony/api/pkg/apis/v1alpha1/managers/solution/metrics"
 	"github.com/eclipse-symphony/symphony/api/pkg/apis/v1alpha1/model"
 	sp "github.com/eclipse-symphony/symphony/api/pkg/apis/v1alpha1/providers"
 	tgt "github.com/eclipse-symphony/symphony/api/pkg/apis/v1alpha1/providers/target"
@@ -37,7 +37,7 @@ import (
 var (
 	log                 = logger.NewLogger("coa.runtime")
 	lock                sync.Mutex
-	apiOperationMetrics *solution.Metrics
+	apiOperationMetrics *metrics.Metrics
 )
 
 const (
@@ -57,7 +57,7 @@ type SolutionManager struct {
 	TargetProviders    map[string]tgt.ITargetProvider
 	StateProvider      states.IStateProvider
 	ConfigProvider     config.IExtConfigProvider
-	SecretProvoider    secret.ISecretProvider
+	SecretProvider     secret.ISecretProvider
 	IsTarget           bool
 	TargetNames        []string
 	evaluationDisabled bool
@@ -96,7 +96,7 @@ func (s *SolutionManager) Init(context *contexts.VendorContext, config managers.
 
 	secretProvider, err := managers.GetSecretProvider(config, providers)
 	if err == nil {
-		s.SecretProvoider = secretProvider
+		s.SecretProvider = secretProvider
 	} else {
 		return err
 	}
@@ -125,14 +125,17 @@ func (s *SolutionManager) Init(context *contexts.VendorContext, config managers.
 	}
 
 	var evaluationDisabled bool
-	evaluationDisabled, err = strconv.ParseBool(config.Properties["disableEvaluation"])
-	if err != nil {
-		return err
+	s.evaluationDisabled = false
+	if v, ok := config.Properties["disableEvaluation"]; ok {
+		evaluationDisabled, err = strconv.ParseBool(v)
+		if err != nil {
+			return err
+		}
+		s.evaluationDisabled = evaluationDisabled
 	}
-	s.evaluationDisabled = evaluationDisabled
 
 	if apiOperationMetrics == nil {
-		apiOperationMetrics, err = solution.New()
+		apiOperationMetrics, err = metrics.New()
 		if err != nil {
 			return err
 		}
@@ -257,8 +260,8 @@ func (s *SolutionManager) Reconcile(ctx context.Context, deployment model.Deploy
 	componentCount := len(deployment.Solution.Spec.Components)
 	apiOperationMetrics.ApiComponentCount(
 		componentCount,
-		solution.GetSummaryOperation,
-		solution.GetOperationType,
+		metrics.GetSummaryOperation,
+		metrics.GetOperationType,
 	)
 
 	if !s.evaluationDisabled {
