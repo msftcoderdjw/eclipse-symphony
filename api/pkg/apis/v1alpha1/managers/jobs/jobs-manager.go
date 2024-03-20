@@ -421,7 +421,7 @@ func (s *JobsManager) HandleJobEvent(ctx context.Context, event v1alpha2.Event) 
 							},
 						},
 						Metadata: map[string]interface{}{
-							"namespace": instance.ObjectMeta.Namespace,
+							"namespace": namespace,
 						},
 					})
 				}
@@ -460,6 +460,9 @@ func (s *JobsManager) HandleJobEvent(ctx context.Context, event v1alpha2.Event) 
 								Time: time.Now().UTC(),
 							},
 						},
+						Metadata: map[string]interface{}{
+							"namespace": namespace,
+						},
 					})
 				}
 			case v1alpha2.JobDelete:
@@ -471,6 +474,36 @@ func (s *JobsManager) HandleJobEvent(ctx context.Context, event v1alpha2.Event) 
 				}
 			default:
 				return v1alpha2.NewCOAError(nil, "unsupported action", v1alpha2.BadRequest)
+			}
+		case "deployment":
+			deployment, err := model.ToDeployment(job.Data)
+			if err != nil {
+				return err
+			}
+			if job.Action == v1alpha2.JobUpdate {
+				_, err := s.apiClient.Reconcile(*deployment, false, namespace)
+				if err != nil {
+					return err
+				} else {
+					// TODO: how to handle status updates?
+					s.StateProvider.Upsert(ctx, states.UpsertRequest{
+						Value: states.StateEntry{
+							ID: "d_" + deployment.Instance.Spec.Name,
+							Body: LastSuccessTime{
+								Time: time.Now().UTC(),
+							},
+						},
+						Metadata: map[string]interface{}{
+							"namespace": namespace,
+						},
+					})
+				}
+			}
+			if job.Action == v1alpha2.JobDelete {
+				_, err := s.apiClient.Reconcile(*deployment, true, namespace)
+				if err != nil {
+					return err
+				}
 			}
 		}
 	}

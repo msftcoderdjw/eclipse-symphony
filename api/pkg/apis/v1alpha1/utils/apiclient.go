@@ -38,11 +38,11 @@ type (
 	TokenProvider func(baseUrl string, client *http.Client) (string, error)
 
 	SummaryGetter interface {
-		GetSummary(id string, scope string) (*model.SummaryResult, error)
+		GetSummary(id string, namespace string) (*model.SummaryResult, error)
 	}
 
 	Dispatcher interface {
-		QueueJob(id string, scope string, isDelete bool, isTarget bool) error
+		QueueJob(id string, namespace string, isDelete bool, isTarget bool) error
 		QueueDeploymentJob(scope string, isDelete bool, deployment model.DeploymentSpec) error
 	}
 
@@ -384,14 +384,14 @@ func (a *apiClient) CreateTarget(target string, payload []byte) error {
 	return nil
 }
 
-func (a *apiClient) GetSummary(id string, scope string) (*model.SummaryResult, error) {
+func (a *apiClient) GetSummary(id string, namespace string) (*model.SummaryResult, error) {
 	result := model.SummaryResult{}
 	token, err := a.tokenProvider(a.baseUrl, a.client)
 	if err != nil {
 		return nil, err
 	}
 
-	ret, err := a.callRestAPI("solution/queue?instance="+url.QueryEscape(id)+"&scope="+url.QueryEscape(scope), "GET", nil, token)
+	ret, err := a.callRestAPI("solution/queue?instance="+url.QueryEscape(id)+"&namespace="+url.QueryEscape(namespace), "GET", nil, token)
 	// callRestApi Does a weird thing where it returns nil if the status code is 404 so we'll recreate the error here
 	if err == nil && ret == nil {
 		return nil, v1alpha2.NewCOAError(nil, "Not found", v1alpha2.NotFound)
@@ -434,7 +434,7 @@ func (a *apiClient) QueueDeploymentJob(scope string, isDelete bool, deployment m
 }
 
 // Deprecated: Use QueueDeploymentJob instead
-func (a *apiClient) QueueJob(id string, scope string, isDelete bool, isTarget bool) error {
+func (a *apiClient) QueueJob(id string, namespace string, isDelete bool, isTarget bool) error {
 	token, err := a.tokenProvider(a.baseUrl, a.client)
 	if err != nil {
 		return err
@@ -442,7 +442,7 @@ func (a *apiClient) QueueJob(id string, scope string, isDelete bool, isTarget bo
 	path := "solution/queue"
 	query := url.Values{
 		"instance":   []string{id},
-		"scope":      []string{scope},
+		"namespace":  []string{namespace},
 		"delete":     []string{fmt.Sprintf("%t", isDelete)},
 		"objectType": []string{"instance"},
 	}

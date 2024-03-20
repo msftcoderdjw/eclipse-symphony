@@ -240,5 +240,6 @@
 ./go.mod
 ./go.sum
 ./pkg/apis/v1alpha1/providers/target/helm/helm.go
+./pkg/apis/v1alpha1/providers/target/helm/helm_test.go
 ./pkg/apis/v1alpha1/providers/target/helm/auth.go
 ./pkg/apis/v1alpha1/providers/target/helm/postrenderer.go
