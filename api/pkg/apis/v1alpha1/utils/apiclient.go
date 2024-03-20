@@ -43,26 +43,26 @@ type (
 
 	Dispatcher interface {
 		QueueJob(id string, namespace string, isDelete bool, isTarget bool) error
-		QueueDeploymentJob(scope string, isDelete bool, deployment model.DeploymentSpec) error
+		QueueDeploymentJob(namespace string, isDelete bool, deployment model.DeploymentSpec) error
 	}
 
 	ApiClient interface {
 		SummaryGetter
 		Dispatcher
 		GetInstancesForAllNamespaces() ([]model.InstanceState, error)
-		GetInstances(scope string) ([]model.InstanceState, error)
-		GetInstance(instance string, scope string) (model.InstanceState, error)
-		CreateInstance(instance string, payload []byte) error
-		DeleteInstance(instance string, scope string) error
-		DeleteTarget(target string, scope string) error
-		GetSolutions(scope string) ([]model.SolutionState, error)
-		GetSolution(solution string, scope string) (model.SolutionState, error)
-		CreateSolution(solution string, payload []byte) error
-		DeleteSolution(solution string, scope string) error
+		GetInstances(namespace string) ([]model.InstanceState, error)
+		GetInstance(instance string, namespace string) (model.InstanceState, error)
+		CreateInstance(instance string, payload []byte, namespace string) error
+		DeleteInstance(instance string, namespace string) error
+		DeleteTarget(target string, namespace string) error
+		GetSolutions(namespace string) ([]model.SolutionState, error)
+		GetSolution(solution string, namespace string) (model.SolutionState, error)
+		CreateSolution(solution string, payload []byte, namespace string) error
+		DeleteSolution(solution string, namespace string) error
 		GetTargetsForAllNamespaces() ([]model.TargetState, error)
-		GetTarget(target string, scope string) (model.TargetState, error)
-		GetTargets(scope string) ([]model.TargetState, error)
-		CreateTarget(target string, payload []byte) error
+		GetTarget(target string, namespace string) (model.TargetState, error)
+		GetTargets(namespace string) ([]model.TargetState, error)
+		CreateTarget(target string, payload []byte, namespace string) error
 		Reconcile(deployment model.DeploymentSpec, isDelete bool, namespace string) (model.SummarySpec, error)
 	}
 )
@@ -140,13 +140,13 @@ func NewAPIClient(ctx context.Context, baseUrl string, opts ...ApiClientOption) 
 	return a, nil
 }
 
-func (a *apiClient) GetInstances(scope string) ([]model.InstanceState, error) {
+func (a *apiClient) GetInstances(namespace string) ([]model.InstanceState, error) {
 	ret := make([]model.InstanceState, 0)
 	token, err := a.tokenProvider(a.baseUrl, a.client)
 	if err != nil {
 		return ret, err
 	}
-	response, err := a.callRestAPI("instances?scope="+url.QueryEscape(scope), "GET", nil, token)
+	response, err := a.callRestAPI("instances?namespace="+url.QueryEscape(namespace), "GET", nil, token)
 	if err != nil {
 		return ret, err
 	}
@@ -179,7 +179,7 @@ func (a *apiClient) GetInstancesForAllNamespaces() ([]model.InstanceState, error
 	return ret, nil
 }
 
-func (a *apiClient) GetInstance(instance string, scope string) (model.InstanceState, error) {
+func (a *apiClient) GetInstance(instance string, namespace string) (model.InstanceState, error) {
 	ret := model.InstanceState{}
 	token, err := a.tokenProvider(a.baseUrl, a.client)
 
@@ -187,7 +187,7 @@ func (a *apiClient) GetInstance(instance string, scope string) (model.InstanceSt
 		return ret, err
 	}
 
-	response, err := a.callRestAPI("instances/"+url.QueryEscape(instance)+"?scope="+url.QueryEscape(scope), "GET", nil, token)
+	response, err := a.callRestAPI("instances/"+url.QueryEscape(instance)+"?namespace="+url.QueryEscape(namespace), "GET", nil, token)
 	if err != nil {
 		return ret, err
 	}
@@ -200,13 +200,13 @@ func (a *apiClient) GetInstance(instance string, scope string) (model.InstanceSt
 	return ret, nil
 }
 
-func (a *apiClient) CreateInstance(instance string, payload []byte) error {
+func (a *apiClient) CreateInstance(instance string, payload []byte, namespace string) error {
 	token, err := a.tokenProvider(a.baseUrl, a.client)
 	if err != nil {
 		return err
 	}
 	//use proper url encoding in the following statement
-	_, err = a.callRestAPI("instances/"+url.QueryEscape(instance), "POST", payload, token)
+	_, err = a.callRestAPI("instances/"+url.QueryEscape(instance)+"?namespace="+url.QueryEscape(namespace), "POST", payload, token)
 	if err != nil {
 		return err
 	}
@@ -214,13 +214,13 @@ func (a *apiClient) CreateInstance(instance string, payload []byte) error {
 	return nil
 }
 
-func (a *apiClient) DeleteInstance(instance string, scope string) error {
+func (a *apiClient) DeleteInstance(instance string, namespace string) error {
 	token, err := a.tokenProvider(a.baseUrl, a.client)
 	if err != nil {
 		return err
 	}
 
-	_, err = a.callRestAPI("instances/"+url.QueryEscape(instance)+"?direct=true&scope="+url.QueryEscape(scope), "DELETE", nil, token)
+	_, err = a.callRestAPI("instances/"+url.QueryEscape(instance)+"?direct=true&namespace="+url.QueryEscape(namespace), "DELETE", nil, token)
 	if err != nil {
 		return err
 	}
@@ -228,13 +228,13 @@ func (a *apiClient) DeleteInstance(instance string, scope string) error {
 	return nil
 }
 
-func (a *apiClient) DeleteTarget(target string, scope string) error {
+func (a *apiClient) DeleteTarget(target string, namespace string) error {
 	token, err := a.tokenProvider(a.baseUrl, a.client)
 	if err != nil {
 		return err
 	}
 
-	_, err = a.callRestAPI("targets/registry/"+url.QueryEscape(target)+"?direct=true&scope="+url.QueryEscape(scope), "DELETE", nil, token)
+	_, err = a.callRestAPI("targets/registry/"+url.QueryEscape(target)+"?direct=true&namespace="+url.QueryEscape(namespace), "DELETE", nil, token)
 	if err != nil {
 		return err
 	}
@@ -242,14 +242,14 @@ func (a *apiClient) DeleteTarget(target string, scope string) error {
 	return nil
 }
 
-func (a *apiClient) GetSolutions(scope string) ([]model.SolutionState, error) {
+func (a *apiClient) GetSolutions(namespace string) ([]model.SolutionState, error) {
 	ret := make([]model.SolutionState, 0)
 	token, err := a.tokenProvider(a.baseUrl, a.client)
 	if err != nil {
 		return ret, err
 	}
 
-	response, err := a.callRestAPI("solutions?scope="+url.QueryEscape(scope), "GET", nil, token)
+	response, err := a.callRestAPI("solutions?namespace="+url.QueryEscape(namespace), "GET", nil, token)
 	if err != nil {
 		return ret, err
 	}
@@ -262,14 +262,14 @@ func (a *apiClient) GetSolutions(scope string) ([]model.SolutionState, error) {
 	return ret, nil
 }
 
-func (a *apiClient) GetSolution(solution string, scope string) (model.SolutionState, error) {
+func (a *apiClient) GetSolution(solution string, namespace string) (model.SolutionState, error) {
 	ret := model.SolutionState{}
 	token, err := a.tokenProvider(a.baseUrl, a.client)
 	if err != nil {
 		return ret, err
 	}
 
-	response, err := a.callRestAPI("solutions/"+url.QueryEscape(solution)+"?scope="+url.QueryEscape(scope), "GET", nil, token)
+	response, err := a.callRestAPI("solutions/"+url.QueryEscape(solution)+"?namespace="+url.QueryEscape(namespace), "GET", nil, token)
 	if err != nil {
 		return ret, err
 	}
@@ -282,13 +282,13 @@ func (a *apiClient) GetSolution(solution string, scope string) (model.SolutionSt
 	return ret, nil
 }
 
-func (a *apiClient) CreateSolution(solution string, payload []byte) error {
+func (a *apiClient) CreateSolution(solution string, payload []byte, namespace string) error {
 	token, err := a.tokenProvider(a.baseUrl, a.client)
 	if err != nil {
 		return err
 	}
 
-	_, err = a.callRestAPI("solutions/"+url.QueryEscape(solution), "POST", payload, token)
+	_, err = a.callRestAPI("solutions/"+url.QueryEscape(solution)+"?namespace="+url.QueryEscape(namespace), "POST", payload, token)
 	if err != nil {
 		return err
 	}
@@ -296,13 +296,13 @@ func (a *apiClient) CreateSolution(solution string, payload []byte) error {
 	return nil
 }
 
-func (a *apiClient) DeleteSolution(solution string, scope string) error {
+func (a *apiClient) DeleteSolution(solution string, namespace string) error {
 	token, err := a.tokenProvider(a.baseUrl, a.client)
 	if err != nil {
 		return err
 	}
 
-	_, err = a.callRestAPI("solutions/"+url.QueryEscape(solution)+"?scope="+url.QueryEscape(scope), "DELETE", nil, token)
+	_, err = a.callRestAPI("solutions/"+url.QueryEscape(solution)+"?namespace="+url.QueryEscape(namespace), "DELETE", nil, token)
 	if err != nil {
 		return err
 	}
@@ -310,14 +310,14 @@ func (a *apiClient) DeleteSolution(solution string, scope string) error {
 	return nil
 }
 
-func (a *apiClient) GetTarget(target string, scope string) (model.TargetState, error) {
+func (a *apiClient) GetTarget(target string, namespace string) (model.TargetState, error) {
 	ret := model.TargetState{}
 	token, err := a.tokenProvider(a.baseUrl, a.client)
 	if err != nil {
 		return ret, err
 	}
 
-	response, err := a.callRestAPI("targets/registry/"+url.QueryEscape(target)+"?scope="+url.QueryEscape(scope), "GET", nil, token)
+	response, err := a.callRestAPI("targets/registry/"+url.QueryEscape(target)+"?namespace="+url.QueryEscape(namespace), "GET", nil, token)
 	if err != nil {
 		return ret, err
 	}
@@ -330,14 +330,14 @@ func (a *apiClient) GetTarget(target string, scope string) (model.TargetState, e
 	return ret, nil
 }
 
-func (a *apiClient) GetTargets(scope string) ([]model.TargetState, error) {
+func (a *apiClient) GetTargets(namespace string) ([]model.TargetState, error) {
 	ret := []model.TargetState{}
 	token, err := a.tokenProvider(a.baseUrl, a.client)
 	if err != nil {
 		return ret, err
 	}
 
-	response, err := a.callRestAPI("targets/registry?scope="+url.QueryEscape(scope), "GET", nil, token)
+	response, err := a.callRestAPI("targets/registry?namespace="+url.QueryEscape(namespace), "GET", nil, token)
 	if err != nil {
 		return ret, err
 	}
@@ -370,13 +370,13 @@ func (a *apiClient) GetTargetsForAllNamespaces() ([]model.TargetState, error) {
 	return ret, nil
 }
 
-func (a *apiClient) CreateTarget(target string, payload []byte) error {
+func (a *apiClient) CreateTarget(target string, payload []byte, namespace string) error {
 	token, err := a.tokenProvider(a.baseUrl, a.client)
 	if err != nil {
 		return err
 	}
 
-	_, err = a.callRestAPI("targets/registry/"+url.QueryEscape(target), "POST", payload, token)
+	_, err = a.callRestAPI("targets/registry/"+url.QueryEscape(target)+"?namespace="+url.QueryEscape(namespace), "POST", payload, token)
 	if err != nil {
 		return err
 	}
@@ -409,11 +409,11 @@ func (a *apiClient) GetSummary(id string, namespace string) (*model.SummaryResul
 	return &result, nil
 }
 
-func (a *apiClient) QueueDeploymentJob(scope string, isDelete bool, deployment model.DeploymentSpec) error {
+func (a *apiClient) QueueDeploymentJob(namespace string, isDelete bool, deployment model.DeploymentSpec) error {
 	token, err := a.tokenProvider(a.baseUrl, a.client)
 	path := "solution/queue"
 	query := url.Values{
-		"scope":      []string{scope},
+		"namespace":  []string{namespace},
 		"delete":     []string{fmt.Sprintf("%t", isDelete)},
 		"objectType": []string{"deployment"},
 	}
