@@ -13,8 +13,10 @@ import (
 	"fmt"
 	"io/ioutil"
 	"net/http"
+	"os"
 	"strings"
 
+	"github.com/eclipse-symphony/symphony/api/constants"
 	"github.com/eclipse-symphony/symphony/api/pkg/apis/v1alpha1/model"
 	"github.com/eclipse-symphony/symphony/coa/pkg/apis/v1alpha2"
 	"github.com/eclipse-symphony/symphony/coa/pkg/apis/v1alpha2/observability"
@@ -23,8 +25,11 @@ import (
 	"github.com/eclipse-symphony/symphony/coa/pkg/logger"
 )
 
-const (
+var (
 	SymphonyAPIAddressBase = "http://symphony-service:8080/v1alpha2/"
+	symphonyAPIAddressBase = os.Getenv(constants.SymphonyAPIUrlEnvName)
+	useSAToken             = os.Getenv(constants.UseServiceAccountTokenEnvName)
+	apiCertPath            = os.Getenv(constants.ApiCertEnvName)
 )
 
 type authRequest struct {
@@ -41,18 +46,29 @@ type authResponse struct {
 // We shouldn't use specific error types
 // SummarySpecError represents an error that includes a SummarySpec in its message
 // field.
-// type SummarySpecError struct {
-// 	Code    string `json:"code"`
-// 	Message string `json:"message"`
-// }
+type SummarySpecError struct {
+	Code    string `json:"code"`
+	Message string `json:"message"`
+}
 
-// func (e *SummarySpecError) Error() string {
-// 	return fmt.Sprintf(
-// 		"failed to invoke Symphony API: [%s] - %s",
-// 		e.Code,
-// 		e.Message,
-// 	)
-// }
+func (e *SummarySpecError) Error() string {
+	return fmt.Sprintf(
+		"failed to invoke Symphony API: [%s] - %s",
+		e.Code,
+		e.Message,
+	)
+}
+
+func GetSymphonyAPIAddressBase() string {
+	if symphonyAPIAddressBase == "" {
+		return SymphonyAPIAddressBase
+	}
+	return symphonyAPIAddressBase
+}
+
+func ShouldUseSATokens() bool {
+	return useSAToken == "true"
+}
 
 var log = logger.NewLogger("coa.runtime")
 
@@ -579,11 +595,16 @@ func MatchTargets(instance model.InstanceState, targets []model.TargetState) []m
 	return slice
 }
 
-func CreateSymphonyDeploymentFromTarget(target model.TargetState) (model.DeploymentSpec, error) {
+func CreateSymphonyDeploymentFromTarget(target model.TargetState, namespace string) (model.DeploymentSpec, error) {
 	key := fmt.Sprintf("%s-%s", "target-runtime", target.ObjectMeta.Name)
 	scope := target.Spec.Scope
+	if scope == "" {
+		scope = constants.DefaultScope
+	}
 
-	ret := model.DeploymentSpec{}
+	ret := model.DeploymentSpec{
+		ObjectNamespace: namespace,
+	}
 	solution := model.SolutionState{
 		ObjectMeta: model.ObjectMeta{
 			Name:      key,
@@ -629,6 +650,8 @@ func CreateSymphonyDeploymentFromTarget(target model.TargetState) (model.Deploym
 	ret.Instance = instance
 	ret.Targets = targets
 	ret.SolutionName = key
+	// set the target generation to the deployment
+	ret.Generation = target.Spec.Generation
 	assignments, err := AssignComponentsToTargets(ret.Solution.Spec.Components, ret.Targets)
 	if err != nil {
 		return ret, err
@@ -642,14 +665,20 @@ func CreateSymphonyDeploymentFromTarget(target model.TargetState) (model.Deploym
 	return ret, nil
 }
 
-func CreateSymphonyDeployment(instance model.InstanceState, solution model.SolutionState, targets []model.TargetState, devices []model.DeviceState) (model.DeploymentSpec, error) {
-	ret := model.DeploymentSpec{}
+func CreateSymphonyDeployment(instance model.InstanceState, solution model.SolutionState, targets []model.TargetState, devices []model.DeviceState, namespace string) (model.DeploymentSpec, error) {
+	ret := model.DeploymentSpec{
+		ObjectNamespace: namespace,
+	}
 	ret.Generation = instance.Spec.Generation
 
 	// convert targets
 	sTargets := make(map[string]model.TargetState)
 	for _, t := range targets {
 		sTargets[t.ObjectMeta.Name] = t
+	}
+
+	if instance.Spec.Scope == "" {
+		instance.Spec.Scope = constants.DefaultScope
 	}
 
 	//TODO: handle devices
@@ -686,7 +715,9 @@ func AssignComponentsToTargets(components []model.ComponentSpec, targets map[str
 				parser := NewParser(component.Constraints)
 				val, err := parser.Eval(utils.EvaluationContext{Properties: target.Spec.Properties})
 				if err != nil {
-					return ret, err
+					// append the error message with the component constraint expression
+					errMsg := fmt.Sprintf("%s in constraint expression: %s", err.Error(), component.Constraints)
+					return ret, v1alpha2.NewCOAError(nil, errMsg, v1alpha2.TargetPropertyNotFound)
 				}
 				match = (val == "true" || val == true)
 			}
