@@ -143,52 +143,6 @@ func TestReadYamlFromUrl(t *testing.T) {
 	}
 }
 
-// TestKubectlTargetProviderApply tests that applying a deployment works
-func TestKubectlTargetProviderPathApply(t *testing.T) {
-	testGatekeeper := os.Getenv("TEST_KUBECTL")
-	if testGatekeeper == "" {
-		t.Skip("Skipping because TEST_KUBECTL environment variable is not set")
-	}
-	config := KubectlTargetProviderConfig{
-		InCluster:  false,
-		ConfigType: "path",
-		ConfigData: "",
-	}
-	provider := KubectlTargetProvider{}
-	err := provider.Init(config)
-	assert.Nil(t, err)
-	component := model.ComponentSpec{
-		Name: "gatekeeper",
-		Type: "yaml.k8s",
-		Properties: map[string]interface{}{
-			"yaml": "https://raw.githubusercontent.com/open-policy-agent/gatekeeper/master/deploy/gatekeeper.yaml",
-		},
-	}
-	deployment := model.DeploymentSpec{
-		Instance: model.InstanceState{
-			Spec: &model.InstanceSpec{
-				Scope: "gatekeeper-system",
-				Name:  "gatekeeper",
-			},
-		},
-		Solution: model.SolutionState{
-			Spec: &model.SolutionSpec{
-				Components: []model.ComponentSpec{component},
-			},
-		},
-	}
-	step := model.DeploymentStep{
-		Components: []model.ComponentStep{
-			{
-				Action:    model.ComponentUpdate,
-				Component: component,
-			},
-		},
-	}
-	_, err = provider.Apply(context.Background(), deployment, step, false)
-	assert.Nil(t, err)
-}
-
 func TestKubectlTargetProviderInlineApply(t *testing.T) {
 	testGatekeeper := os.Getenv("TEST_KUBECTL")
 	if testGatekeeper == "" {
@@ -326,8 +280,8 @@ func TestKubectlTargetProviderInlineUpdate(t *testing.T) {
 	deployment := model.DeploymentSpec{
 		Instance: model.InstanceState{
 			Spec: &model.InstanceSpec{
-				Name:  "test-instance",
-				Scope: "test-scope",
+				Name:  "test-instance-iu",
+				Scope: "test-scope-iu",
 			},
 		},
 		Solution: model.SolutionState{
@@ -339,7 +293,7 @@ func TestKubectlTargetProviderInlineUpdate(t *testing.T) {
 	step := model.DeploymentStep{
 		Components: []model.ComponentStep{
 			{
-				Action:    "update",
+				Action:    model.ComponentUpdate,
 				Component: component,
 			},
 		},
@@ -414,8 +368,8 @@ func TestKubectlTargetProviderInlineStatusProbeApply(t *testing.T) {
 	deployment := model.DeploymentSpec{
 		Instance: model.InstanceState{
 			Spec: &model.InstanceSpec{
-				Name:  "test-instance",
-				Scope: "test-scope",
+				Name:  "test-instance-spa",
+				Scope: "test-scope-spa",
 			},
 		},
 		Solution: model.SolutionState{
@@ -427,7 +381,7 @@ func TestKubectlTargetProviderInlineStatusProbeApply(t *testing.T) {
 	step := model.DeploymentStep{
 		Components: []model.ComponentStep{
 			{
-				Action:    "update",
+				Action:    model.ComponentUpdate,
 				Component: component,
 			},
 		},
@@ -575,23 +529,25 @@ func TestKubectlTargetProviderApplyPolicy(t *testing.T) {
 	assert.NotNil(t, err)
 }
 
-// TestKubectlTargetProviderDelete tests that deleting a deployment works
-func TestKubectlTargetProviderDelete(t *testing.T) {
+// TestKubectlTargetProviderApply tests that applying a deployment works, then deleting it
+// We cannot run apply and delete seperately as once gatekeeper.yaml is applied, namespace creation will be blocked.
+// We need to cleanup gatekeeper before running other cases
+func TestKubectlTargetProviderPathApplyAndDelete(t *testing.T) {
+	os.Setenv("TEST_KUBECTL", "true")
 	testGatekeeper := os.Getenv("TEST_KUBECTL")
 	if testGatekeeper == "" {
 		t.Skip("Skipping because TEST_KUBECTL environment variable is not set")
 	}
-
 	config := KubectlTargetProviderConfig{
 		InCluster:  false,
 		ConfigType: "path",
+		ConfigData: "",
 	}
-
 	provider := KubectlTargetProvider{}
 	err := provider.Init(config)
 	assert.Nil(t, err)
 	component := model.ComponentSpec{
-		Name: "gatekeepr1",
+		Name: "gatekeeper",
 		Type: "yaml.k8s",
 		Properties: map[string]interface{}{
 			"yaml": "https://raw.githubusercontent.com/open-policy-agent/gatekeeper/master/deploy/gatekeeper.yaml",
@@ -600,7 +556,8 @@ func TestKubectlTargetProviderDelete(t *testing.T) {
 	deployment := model.DeploymentSpec{
 		Instance: model.InstanceState{
 			Spec: &model.InstanceSpec{
-				Name: "gatekeeper",
+				Scope: "gatekeeper-system",
+				Name:  "gatekeeper",
 			},
 		},
 		Solution: model.SolutionState{
@@ -609,7 +566,22 @@ func TestKubectlTargetProviderDelete(t *testing.T) {
 			},
 		},
 	}
+	// update
 	step := model.DeploymentStep{
+		Components: []model.ComponentStep{
+			{
+				Action:    model.ComponentUpdate,
+				Component: component,
+			},
+		},
+	}
+	_, err = provider.Apply(context.Background(), deployment, step, false)
+	assert.Nil(t, err)
+
+	time.Sleep(3 * time.Second)
+
+	// delete
+	step = model.DeploymentStep{
 		Components: []model.ComponentStep{
 			{
 				Action:    model.ComponentDelete,
