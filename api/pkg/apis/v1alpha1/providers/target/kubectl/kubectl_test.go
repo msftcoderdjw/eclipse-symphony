@@ -530,8 +530,14 @@ func TestKubectlTargetProviderApplyPolicy(t *testing.T) {
 }
 
 // TestKubectlTargetProviderApply tests that applying a deployment works, then deleting it
-// We cannot run apply and delete seperately as once gatekeeper.yaml is applied, namespace creation will be blocked.
-// We need to cleanup gatekeeper before running other cases
+// Note, gatekeeper.yaml will register webhooks. If gatekeeper-webhook-service.<namespace>.svc is not healthy,
+// K8S operations will be blocked, e.g. creating namespace will fail with below error:
+//
+//	"Internal error occurred: failed calling webhook "check-ignore-label.gatekeeper.sh": failed to call webhook: Post "
+//	https://gatekeeper-webhook-service.gatekeeper-system.svc:443/v1/admitlabel?timeout=3s":
+//	dial tcp x.x.x.x:443: connect: connection refused"
+//
+// Better to cleanup gatekeeper before running other cases
 func TestKubectlTargetProviderPathApplyAndDelete(t *testing.T) {
 	os.Setenv("TEST_KUBECTL", "true")
 	testGatekeeper := os.Getenv("TEST_KUBECTL")
