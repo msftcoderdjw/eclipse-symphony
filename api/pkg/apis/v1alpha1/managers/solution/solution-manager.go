@@ -273,6 +273,7 @@ func (s *SolutionManager) Reconcile(ctx context.Context, deployment model.Deploy
 		context.Namespace = namespace
 		deployment, err = api_utils.EvaluateDeployment(*context)
 	}
+	summary.IsRemoval = remove
 
 	if err != nil {
 		if remove {
