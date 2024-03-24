@@ -290,10 +290,25 @@ func TestKubectlTargetProviderInlineUpdate(t *testing.T) {
 			},
 		},
 	}
+	// update
 	step := model.DeploymentStep{
 		Components: []model.ComponentStep{
 			{
 				Action:    model.ComponentUpdate,
+				Component: component,
+			},
+		},
+	}
+	_, err = provider.Apply(context.Background(), deployment, step, false)
+	assert.Nil(t, err)
+
+	time.Sleep(3 * time.Second)
+
+	// cleanup
+	step = model.DeploymentStep{
+		Components: []model.ComponentStep{
+			{
+				Action:    model.ComponentDelete,
 				Component: component,
 			},
 		},
@@ -378,10 +393,25 @@ func TestKubectlTargetProviderInlineStatusProbeApply(t *testing.T) {
 			},
 		},
 	}
+	// update
 	step := model.DeploymentStep{
 		Components: []model.ComponentStep{
 			{
 				Action:    model.ComponentUpdate,
+				Component: component,
+			},
+		},
+	}
+	_, err = provider.Apply(context.Background(), deployment, step, false)
+	assert.Nil(t, err)
+
+	time.Sleep(3 * time.Second)
+
+	// cleanup
+	step = model.DeploymentStep{
+		Components: []model.ComponentStep{
+			{
+				Action:    model.ComponentDelete,
 				Component: component,
 			},
 		},
