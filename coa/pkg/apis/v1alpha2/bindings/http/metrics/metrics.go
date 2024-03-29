@@ -23,7 +23,7 @@ func New() (*Metrics, error) {
 	observable := observability.New(constants.API)
 
 	apiOperationLatency, err := observable.Metrics.Histogram(
-		"aio_orc_api_operation_latency",
+		"symphony_api_operation_latency",
 		"measure of overall latency for API operation side",
 	)
 	if err != nil {
@@ -31,7 +31,7 @@ func New() (*Metrics, error) {
 	}
 
 	apiOperationErrors, err := observable.Metrics.Counter(
-		"aio_orc_api_operation_errors",
+		"symphony_api_operation_errors",
 		"count of errors in API operation side",
 	)
 	if err != nil {
