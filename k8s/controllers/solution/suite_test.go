@@ -4,7 +4,7 @@
  * SPDX-License-Identifier: MIT
  */
 
-package solution
+package solution_test
 
 import (
 	"encoding/json"
@@ -25,7 +25,7 @@ import (
 	"sigs.k8s.io/controller-runtime/pkg/log/zap"
 	"sigs.k8s.io/yaml"
 
-	solutionv1 "gopls-workspace/apis/solution/v1"
+	api "gopls-workspace/apis/solution/v1"
 	//+kubebuilder:scaffold:imports
 )
 
@@ -37,7 +37,6 @@ var k8sClient client.Client
 var testEnv *envtest.Environment
 
 func TestAPIs(t *testing.T) {
-	t.Skip("Skipping tests for now as they are no longer relevant")
 	RegisterFailHandler(Fail)
 
 	RunGinkgoSpecs(t, "Controller Suite")
@@ -57,7 +56,7 @@ spec:
       bar:
         baz: "qux"
 `
-	solution := &solutionv1.Solution{}
+	solution := &api.Solution{}
 	err := yaml.Unmarshal([]byte(solutionYaml), solution)
 	assert.NoError(t, err)
 
@@ -88,7 +87,7 @@ var _ = BeforeSuite(func() {
 	Expect(err).NotTo(HaveOccurred())
 	Expect(cfg).NotTo(BeNil())
 
-	err = solutionv1.AddToScheme(scheme.Scheme)
+	err = api.AddToScheme(scheme.Scheme)
 	Expect(err).NotTo(HaveOccurred())
 
 	//+kubebuilder:scaffold:scheme
@@ -100,7 +99,6 @@ var _ = BeforeSuite(func() {
 })
 
 var _ = AfterSuite(func() {
-	Skip("Skipping tests for now as they are no longer relevant")
 	By("tearing down the test environment")
 	err := testEnv.Stop()
 	Expect(err).NotTo(HaveOccurred())
