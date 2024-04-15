@@ -60,3 +60,7 @@ func writeObjectHash(writer io.Writer, object client.Object) {
 func IsDeploymentFinished(summary apimodel.SummaryResult) bool {
 	return summary.State == apimodel.SummaryStateDone
 }
+
+func IsDeploymentFinished(summary apimodel.SummaryResult) bool {
+	return summary.State == apimodel.SummaryStateDone
+}
