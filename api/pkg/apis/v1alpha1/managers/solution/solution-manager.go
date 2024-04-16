@@ -299,14 +299,13 @@ func (s *SolutionManager) Reconcile(ctx context.Context, deployment model.Deploy
 
 	previousDesiredState := s.getPreviousState(iCtx, deployment.Instance.Spec.Name, namespace)
 
-	var currentDesiredState model.DeploymentState
+	var currentDesiredState, currentState model.DeploymentState
 	currentDesiredState, err = NewDeploymentState(deployment)
 	if err != nil {
 		summary.SummaryMessage = "failed to create target manager state from deployment spec: " + err.Error()
 		log.Errorf(" M (Solution): failed to create target manager state from deployment spec: %+v", err)
 		return summary, err
 	}
-	var currentState model.DeploymentState
 	currentState, _, err = s.Get(iCtx, deployment, targetName)
 	if err != nil {
 		summary.SummaryMessage = "failed to get current state: " + err.Error()
