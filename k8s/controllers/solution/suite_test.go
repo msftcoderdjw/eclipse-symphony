@@ -137,8 +137,8 @@ var _ = Describe("Legacy testing with envtest", Ordered, func() {
 		k8sClient = k8sManager.GetClient()
 		Expect(k8sClient).NotTo(BeNil())
 
-		apiClient.On("GetSummary", mock.Anything, mock.Anything).Return(MockSucessSummaryResult(BuildDefaultTarget(), ""), nil)
-		apiClient.On("QueueDeploymentJob", mock.Anything, mock.Anything, mock.Anything).Return(nil)
+		apiClient.On("GetSummary", mock.Anything, mock.Anything, mock.Anything).Return(MockSucessSummaryResult(BuildDefaultTarget(), ""), nil)
+		apiClient.On("QueueDeploymentJob", mock.Anything, mock.Anything, mock.Anything, mock.Anything).Return(nil)
 
 		err = (&controllers.InstanceReconciler{
 			Client:                 k8sManager.GetClient(),

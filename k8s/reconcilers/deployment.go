@@ -153,7 +153,7 @@ func (r *DeploymentReconciler) AttemptUpdate(ctx context.Context, object Reconci
 		return metrics.DeploymentTimedOut, ctrl.Result{RequeueAfter: reconciliationInterval}, nil
 	}
 
-	summary, err := r.getDeploymentSummary(object)
+	summary, err := r.getDeploymentSummary(ctx, object)
 	if err != nil {
 		// If the error is anything but 404, we should return the error so the reconciler can retry
 		if !v1alpha2.IsNotFound(err) {
@@ -258,7 +258,7 @@ func (r *DeploymentReconciler) AttemptRemove(ctx context.Context, object Reconci
 	}
 
 	// Grab summary
-	summary, err := r.getDeploymentSummary(object)
+	summary, err := r.getDeploymentSummary(ctx, object)
 	// If there was an error and it was not a 404, we should update the status and return the error so the reconciler can retry
 	if err != nil && !v1alpha2.IsNotFound(err) {
 		if _, uErr := r.updateObjectStatus(ctx, object, nil, patchStatusOptions{nonTerminalErr: err}, log); uErr != nil {
@@ -430,15 +430,15 @@ func (r *DeploymentReconciler) queueDeploymentJob(ctx context.Context, object Re
 	}
 
 	// Send the deployment object to the api to queue a job
-	err = r.apiClient.QueueDeploymentJob(object.GetNamespace(), isRemoval, *deployment)
+	err = r.apiClient.QueueDeploymentJob(ctx, object.GetNamespace(), isRemoval, *deployment)
 	if err != nil {
 		return err
 	}
 	return nil
 }
 
-func (r *DeploymentReconciler) getDeploymentSummary(object Reconcilable) (*model.SummaryResult, error) {
-	return r.apiClient.GetSummary(r.deploymentKeyResolver(object), object.GetNamespace())
+func (r *DeploymentReconciler) getDeploymentSummary(ctx context.Context, object Reconcilable) (*model.SummaryResult, error) {
+	return r.apiClient.GetSummary(ctx, r.deploymentKeyResolver(object), object.GetNamespace())
 }
 
 func (r *DeploymentReconciler) updateCorrelationIdMetaData(ctx context.Context, object Reconcilable, operationStartTimeKey string) error {
