@@ -273,7 +273,6 @@ func (s *SolutionManager) Reconcile(ctx context.Context, deployment model.Deploy
 		context.Namespace = namespace
 		deployment, err = api_utils.EvaluateDeployment(*context)
 	}
-	summary.IsRemoval = remove
 
 	if err != nil {
 		if remove {
@@ -467,8 +466,6 @@ func (s *SolutionManager) Reconcile(ctx context.Context, deployment model.Deploy
 		},
 	})
 	//}
-
-	summary.IsRemoval = remove
 
 	successCount := 0
 	for _, v := range targetResult {
