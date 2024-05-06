@@ -171,7 +171,6 @@ type CampaignContainerSpec struct {
 
 // +kubebuilder:object:generate=true
 type CatalogSpec struct {
-	SiteId   string            `json:"siteId"`
 	Type     string            `json:"type"`
 	Metadata map[string]string `json:"metadata,omitempty"`
 	// +kubebuilder:pruning:PreserveUnknownFields

@@ -489,13 +489,10 @@ spec:
               properties:
                 type: object
                 x-kubernetes-preserve-unknown-fields: true
-              siteId:
-                type: string
               type:
                 type: string
             required:
             - properties
-            - siteId
             - type
             type: object
           status:
