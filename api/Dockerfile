@@ -4,8 +4,11 @@
 ## SPDX-License-Identifier: MIT
 ##
 
-ARG BUILD_BASE_IMAGE=golang:1.20.2-alpine
-ARG TARGET_BASE_IMAGE=ubuntu:latest
+# ARG BUILD_BASE_IMAGE=golang:1.20.2-alpine
+# ARG TARGET_BASE_IMAGE=ubuntu:latest
+
+ARG BUILD_BASE_IMAGE=mcr.microsoft.com/oss/go/microsoft/golang:1.20.2-cbl-mariner2.0
+ARG TARGET_BASE_IMAGE=mcr.microsoft.com/mirror/docker/library/ubuntu:22.04
 
 FROM --platform=$BUILDPLATFORM ${BUILD_BASE_IMAGE} AS build
 
