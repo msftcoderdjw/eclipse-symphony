@@ -3,11 +3,11 @@
     "properties": {
       "serviceName": "symphony-api",
       "pipelines": [
-        {{- if .Values.otelCollectorAddress }}
+        {{- if .Values.OTLP_HTTP_TRACE_ENDPOINT }}
         {
           "exporter": {
             "type": "tracing.exporters.otlpgrpc",
-            "collectorUrl": "{{ tpl .Values.otelCollectorAddress $ }}"
+            "collectorUrl": "{{ tpl .Values.OTLP_HTTP_TRACE_ENDPOINT $ }}"
           }
         }
         {{- end }}

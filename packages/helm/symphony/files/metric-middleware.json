@@ -3,17 +3,17 @@
     "properties": {
       "serviceName": "symphony-api",
       "pipelines": [
-        {{- if .Values.otelCollectorAddress }}
+        {{- if .Values.OTLP_HTTP_METRIC_ENDPOINT }}
         {
           "exporter": {
             "type": "metrics.exporters.otlpgrpc",
-            "collectorUrl": "{{ tpl .Values.otelCollectorAddress $ }}",
+            "collectorUrl": "{{ tpl .Values.OTLP_HTTP_METRIC_ENDPOINT $ }}",
             "temporality": false
           }
         }
         {{- end }}
         {{- if .Values.genevaCollectorAddress }}
-        {{- if .Values.otelCollectorAddress }}
+        {{- if .Values.OTLP_HTTP_METRIC_ENDPOINT }}
         ,
         {{- end }}
         {
