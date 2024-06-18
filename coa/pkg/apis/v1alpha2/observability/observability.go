@@ -151,6 +151,7 @@ func (o *Observability) createExporter(config ExporterConfig) error {
 		sdktrace.WithResource(resource.NewWithAttributes(
 			semconv.SchemaURL,
 			semconv.ServiceNameKey.String("Symphony API"),
+			populateMicrosoftResourceId(),
 		))))
 	return nil
 }
@@ -220,6 +221,7 @@ func (o *Observability) InitTrace(config ObservabilityConfig) error {
 			resource.NewWithAttributes(
 				semconv.SchemaURL,
 				semconv.ServiceNameKey.String(config.ServiceName),
+				populateMicrosoftResourceId(),
 			),
 		),
 	}
@@ -302,6 +304,7 @@ func (o *Observability) InitMetric(config ObservabilityConfig) error {
 			resource.NewWithAttributes(
 				semconv.SchemaURL,
 				semconv.ServiceNameKey.String(config.ServiceName),
+				populateMicrosoftResourceId(),
 			),
 		),
 	}
@@ -341,5 +344,17 @@ func genevaTemporality(ik sdkmetric.InstrumentKind) metricdata.Temporality {
 
 	default:
 		return sdkmetric.DefaultTemporalitySelector(ik)
+	}
+}
+
+func populateMicrosoftResourceId() attribute.KeyValue {
+	rid, ok := os.LookupEnv("EXTENSION_RESOURCEID")
+	if !ok {
+		return attribute.KeyValue{}
+	}
+
+	return attribute.KeyValue{
+		Key:   "microsoft.resourceId",
+		Value: attribute.StringValue(rid),
 	}
 }

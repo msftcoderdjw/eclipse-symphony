@@ -3,23 +3,11 @@
     "properties": {
       "serviceName": "symphony-api",
       "pipelines": [
-        {{- if .Values.OTLP_HTTP_METRIC_ENDPOINT }}
+        {{- if .Values.OTLP_GRPC_METRIC_ENDPOINT }}
         {
           "exporter": {
             "type": "metrics.exporters.otlpgrpc",
-            "collectorUrl": "{{ tpl .Values.OTLP_HTTP_METRIC_ENDPOINT $ }}",
-            "temporality": false
-          }
-        }
-        {{- end }}
-        {{- if .Values.genevaCollectorAddress }}
-        {{- if .Values.OTLP_HTTP_METRIC_ENDPOINT }}
-        ,
-        {{- end }}
-        {
-          "exporter": {
-            "type": "metrics.exporters.otlpgrpc",
-            "collectorUrl": "{{ tpl .Values.genevaCollectorAddress $ }}",
+            "collectorUrl": "{{ tpl .Values.OTLP_GRPC_METRIC_ENDPOINT $ }}",
             "temporality": true
           }
         }
