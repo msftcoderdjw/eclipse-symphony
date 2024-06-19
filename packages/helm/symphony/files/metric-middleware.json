@@ -3,11 +3,11 @@
     "properties": {
       "serviceName": "symphony-api",
       "pipelines": [
-        {{- if .Values.OTLP_GRPC_METRIC_ENDPOINT }}
+        {{- if .Values.otlpMetricsEndpointGrpc }}
         {
           "exporter": {
             "type": "metrics.exporters.otlpgrpc",
-            "collectorUrl": "{{ tpl .Values.OTLP_GRPC_METRIC_ENDPOINT $ }}",
+            "collectorUrl": "{{ tpl .Values.otlpMetricsEndpointGrpc $ }}",
             "temporality": true
           }
         }

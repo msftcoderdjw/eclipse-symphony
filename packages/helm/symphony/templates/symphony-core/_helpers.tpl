@@ -105,7 +105,7 @@ Zipkin Middleware
 Trace Middleware
 */}}
 {{- define "symphony.traceMiddleware" -}}
-{{- if .Values.OTLP_GRPC_TRACE_ENDPOINT }}
+{{- if .Values.otlpTracesEndpointGrpc }}
 {{ tpl (.Files.Get "files/trace-middleware.json") .  }},
 {{- end }}
 {{- end }}
@@ -114,7 +114,7 @@ Trace Middleware
 Metric Middleware
 */}}
 {{- define "symphony.metricMiddleware" -}}
-{{- if .Values.OTLP_GRPC_METRIC_ENDPOINT }}
+{{- if .Values.otlpMetricsEndpointGrpc }}
 {{ tpl (.Files.Get "files/metric-middleware.json") .  }},
 {{- end }}
 {{- end }}
