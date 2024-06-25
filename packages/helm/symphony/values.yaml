@@ -21,7 +21,7 @@ observability:
     exporter:
       zipkin: true
   otelCollector:
-    enabled: true
+    enabled: false
     image: otel/opentelemetry-collector:0.103.0
 zipkin:
   fullnameOverride: symphony-zipkin
