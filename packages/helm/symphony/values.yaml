@@ -23,6 +23,8 @@ observability:
   otelCollector:
     enabled: true
     image: otel/opentelemetry-collector:0.103.0
+  otelForwarder:
+    image: mcr.microsoft.com/oss/otel/opentelemetry-collector-contrib:0.102.1
 zipkin:
   fullnameOverride: symphony-zipkin
 cert-manager:
@@ -59,4 +61,8 @@ Azure:
     proxyCert: ""
   Extension:
     ResourceId: "/subscriptions/af54d2ce-0dcb-48f8-9d2d-ff9c53e48c8d/resourcegroups/jiadutestaks0618c_group/providers/Microsoft.Kubernetes/ConnectedClusters/jiadutestaks0618c/providers/Microsoft.KubernetesConfiguration/extensions/symphonyext"
-otlpLogsEndpointHttp: http://symphony-otel-collector-service.default.svc:4318
+  Cluster:
+    Region: "eastus"
+    ResourceId: "/subscriptions/af54d2ce-0dcb-48f8-9d2d-ff9c53e48c8d/resourcegroups/jiadutestaks0618c_group/providers/Microsoft.Kubernetes/connectedClusters/jiadutestaks0618c"
+otlpLogsEndpointGrpc: symphony-otel-collector-service.default.svc:4317
+otlpInsecureGrpc: true

@@ -198,31 +198,3 @@ Symphony full url Endpoint
 {{- printf "no" }}
 {{- end }}
 {{- end }}
-
-{{/* Symphony Otel log endpoint */}}
-{{- define "symphony.otel.logHost" -}}
-{{- if .Values.otlpLogsEndpointHttp  }}
-  {{- $noSchemeUrl := regexReplaceAll "https?://" .Values.otlpLogsEndpointHttp "" }}
-  {{- $noSuffixUrl := regexReplaceAll "/.*" $noSchemeUrl "" }}
-  {{- $hostAndPort := split ":" $noSuffixUrl }}
-  {{- printf "%s" $hostAndPort._0 }}
-{{- else}}
-  {{- printf "127.0.0.1" }}
-{{- end }}
-{{- end }}
-
-{{/* Symphony Otel log port */}}
-{{- define "symphony.otel.logPort" -}}
-{{- if .Values.otlpLogsEndpointHttp  }}
-  {{- $noSchemeUrl := regexReplaceAll "https?://" .Values.otlpLogsEndpointHttp "" }}
-  {{- $noSuffixUrl := regexReplaceAll "/.*" $noSchemeUrl "" }}
-  {{- $hostAndPort := split ":" $noSuffixUrl }}
-  {{- if gt (len $hostAndPort) 1 }}
-    {{- printf "%s" $hostAndPort._1 }}
-  {{- else }}
-    {{- printf "80" }} {{/* Default port if not specified */}}
-  {{- end }}
-{{- else}}
-  {{- printf "80" }}
-{{- end }}
-{{- end }}

@@ -132,26 +132,11 @@ data:
       - name: stdout
         match: kube.*
         format: json_lines
-        processors:
-          logs:
-          - name: content_modifier
-            action: upsert
-            context: attributes
-            key: "microsoft.resourceId"
-            value: {{ .Values.Azure.Extension.ResourceId }}
-      {{- if .Values.otlpLogsEndpointHttp }}
-      - name: opentelemetry
+      {{- if .Values.otlpLogsEndpointGrpc }}
+      - name: forward
         match: kube.*
-        host: {{ include "symphony.otel.logHost" . }}
-        port: {{ include "symphony.otel.logPort" . }}
-        tls.verify: off
-        processors:
-          logs:
-          - name: content_modifier
-            action: upsert
-            context: attributes
-            key: "microsoft.resourceId"
-            value: {{ .Values.Azure.Extension.ResourceId }}
+        host: {{ include "symphony.fullname" . }}-otel-forwarder-service.{{ .Release.Namespace }}.svc
+        port: 24284
       {{- end }}
 
 {{- end }}
