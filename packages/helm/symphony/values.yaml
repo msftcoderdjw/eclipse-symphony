@@ -21,7 +21,7 @@ observability:
     exporter:
       zipkin: true
   otelCollector:
-    enabled: false
+    enabled: true
     image: otel/opentelemetry-collector:0.103.0
 zipkin:
   fullnameOverride: symphony-zipkin
@@ -59,4 +59,4 @@ Azure:
     proxyCert: ""
   Extension:
     ResourceId: "/subscriptions/af54d2ce-0dcb-48f8-9d2d-ff9c53e48c8d/resourcegroups/jiadutestaks0618c_group/providers/Microsoft.Kubernetes/ConnectedClusters/jiadutestaks0618c/providers/Microsoft.KubernetesConfiguration/extensions/symphonyext"
-otlpLogsEndpointHttp: symphony-otel-collector-service.default.svc:4318
+otlpLogsEndpointHttp: http://symphony-otel-collector-service.default.svc:4318
