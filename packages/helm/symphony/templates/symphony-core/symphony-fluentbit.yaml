@@ -128,7 +128,6 @@ data:
         kube_token_file: /var/run/secrets/kubernetes.io/serviceaccount/token
         kube_tag_prefix: kube.var.log.containers.
         merge_log: on
-        merge_log_key: log_processed
       outputs:
       - name: stdout
         match: kube.*

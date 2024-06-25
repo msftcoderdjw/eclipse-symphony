@@ -203,7 +203,8 @@ Symphony full url Endpoint
 {{- define "symphony.otel.logHost" -}}
 {{- if .Values.otlpLogsEndpointHttp  }}
   {{- $noSchemeUrl := regexReplaceAll "https?://" .Values.otlpLogsEndpointHttp "" }}
-  {{- $hostAndPort := split ":" $noSchemeUrl }}
+  {{- $noSuffixUrl := regexReplaceAll "/.*" $noSchemeUrl "" }}
+  {{- $hostAndPort := split ":" $noSuffixUrl }}
   {{- printf "%s" $hostAndPort._0 }}
 {{- else}}
   {{- printf "127.0.0.1" }}
@@ -214,7 +215,8 @@ Symphony full url Endpoint
 {{- define "symphony.otel.logPort" -}}
 {{- if .Values.otlpLogsEndpointHttp  }}
   {{- $noSchemeUrl := regexReplaceAll "https?://" .Values.otlpLogsEndpointHttp "" }}
-  {{- $hostAndPort := split ":" $noSchemeUrl }}
+  {{- $noSuffixUrl := regexReplaceAll "/.*" $noSchemeUrl "" }}
+  {{- $hostAndPort := split ":" $noSuffixUrl }}
   {{- if gt (len $hostAndPort) 1 }}
     {{- printf "%s" $hostAndPort._1 }}
   {{- else }}
