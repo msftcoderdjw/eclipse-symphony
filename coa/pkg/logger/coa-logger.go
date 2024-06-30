@@ -73,6 +73,7 @@ func (l *daprLogger) EnableJSONOutput(enabled bool) {
 	}
 
 	l.logger.Logger.SetFormatter(formatter)
+	l.logger.Logger.SetReportCaller(true)
 }
 
 // SetAppID sets app_id field in the log. Default value is empty string

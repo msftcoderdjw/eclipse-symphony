@@ -23,6 +23,7 @@ import (
 	"github.com/eclipse-symphony/symphony/api/pkg/apis/v1alpha1/utils"
 	"github.com/eclipse-symphony/symphony/coa/pkg/apis/v1alpha2/observability"
 	"github.com/eclipse-symphony/symphony/coa/pkg/logger"
+	zaplog "go.uber.org/zap"
 	"go.uber.org/zap/zapcore"
 	"k8s.io/apimachinery/pkg/runtime"
 	utilruntime "k8s.io/apimachinery/pkg/util/runtime"
@@ -153,6 +154,7 @@ func main() {
 	opts := zap.Options{
 		Development: logMode.IsDevelopment(),
 		TimeEncoder: zapcore.ISO8601TimeEncoder,
+		ZapOpts:     []zaplog.Option{zaplog.AddCaller()},
 	}
 	opts.BindFlags(flag.CommandLine)
 	flag.Parse()
