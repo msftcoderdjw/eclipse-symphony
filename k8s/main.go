@@ -117,6 +117,8 @@ func main() {
 	fmt.Println(constants.EulaMessage)
 	fmt.Println()
 
+	time.Sleep(10 * time.Millisecond) // sleep 10ms to make sure license print at first and won't be mixed with other logs
+
 	var metricsAddr string
 	var enableLeaderElection bool
 	var probeAddr string
