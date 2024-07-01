@@ -38,6 +38,7 @@ const (
 	CHART_PATH             = "../../packages/helm/symphony"
 	GITHUB_PAT             = "CR_PAT"
 	LOG_ROOT               = "/tmp/symphony-integration-test-logs"
+	MINIKUBE_START_OPTIONS = ""
 )
 
 var platform = fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH)
@@ -52,10 +53,19 @@ func PrintParams() error {
 	fmt.Println("SKIP_GHCR_VALUES: ", skipGhcrValues())
 	fmt.Println("GHCR_VALUES_OPTIONS: ", ghcrValuesOptions())
 	fmt.Println("LOG_ROOT: ", getLogRoot())
+	fmt.Println("MINIKUBE_START_OPTIONS: ", getMinikubeStartOptions())
 	return nil
 }
 
 // global variables
+func getMinikubeStartOptions() string {
+	if os.Getenv("MINIKUBE_START_OPTIONS") != "" {
+		return os.Getenv("MINIKUBE_START_OPTIONS")
+	} else {
+		return MINIKUBE_START_OPTIONS
+	}
+}
+
 func getLogRoot() string {
 	if os.Getenv("LOG_ROOT") != "" {
 		return os.Getenv("LOG_ROOT")
@@ -447,7 +457,7 @@ func (Minikube) Install() error {
 
 // Starts the Minikube cluster w/ select addons.
 func (Minikube) Start() error {
-	err := shellcmd.Command("minikube start").Run()
+	err := shellcmd.Command(fmt.Sprintf("minikube start %s", getMinikubeStartOptions())).Run()
 	if err != nil {
 		return err
 	}
