@@ -664,7 +664,7 @@ func load(names ...string) []shellcmd.Command {
 	for i, name := range names {
 		loads[i] = shellcmd.Command(fmt.Sprintf(
 			"minikube image load %s/%s",
-			OSS_CONTAINER_REGISTRY,
+			getContainerRegistry(),
 			name,
 		))
 	}
