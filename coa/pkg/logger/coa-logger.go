@@ -7,9 +7,11 @@
 package logger
 
 import (
+	"context"
 	"os"
 	"time"
 
+	"github.com/eclipse-symphony/symphony/coa/pkg/logger/hooks"
 	"github.com/sirupsen/logrus"
 )
 
@@ -25,6 +27,7 @@ var DaprVersion string = "unknown"
 
 func newDaprLogger(name string) *daprLogger {
 	newLogger := logrus.New()
+	newLogger.AddHook(hooks.NewContextHook())
 	newLogger.SetOutput(os.Stdout)
 
 	dl := &daprLogger{
@@ -97,6 +100,16 @@ func (l *daprLogger) WithLogType(logType string) Logger {
 	return &daprLogger{
 		name:   l.name,
 		logger: l.logger.WithField(logFieldType, logType),
+	}
+}
+
+func (l *daprLogger) WithContext(ctx context.Context) Logger {
+	if l.logger == nil {
+		l.logger = newDaprLogger(l.name).logger.WithContext(ctx)
+		return l
+	} else {
+		l.logger = l.logger.WithContext(ctx)
+		return l
 	}
 }
 
