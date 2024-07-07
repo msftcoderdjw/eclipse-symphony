@@ -48,7 +48,7 @@ func (s *TrailsManager) Append(ctx context.Context, trails []v1alpha2.Trail) err
 	var err error = nil
 	defer observ_utils.CloseSpanWithError(span, &err)
 
-	log.Debugf(" M (Trails): append Trails, trails count: %d, traceId: %s", len(trails), span.SpanContext().TraceID().String())
+	log.WithContext(ctx).Debugf(" M (Trails): append Trails, trails count: %d", len(trails))
 	errMessage := ""
 	for _, p := range s.LedgerProviders {
 		err = p.Append(ctx, trails)
@@ -58,9 +58,9 @@ func (s *TrailsManager) Append(ctx context.Context, trails []v1alpha2.Trail) err
 	}
 	if errMessage != "" {
 		err := v1alpha2.NewCOAError(nil, errMessage, v1alpha2.InternalError)
-		log.Errorf(" M (Trails): failed to append trails: error: %v, traceId: %s", err, span.SpanContext().TraceID().String())
+		log.WithContext(ctx).Errorf(" M (Trails): failed to append trails: %+v", err)
 		return err
 	}
-	log.Debugf(" M (Trails): append trails successfully, traceId: %s", span.SpanContext().SpanID().String())
+	log.WithContext(ctx).Debug(" M (Trails): append trails successfully")
 	return nil
 }

@@ -167,7 +167,7 @@ func (s *SolutionManager) GetSummary(ctx context.Context, key string, namespace 
 	var err error = nil
 	defer observ_utils.CloseSpanWithError(span, &err)
 
-	log.Infof(" M (Solution): get summary, key: %s, namespace: %s, traceId: %s", key, namespace, span.SpanContext().TraceID().String())
+	log.WithContext(ctx).Infof(" M (Solution): get summary, key: %s, namespace: %s", key, namespace)
 
 	var state states.StateEntry
 	state, err = s.StateProvider.Get(iCtx, states.GetRequest{
@@ -235,13 +235,12 @@ func (s *SolutionManager) Reconcile(ctx context.Context, deployment model.Deploy
 	var err error = nil
 	defer observ_utils.CloseSpanWithError(span, &err)
 
-	log.Infof(" M (Solution): reconciling deployment.InstanceName: %s, deployment.SolutionName: %s, remove: %t, namespace: %s, targetName: %s, traceId: %s",
+	log.WithContext(ctx).Infof(" M (Solution): reconciling deployment.InstanceName: %s, deployment.SolutionName: %s, remove: %t, namespace: %s, targetName: %s",
 		deployment.Instance.ObjectMeta.Name,
 		deployment.SolutionName,
 		remove,
 		namespace,
-		targetName,
-		span.SpanContext().TraceID().String())
+		targetName)
 
 	summary := model.SummarySpec{
 		TargetResults:       make(map[string]model.TargetResultSpec),
@@ -564,11 +563,10 @@ func (s *SolutionManager) Get(ctx context.Context, deployment model.DeploymentSp
 	})
 	var err error = nil
 	defer observ_utils.CloseSpanWithError(span, &err)
-	log.Infof(" M (Solution): getting deployment.InstanceName: %s, deployment.SolutionName: %s, targetName: %s, traceId: %s",
+	log.WithContext(ctx).Infof(" M (Solution): getting deployment.InstanceName: %s, deployment.SolutionName: %s, targetName: %s",
 		deployment.Instance.ObjectMeta.Name,
 		deployment.SolutionName,
-		targetName,
-		span.SpanContext().TraceID().String())
+		targetName)
 
 	ret := model.DeploymentState{}
 

@@ -1,6 +1,7 @@
 package contexts
 
 import (
+	"context"
 	"testing"
 
 	"github.com/stretchr/testify/assert"
@@ -164,4 +165,125 @@ func TestDiagnosticsLogContext_Value(t *testing.T) {
 	assert.Equal(t, "spanId", ctx.Value("span-id"))
 	assert.Equal(t, "correlationId", ctx.Value("correlation-id"))
 	assert.Equal(t, "requestId", ctx.Value("request-id"))
+}
+
+func TestPopulateTraceAndSpanToDiagnosticLogContext_BackgroundCtx(t *testing.T) {
+	ctx := PopulateTraceAndSpanToDiagnosticLogContext("traceId", "spanId", context.Background())
+	assert.NotNil(t, ctx)
+	diagCtx, ok := ctx.Value(DiagnosticLogContextKey).(*DiagnosticLogContext)
+	assert.True(t, ok)
+	assert.NotNil(t, diagCtx)
+	assert.Equal(t, "traceId", diagCtx.traceId)
+	assert.Equal(t, "spanId", diagCtx.spanId)
+}
+
+func TestPopulateTraceAndSpanToDiagnosticLogContext_NilCtx(t *testing.T) {
+	ctx := PopulateTraceAndSpanToDiagnosticLogContext("traceId", "spanId", nil)
+	assert.NotNil(t, ctx)
+	diagCtx, ok := ctx.Value(DiagnosticLogContextKey).(*DiagnosticLogContext)
+	assert.True(t, ok)
+	assert.NotNil(t, diagCtx)
+	assert.Equal(t, "traceId", diagCtx.traceId)
+	assert.Equal(t, "spanId", diagCtx.spanId)
+}
+
+func TestPopulateTraceAndSpanToDiagnosticLogContext_NilTraceId(t *testing.T) {
+	ctx := PopulateTraceAndSpanToDiagnosticLogContext("", "spanId", context.Background())
+	assert.NotNil(t, ctx)
+	diagCtx, ok := ctx.Value(DiagnosticLogContextKey).(*DiagnosticLogContext)
+	assert.True(t, ok)
+	assert.NotNil(t, diagCtx)
+	assert.Equal(t, "", diagCtx.traceId)
+	assert.Equal(t, "spanId", diagCtx.spanId)
+}
+
+func TestPopulateTraceAndSpanToDiagnosticLogContext_NilSpanId(t *testing.T) {
+	ctx := PopulateTraceAndSpanToDiagnosticLogContext("traceId", "", context.Background())
+	assert.NotNil(t, ctx)
+	diagCtx, ok := ctx.Value(DiagnosticLogContextKey).(*DiagnosticLogContext)
+	assert.True(t, ok)
+	assert.NotNil(t, diagCtx)
+	assert.Equal(t, "traceId", diagCtx.traceId)
+	assert.Equal(t, "", diagCtx.spanId)
+}
+
+func TestPopulateTraceAndSpanToDiagnosticLogContext_NilTraceAndSpanId(t *testing.T) {
+	ctx := PopulateTraceAndSpanToDiagnosticLogContext("", "", context.Background())
+	assert.NotNil(t, ctx)
+	diagCtx, ok := ctx.Value(DiagnosticLogContextKey).(*DiagnosticLogContext)
+	assert.True(t, ok)
+	assert.NotNil(t, diagCtx)
+	assert.Equal(t, "", diagCtx.traceId)
+	assert.Equal(t, "", diagCtx.spanId)
+}
+
+func TestPopulateTraceAndSpanToDiagnosticLogContext_ParentCtx(t *testing.T) {
+	parent := context.WithValue(context.Background(), DiagnosticLogContextKey, NewDiagnosticLogContext("a_traceId", "a_spanId", "a_correlationId", "a_requestId"))
+	ctx := PopulateTraceAndSpanToDiagnosticLogContext("traceId", "spanId", parent)
+	assert.NotNil(t, ctx)
+	diagCtx, ok := ctx.Value(DiagnosticLogContextKey).(*DiagnosticLogContext)
+	assert.True(t, ok)
+	assert.NotNil(t, diagCtx)
+	assert.Equal(t, "traceId", diagCtx.traceId)
+	assert.Equal(t, "spanId", diagCtx.spanId)
+	assert.Equal(t, "a_correlationId", diagCtx.correlationId)
+	assert.Equal(t, "a_requestId", diagCtx.requestId)
+}
+
+func TestPopulateTraceAndSpanToDiagnosticLogContext_ParentCtxWithInvalidDiagnosticLogContext(t *testing.T) {
+	parent := context.WithValue(context.Background(), DiagnosticLogContextKey, "value")
+	assert.Equal(t, "value", parent.Value(DiagnosticLogContextKey))
+	ctx := PopulateTraceAndSpanToDiagnosticLogContext("traceId", "spanId", parent)
+	assert.NotNil(t, ctx)
+	diagCtx, ok := ctx.Value(DiagnosticLogContextKey).(*DiagnosticLogContext)
+	assert.True(t, ok)
+	assert.NotNil(t, diagCtx)
+	assert.Equal(t, "traceId", diagCtx.traceId)
+	assert.Equal(t, "spanId", diagCtx.spanId)
+}
+
+func TestPopulateTraceAndSpanToDiagnosticLogContext_ParentCtxWithOtherValues(t *testing.T) {
+	parent := context.WithValue(context.Background(), "key", "value")
+	ctx := PopulateTraceAndSpanToDiagnosticLogContext("traceId", "spanId", parent)
+	assert.NotNil(t, ctx)
+	diagCtx, ok := ctx.Value(DiagnosticLogContextKey).(*DiagnosticLogContext)
+	assert.True(t, ok)
+	assert.NotNil(t, diagCtx)
+	assert.Equal(t, "traceId", diagCtx.traceId)
+	assert.Equal(t, "spanId", diagCtx.spanId)
+	assert.Equal(t, "value", ctx.Value("key"))
+}
+
+func TestClearTraceAndSpanFromDiagnosticLogContext_NilParent(t *testing.T) {
+	ClearTraceAndSpanFromDiagnosticLogContext(nil)
+}
+
+func TestClearTraceAndSpanFromDiagnosticLogContext_ParentCtx(t *testing.T) {
+	parent := context.WithValue(context.Background(), DiagnosticLogContextKey, NewDiagnosticLogContext("a_traceId", "a_spanId", "a_correlationId", "a_requestId"))
+	ClearTraceAndSpanFromDiagnosticLogContext(&parent)
+	diagCtx, ok := parent.Value(DiagnosticLogContextKey).(*DiagnosticLogContext)
+	assert.True(t, ok)
+	assert.NotNil(t, diagCtx)
+	assert.Equal(t, "", diagCtx.traceId)
+	assert.Equal(t, "", diagCtx.spanId)
+	assert.Equal(t, "a_correlationId", diagCtx.correlationId)
+	assert.Equal(t, "a_requestId", diagCtx.requestId)
+}
+
+func TestClearTraceAndSpanFromDiagnosticLogContext_ParentCtxWithoutDiagnosticLogContext(t *testing.T) {
+	parent := context.WithValue(context.Background(), "key", "value")
+	ClearTraceAndSpanFromDiagnosticLogContext(&parent)
+	assert.Equal(t, "value", parent.Value("key"))
+}
+
+func TestClearTraceAndSpanFromDiagnosticLogContext_ParentCtxWithInvalidDiagnosticLogContext(t *testing.T) {
+	parent := context.WithValue(context.Background(), DiagnosticLogContextKey, "value")
+	ClearTraceAndSpanFromDiagnosticLogContext(&parent)
+	assert.Equal(t, "value", parent.Value(DiagnosticLogContextKey))
+}
+
+func TestClearTraceAndSpanFromDiagnosticLogContext_ParentCtxWithNilDiagnosticLogContext(t *testing.T) {
+	parent := context.WithValue(context.Background(), DiagnosticLogContextKey, nil)
+	ClearTraceAndSpanFromDiagnosticLogContext(&parent)
+	assert.Nil(t, parent.Value(DiagnosticLogContextKey))
 }

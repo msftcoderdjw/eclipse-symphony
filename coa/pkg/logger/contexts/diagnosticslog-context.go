@@ -1,6 +1,7 @@
 package contexts
 
 import (
+	"context"
 	"encoding/json"
 	"time"
 )
@@ -126,4 +127,31 @@ func (ctx *DiagnosticLogContext) SetCorrelationId(correlationId string) {
 
 func (ctx *DiagnosticLogContext) SetRequestId(requestId string) {
 	ctx.requestId = requestId
+}
+
+func PopulateTraceAndSpanToDiagnosticLogContext(traceId string, spanId string, parent context.Context) context.Context {
+	if parent == nil {
+		diagCtx := NewDiagnosticLogContext(traceId, spanId, "", "")
+		return context.WithValue(context.Background(), DiagnosticLogContextKey, diagCtx)
+	}
+	if diagCtx, ok := parent.Value(DiagnosticLogContextKey).(*DiagnosticLogContext); ok {
+		diagCtx.SetTraceId(traceId)
+		diagCtx.SetSpanId(spanId)
+		return context.WithValue(parent, DiagnosticLogContextKey, diagCtx)
+	} else {
+		diagCtx := NewDiagnosticLogContext(traceId, spanId, "", "")
+		return context.WithValue(parent, DiagnosticLogContextKey, diagCtx)
+	}
+}
+
+func ClearTraceAndSpanFromDiagnosticLogContext(parent *context.Context) {
+	if parent == nil {
+		return
+	}
+	if diagCtx, ok := (*parent).Value(DiagnosticLogContextKey).(*DiagnosticLogContext); ok {
+		if diagCtx != nil {
+			diagCtx.SetTraceId("")
+			diagCtx.SetSpanId("")
+		}
+	}
 }

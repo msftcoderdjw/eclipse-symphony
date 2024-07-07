@@ -75,7 +75,7 @@ func (c *CampaignsVendor) onCampaigns(request v1alpha2.COARequest) v1alpha2.COAR
 		"method": "onCampaigns",
 	})
 	defer span.End()
-	cLog.Infof("V (Campaigns): onCampaigns, method: %s, traceId: %s", string(request.Method), span.SpanContext().TraceID().String())
+	cLog.WithContext(pCtx).Infof("V (Campaigns): onCampaigns, method: %s", string(request.Method))
 
 	id := request.Parameters["__name"]
 	namespace, namespaceSupplied := request.Parameters["namespace"]
@@ -99,7 +99,7 @@ func (c *CampaignsVendor) onCampaigns(request v1alpha2.COARequest) v1alpha2.COAR
 			state, err = c.CampaignsManager.GetState(ctx, id, namespace)
 		}
 		if err != nil {
-			cLog.Infof("V (Campaigns): onCampaigns failed - %s, traceId: %s", err.Error(), span.SpanContext().TraceID().String())
+			cLog.WithContext(ctx).Infof("V (Campaigns): onCampaigns failed - %s", err.Error())
 			return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 				State: v1alpha2.InternalError,
 				Body:  []byte(err.Error()),

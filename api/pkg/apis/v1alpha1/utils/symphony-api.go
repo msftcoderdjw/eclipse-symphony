@@ -906,7 +906,7 @@ func callRestAPI(context context.Context, baseUrl string, route string, method s
 	var err error = nil
 	defer observ_utils.CloseSpanWithError(span, &err)
 
-	log.Infof("Calling Symphony API: %s %s, spanId: %s, traceId: %s", method, baseUrl+route, span.SpanContext().SpanID().String(), span.SpanContext().TraceID().String())
+	log.WithContext(context).Infof("Calling Symphony API: %s %s", method, baseUrl+route)
 
 	client := &http.Client{}
 	rUrl := baseUrl + route
@@ -952,7 +952,7 @@ func callRestAPI(context context.Context, baseUrl string, route string, method s
 		return nil, err
 	}
 	err = nil
-	log.Infof("Symphony API succeeded: %s %s, spanId: %s, traceId: %s", method, baseUrl+route, span.SpanContext().SpanID().String(), span.SpanContext().TraceID().String())
+	log.WithContext(context).Infof("Symphony API succeeded: %s %s", method, baseUrl+route)
 
 	return bodyBytes, nil
 }
