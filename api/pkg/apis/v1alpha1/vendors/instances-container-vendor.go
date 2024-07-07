@@ -74,7 +74,7 @@ func (c *InstanceContainersVendor) onInstanceContainers(request v1alpha2.COARequ
 		"method": "onInstanceContainers",
 	})
 	defer span.End()
-	icLog.Infof("V (InstanceContainers): onInstanceContainers, method: %s, traceId: %s", request.Method, span.SpanContext().TraceID().String())
+	icLog.WithContext(pCtx).Infof("V (InstanceContainers): onInstanceContainers, method: %s", request.Method)
 
 	id := request.Parameters["__name"]
 	namespace, exist := request.Parameters["namespace"]
@@ -82,7 +82,7 @@ func (c *InstanceContainersVendor) onInstanceContainers(request v1alpha2.COARequ
 		namespace = constants.DefaultScope
 	}
 
-	icLog.Infof("V (InstanceContainers): onInstanceContainers, method: %s, traceId: %s", string(request.Method), span.SpanContext().TraceID().String())
+	icLog.WithContext(pCtx).Infof("V (InstanceContainers): onInstanceContainers, method: %s", string(request.Method))
 	switch request.Method {
 	case fasthttp.MethodGet:
 		ctx, span := observability.StartSpan("onInstanceContainers-GET", pCtx, nil)
@@ -100,7 +100,7 @@ func (c *InstanceContainersVendor) onInstanceContainers(request v1alpha2.COARequ
 			state, err = c.InstanceContainersManager.GetState(ctx, id, namespace)
 		}
 		if err != nil {
-			icLog.Errorf("V (InstanceContainers): onInstanceContainers failed - %s, traceId: %s", err.Error(), span.SpanContext().TraceID().String())
+			icLog.WithContext(ctx).Errorf("V (InstanceContainers): onInstanceContainers failed - %s", err.Error())
 			return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 				State: v1alpha2.InternalError,
 				Body:  []byte(err.Error()),
@@ -128,7 +128,7 @@ func (c *InstanceContainersVendor) onInstanceContainers(request v1alpha2.COARequ
 
 		err := c.InstanceContainersManager.UpsertState(ctx, id, instance)
 		if err != nil {
-			icLog.Infof("V (InstanceContainers): onInstanceContainers failed - %s, traceId: %s", err.Error(), span.SpanContext().TraceID().String())
+			icLog.WithContext(ctx).Errorf("V (InstanceContainers): onInstanceContainers failed - %s", err.Error())
 			return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 				State: v1alpha2.InternalError,
 				Body:  []byte(err.Error()),
@@ -142,7 +142,7 @@ func (c *InstanceContainersVendor) onInstanceContainers(request v1alpha2.COARequ
 		ctx, span := observability.StartSpan("onInstanceContainers-DELETE", pCtx, nil)
 		err := c.InstanceContainersManager.DeleteState(ctx, id, namespace)
 		if err != nil {
-			icLog.Infof("V (InstanceContainers): onInstanceContainers failed - %s, traceId: %s", err.Error(), span.SpanContext().TraceID().String())
+			icLog.WithContext(ctx).Errorf("V (InstanceContainers): onInstanceContainers failed - %s", err.Error())
 			return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 				State: v1alpha2.InternalError,
 				Body:  []byte(err.Error()),
@@ -152,7 +152,7 @@ func (c *InstanceContainersVendor) onInstanceContainers(request v1alpha2.COARequ
 			State: v1alpha2.OK,
 		})
 	}
-	icLog.Infof("V (InstanceContainers): onInstanceContainers failed - 405 method not allowed, traceId: %s", span.SpanContext().TraceID().String())
+	icLog.WithContext(pCtx).Info("V (InstanceContainers): onInstanceContainers failed - 405 method not allowed")
 	resp := v1alpha2.COAResponse{
 		State:       v1alpha2.MethodNotAllowed,
 		Body:        []byte("{\"result\":\"405 - method not allowed\"}"),

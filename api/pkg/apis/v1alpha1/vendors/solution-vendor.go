@@ -86,7 +86,7 @@ func (c *SolutionVendor) onQueue(request v1alpha2.COARequest) v1alpha2.COARespon
 	})
 	defer span.End()
 
-	sLog.Infof("V (Solution): onQueue, method: %s, traceId: %s", request.Method, span.SpanContext().TraceID().String())
+	sLog.WithContext(rContext).Infof("V (Solution): onQueue, method: %s", request.Method)
 
 	namespace, exist := request.Parameters["namespace"]
 	if !exist {
@@ -99,7 +99,7 @@ func (c *SolutionVendor) onQueue(request v1alpha2.COARequest) v1alpha2.COARespon
 		instance := request.Parameters["instance"]
 
 		if instance == "" {
-			sLog.Infof("V (Solution): onQueue failed - 400 instance parameter is not found, traceId: %s", span.SpanContext().TraceID().String())
+			sLog.WithContext(ctx).Error("V (Solution): onQueue failed - 400 instance parameter is not found")
 			return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 				State:       v1alpha2.BadRequest,
 				Body:        []byte("{\"result\":\"400 - instance parameter is not found\"}"),
@@ -109,7 +109,7 @@ func (c *SolutionVendor) onQueue(request v1alpha2.COARequest) v1alpha2.COARespon
 		summary, err := c.SolutionManager.GetSummary(ctx, instance, namespace)
 		data, _ := json.Marshal(summary)
 		if err != nil {
-			sLog.Infof("V (Solution): onQueue failed - %s, traceId: %s", err.Error(), span.SpanContext().TraceID().String())
+			sLog.WithContext(ctx).Errorf("V (Solution): onQueue failed - %s", err.Error())
 			if v1alpha2.IsNotFound(err) {
 				return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 					State: v1alpha2.NotFound,
@@ -156,7 +156,7 @@ func (c *SolutionVendor) onQueue(request v1alpha2.COARequest) v1alpha2.COARespon
 		}
 
 		if instance == "" {
-			sLog.Infof("V (Solution): onQueue failed - 400 instance parameter is not found, traceId: %s", span.SpanContext().TraceID().String())
+			sLog.WithContext(rContext).Error("V (Solution): onQueue failed - 400 instance parameter is not found")
 			return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 				State:       v1alpha2.BadRequest,
 				Body:        []byte("{\"result\":\"400 - instance parameter is not found\"}"),
@@ -185,7 +185,7 @@ func (c *SolutionVendor) onQueue(request v1alpha2.COARequest) v1alpha2.COARespon
 			ContentType: "application/json",
 		})
 	}
-	sLog.Infof("V (Solution): onQueue failed - 405 method not allowed, traceId: %s", span.SpanContext().TraceID().String())
+	sLog.WithContext(rContext).Error("V (Solution): onQueue failed - 405 method not allowed")
 	return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 		State:       v1alpha2.MethodNotAllowed,
 		Body:        []byte("{\"result\":\"405 - method not allowed\"}"),
@@ -198,7 +198,7 @@ func (c *SolutionVendor) onReconcile(request v1alpha2.COARequest) v1alpha2.COARe
 	})
 	defer span.End()
 
-	sLog.Infof("V (Solution): onReconcile, method: %s, traceId: %s", request.Method, span.SpanContext().TraceID().String())
+	sLog.WithContext(rContext).Infof("V (Solution): onReconcile, method: %s", request.Method)
 	namespace, exist := request.Parameters["namespace"]
 	if !exist {
 		namespace = constants.DefaultScope
@@ -210,7 +210,7 @@ func (c *SolutionVendor) onReconcile(request v1alpha2.COARequest) v1alpha2.COARe
 		var deployment model.DeploymentSpec
 		err := json.Unmarshal(request.Body, &deployment)
 		if err != nil {
-			sLog.Infof("V (Solution): onReconcile failed POST - unmarshal request %s, traceId: %s", err.Error(), span.SpanContext().TraceID().String())
+			sLog.WithContext(ctx).Errorf("V (Solution): onReconcile failed POST - unmarshal request %s", err.Error())
 			return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 				State: v1alpha2.InternalError,
 				Body:  []byte(err.Error()),
@@ -226,7 +226,7 @@ func (c *SolutionVendor) onReconcile(request v1alpha2.COARequest) v1alpha2.COARe
 		summary, err := c.SolutionManager.Reconcile(ctx, deployment, delete == "true", namespace, targetName)
 		data, _ := json.Marshal(summary)
 		if err != nil {
-			sLog.Infof("V (Solution): onReconcile failed POST - reconcile %s, traceId: %s", err.Error(), span.SpanContext().TraceID().String())
+			sLog.WithContext(ctx).Errorf("V (Solution): onReconcile failed POST - reconcile %s", err.Error())
 			return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 				State: v1alpha2.InternalError,
 				Body:  data,
@@ -238,7 +238,7 @@ func (c *SolutionVendor) onReconcile(request v1alpha2.COARequest) v1alpha2.COARe
 			ContentType: "application/json",
 		})
 	}
-	sLog.Infof("V (Solution): onReconcile failed - 405 method not allowed, traceId: %s", span.SpanContext().TraceID().String())
+	sLog.WithContext(rContext).Error("V (Solution): onReconcile failed - 405 method not allowed")
 	return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 		State:       v1alpha2.MethodNotAllowed,
 		Body:        []byte("{\"result\":\"405 - method not allowed\"}"),
@@ -247,12 +247,12 @@ func (c *SolutionVendor) onReconcile(request v1alpha2.COARequest) v1alpha2.COARe
 }
 
 func (c *SolutionVendor) onApplyDeployment(request v1alpha2.COARequest) v1alpha2.COAResponse {
-	_, span := observability.StartSpan("Solution Vendor", request.Context, &map[string]string{
+	rContext, span := observability.StartSpan("Solution Vendor", request.Context, &map[string]string{
 		"method": "onApplyDeployment",
 	})
 	defer span.End()
 
-	sLog.Infof("V (Solution): onApplyDeployment %s, traceId: %s", request.Method, span.SpanContext().TraceID().String())
+	sLog.WithContext(rContext).Infof("V (Solution): onApplyDeployment %s", request.Method)
 	namespace, exist := request.Parameters["namespace"]
 	if !exist {
 		namespace = constants.DefaultScope
@@ -265,12 +265,12 @@ func (c *SolutionVendor) onApplyDeployment(request v1alpha2.COARequest) v1alpha2
 	}
 	switch request.Method {
 	case fasthttp.MethodPost:
-		ctx, span := observability.StartSpan("Apply Deployment", request.Context, nil)
+		ctx, span := observability.StartSpan("Apply Deployment", rContext, nil)
 		defer span.End()
 		deployment := new(model.DeploymentSpec)
 		err := json.Unmarshal(request.Body, &deployment)
 		if err != nil {
-			sLog.Infof("V (Solution): onApplyDeployment failed - %s, traceId: %s", err.Error(), span.SpanContext().TraceID().String())
+			sLog.WithContext(ctx).Errorf("V (Solution): onApplyDeployment failed - %s", err.Error())
 			return v1alpha2.COAResponse{
 				State: v1alpha2.InternalError,
 				Body:  []byte(err.Error()),
@@ -279,12 +279,12 @@ func (c *SolutionVendor) onApplyDeployment(request v1alpha2.COARequest) v1alpha2
 		response := c.doDeploy(ctx, *deployment, namespace, targetName)
 		return observ_utils.CloseSpanWithCOAResponse(span, response)
 	case fasthttp.MethodGet:
-		ctx, span := observability.StartSpan("Get Components", request.Context, nil)
+		ctx, span := observability.StartSpan("Get Components", rContext, nil)
 		defer span.End()
 		deployment := new(model.DeploymentSpec)
 		err := json.Unmarshal(request.Body, &deployment)
 		if err != nil {
-			sLog.Infof("V (Solution): onApplyDeployment failed - %s, traceId: %s", err.Error(), span.SpanContext().TraceID().String())
+			sLog.WithContext(ctx).Errorf("V (Solution): onApplyDeployment failed - %s", err.Error())
 			return v1alpha2.COAResponse{
 				State: v1alpha2.InternalError,
 				Body:  []byte(err.Error()),
@@ -293,11 +293,12 @@ func (c *SolutionVendor) onApplyDeployment(request v1alpha2.COARequest) v1alpha2
 		response := c.doGet(ctx, *deployment, targetName)
 		return observ_utils.CloseSpanWithCOAResponse(span, response)
 	case fasthttp.MethodDelete:
-		ctx, span := observability.StartSpan("Delete Components", request.Context, nil)
+		ctx, span := observability.StartSpan("Delete Components", rContext, nil)
 		defer span.End()
 		var deployment model.DeploymentSpec
 		err := json.Unmarshal(request.Body, &deployment)
 		if err != nil {
+			sLog.WithContext(ctx).Errorf("V (Solution): onApplyDeployment failed - %s", err.Error())
 			return v1alpha2.COAResponse{
 				State: v1alpha2.InternalError,
 				Body:  []byte(err.Error()),
@@ -306,7 +307,7 @@ func (c *SolutionVendor) onApplyDeployment(request v1alpha2.COARequest) v1alpha2
 		response := c.doRemove(ctx, deployment, namespace, targetName)
 		return observ_utils.CloseSpanWithCOAResponse(span, response)
 	}
-	sLog.Infof("V (Solution): onApplyDeployment failed - 405 method not allowed, traceId: %s", span.SpanContext().TraceID().String())
+	sLog.WithContext(rContext).Error("V (Solution): onApplyDeployment failed - 405 method not allowed")
 	resp := v1alpha2.COAResponse{
 		State:       v1alpha2.MethodNotAllowed,
 		Body:        []byte("{\"result\":\"405 - method not allowed\"}"),
@@ -321,11 +322,11 @@ func (c *SolutionVendor) doGet(ctx context.Context, deployment model.DeploymentS
 		"method": "doGet",
 	})
 	defer span.End()
-	sLog.Infof("V (Solution): doGet, traceId: %s", span.SpanContext().TraceID().String())
+	sLog.WithContext(ctx).Info("V (Solution): doGet")
 
 	_, components, err := c.SolutionManager.Get(ctx, deployment, targetName)
 	if err != nil {
-		sLog.Infof("V (Solution): doGet failed - %s, traceId: %s", err.Error(), span.SpanContext().TraceID().String())
+		sLog.WithContext(ctx).Errorf("V (Solution): doGet failed - %s", err.Error())
 		response := v1alpha2.COAResponse{
 			State: v1alpha2.InternalError,
 			Body:  []byte(err.Error()),
@@ -347,11 +348,11 @@ func (c *SolutionVendor) doDeploy(ctx context.Context, deployment model.Deployme
 		"method": "doDeploy",
 	})
 	defer span.End()
-	sLog.Infof("V (Solution): doDeploy, traceId: %s", span.SpanContext().TraceID().String())
+	sLog.WithContext(ctx).Info("V (Solution): doDeploy")
 	summary, err := c.SolutionManager.Reconcile(ctx, deployment, false, namespace, targetName)
 	data, _ := json.Marshal(summary)
 	if err != nil {
-		sLog.Infof("V (Solution): doDeploy failed - %s, traceId: %s", err.Error(), span.SpanContext().TraceID().String())
+		sLog.WithContext(ctx).Errorf("V (Solution): doDeploy failed - %s", err.Error())
 		response := v1alpha2.COAResponse{
 			State: v1alpha2.InternalError,
 			Body:  data,
@@ -373,11 +374,11 @@ func (c *SolutionVendor) doRemove(ctx context.Context, deployment model.Deployme
 	})
 	defer span.End()
 
-	sLog.Infof("V (Solution): doRemove, traceId: %s", span.SpanContext().TraceID().String())
+	sLog.WithContext(ctx).Info("V (Solution): doRemove")
 	summary, err := c.SolutionManager.Reconcile(ctx, deployment, true, namespace, targetName)
 	data, _ := json.Marshal(summary)
 	if err != nil {
-		sLog.Infof("V (Solution): doRemove failed - %s, traceId: %s", err.Error(), span.SpanContext().TraceID().String())
+		sLog.WithContext(ctx).Errorf("V (Solution): doRemove failed - %s", err.Error())
 		response := v1alpha2.COAResponse{
 			State: v1alpha2.InternalError,
 			Body:  data,

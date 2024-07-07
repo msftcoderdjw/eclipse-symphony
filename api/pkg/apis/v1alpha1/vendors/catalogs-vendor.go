@@ -123,7 +123,7 @@ func (e *CatalogsVendor) onStatus(request v1alpha2.COARequest) v1alpha2.COARespo
 	})
 	defer span.End()
 
-	lLog.Infof("V (Catalogs Vendor): onStatus, method: %s, traceId: %s", string(request.Method), span.SpanContext().TraceID().String())
+	lLog.WithContext(rCtx).Infof("V (Catalogs Vendor): onStatus, method: %s", string(request.Method))
 
 	namespace, namesapceSupplied := request.Parameters["namespace"]
 	if !namesapceSupplied {
@@ -181,7 +181,7 @@ func (e *CatalogsVendor) onCheck(request v1alpha2.COARequest) v1alpha2.COARespon
 	})
 	defer span.End()
 
-	lLog.Infof("V (Catalogs Vendor): onCheck, method: %s, traceId: %s", string(request.Method), span.SpanContext().TraceID().String())
+	lLog.WithContext(rCtx).Infof("V (Catalogs Vendor): onCheck, method: %s", string(request.Method))
 	switch request.Method {
 	case fasthttp.MethodPost:
 		var catalog model.CatalogState
@@ -228,7 +228,7 @@ func (e *CatalogsVendor) onCatalogsGraph(request v1alpha2.COARequest) v1alpha2.C
 	})
 	defer span.End()
 
-	lLog.Infof("V (Catalogs Vendor): onCatalogsGraph, method: %s, traceId: %s", string(request.Method), span.SpanContext().TraceID().String())
+	lLog.WithContext(rCtx).Infof("V (Catalogs Vendor): onCatalogsGraph, method: %s", string(request.Method))
 	namespace, namesapceSupplied := request.Parameters["namespace"]
 	if !namesapceSupplied {
 		namespace = ""
@@ -292,7 +292,7 @@ func (e *CatalogsVendor) onCatalogs(request v1alpha2.COARequest) v1alpha2.COARes
 	})
 	defer span.End()
 
-	lLog.Infof("V (Catalogs Vendor): onCatalogs, method: %s, traceId: %s", string(request.Method), span.SpanContext().TraceID().String())
+	lLog.WithContext(pCtx).Infof("V (Catalogs Vendor): onCatalogs, method: %s", string(request.Method))
 
 	id := request.Parameters["__name"]
 	namespace, namesapceSupplied := request.Parameters["namespace"]

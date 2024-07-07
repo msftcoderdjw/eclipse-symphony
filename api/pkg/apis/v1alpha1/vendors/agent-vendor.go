@@ -118,7 +118,7 @@ func (c *AgentVendor) onReference(request v1alpha2.COARequest) v1alpha2.COARespo
 		return observ_utils.CloseSpanWithCOAResponse(span, response)
 	}
 
-	log.WithContext(pCtx).Info("V (Agent): onReference returns MethodNotAllowed")
+	log.WithContext(pCtx).Error("V (Agent): onReference returns MethodNotAllowed")
 	resp := v1alpha2.COAResponse{
 		State:       v1alpha2.MethodNotAllowed,
 		Body:        []byte("{\"result\":\"405 - method not allowed\"}"),

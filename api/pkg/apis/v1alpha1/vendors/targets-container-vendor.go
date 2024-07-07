@@ -74,7 +74,7 @@ func (c *TargetContainersVendor) onTargetContainers(request v1alpha2.COARequest)
 		"method": "onTargetContainers",
 	})
 	defer span.End()
-	tcLog.Infof("V (TargetContainers): onTargetContainers, method: %s, traceId: %s", request.Method, span.SpanContext().TraceID().String())
+	tcLog.WithContext(pCtx).Infof("V (TargetContainers): onTargetContainers, method: %s", request.Method)
 
 	id := request.Parameters["__name"]
 	namespace, exist := request.Parameters["namespace"]
@@ -82,7 +82,6 @@ func (c *TargetContainersVendor) onTargetContainers(request v1alpha2.COARequest)
 		namespace = constants.DefaultScope
 	}
 
-	tcLog.Infof("V (TargetContainers): onTargetContainers, method: %s, traceId: %s", string(request.Method), span.SpanContext().TraceID().String())
 	switch request.Method {
 	case fasthttp.MethodGet:
 		ctx, span := observability.StartSpan("onTargetContainers-GET", pCtx, nil)
@@ -100,7 +99,7 @@ func (c *TargetContainersVendor) onTargetContainers(request v1alpha2.COARequest)
 			state, err = c.TargetContainersManager.GetState(ctx, id, namespace)
 		}
 		if err != nil {
-			tcLog.Errorf("V (TargetContainers): onTargetContainers failed - %s, traceId: %s", err.Error(), span.SpanContext().TraceID().String())
+			tcLog.WithContext(ctx).Errorf("V (TargetContainers): onTargetContainers failed - %s", err.Error())
 			return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 				State: v1alpha2.InternalError,
 				Body:  []byte(err.Error()),
@@ -128,7 +127,7 @@ func (c *TargetContainersVendor) onTargetContainers(request v1alpha2.COARequest)
 
 		err := c.TargetContainersManager.UpsertState(ctx, id, target)
 		if err != nil {
-			tcLog.Infof("V (TargetContainers): onTargetContainers failed - %s, traceId: %s", err.Error(), span.SpanContext().TraceID().String())
+			tcLog.WithContext(ctx).Errorf("V (TargetContainers): onTargetContainers failed - %s", err.Error())
 			return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 				State: v1alpha2.InternalError,
 				Body:  []byte(err.Error()),
@@ -142,7 +141,7 @@ func (c *TargetContainersVendor) onTargetContainers(request v1alpha2.COARequest)
 		ctx, span := observability.StartSpan("onTargetContainers-DELETE", pCtx, nil)
 		err := c.TargetContainersManager.DeleteState(ctx, id, namespace)
 		if err != nil {
-			tcLog.Infof("V (TargetContainers): onTargetContainers failed - %s, traceId: %s", err.Error(), span.SpanContext().TraceID().String())
+			tcLog.WithContext(ctx).Errorf("V (TargetContainers): onTargetContainers failed - %s", err.Error())
 			return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 				State: v1alpha2.InternalError,
 				Body:  []byte(err.Error()),
@@ -152,7 +151,7 @@ func (c *TargetContainersVendor) onTargetContainers(request v1alpha2.COARequest)
 			State: v1alpha2.OK,
 		})
 	}
-	tcLog.Infof("V (TargetContainers): onTargetContainers failed - 405 method not allowed, traceId: %s", span.SpanContext().TraceID().String())
+	tcLog.WithContext(pCtx).Error("V (TargetContainers): onTargetContainers failed - 405 method not allowed")
 	resp := v1alpha2.COAResponse{
 		State:       v1alpha2.MethodNotAllowed,
 		Body:        []byte("{\"result\":\"405 - method not allowed\"}"),
