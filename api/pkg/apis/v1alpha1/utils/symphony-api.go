@@ -74,12 +74,12 @@ func GetApiClient() (*apiClient, error) {
 	if value, ok := symphonyApiClients.Load(symphonyBaseUrl); ok {
 		client, ok := value.(*apiClient)
 		if !ok {
-			log.Infof("Symphony base url apiclient is broken. Recreating it.")
+			log.Info("Symphony base url apiclient is broken. Recreating it.")
 		} else {
 			return client, nil
 		}
 	}
-	log.Infof("Creating the symphony base url apiclient.")
+	log.Info("Creating the symphony base url apiclient.")
 	client, err := getApiClient()
 	if err != nil {
 		log.Errorf("Failed to create the apiclient: %+v", err.Error())
@@ -821,7 +821,7 @@ func GetSummary(context context.Context, baseUrl string, user string, password s
 		}
 	}
 
-	log.Infof("Summary result: %s", string(ret))
+	log.InfofCtx(context, "Summary result: %s", string(ret))
 
 	return result, nil
 }

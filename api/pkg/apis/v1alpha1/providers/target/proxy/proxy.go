@@ -65,16 +65,16 @@ func (s *ProxyUpdateProvider) SetContext(ctx *contexts.ManagerContext) {
 }
 
 func (i *ProxyUpdateProvider) Init(config providers.IProviderConfig) error {
-	_, span := observability.StartSpan("Proxy Provider", context.TODO(), &map[string]string{
+	ctx, span := observability.StartSpan("Proxy Provider", context.TODO(), &map[string]string{
 		"method": "Init",
 	})
 	var err error = nil
 	defer observ_utils.CloseSpanWithError(span, &err)
-	sLog.Info("  P (Proxy Target): Init()")
+	sLog.InfoCtx(ctx, "  P (Proxy Target): Init()")
 
 	updateConfig, err := toProxyUpdateProviderConfig(config)
 	if err != nil {
-		sLog.Errorf("  P (Proxy Target): expected ProxyUpdateProviderConfig - %+v", err)
+		sLog.ErrorfCtx(ctx, "  P (Proxy Target): expected ProxyUpdateProviderConfig - %+v", err)
 		err = errors.New("expected ProxyUpdateProviderConfig")
 		return err
 	}

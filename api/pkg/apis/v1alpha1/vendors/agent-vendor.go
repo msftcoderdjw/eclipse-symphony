@@ -306,7 +306,7 @@ func (c *AgentVendor) doPost(ctx context.Context, parameters map[string]string, 
 		}
 	}
 
-	log.Info("V (Agent): report status successfully")
+	log.InfoCtx(ctx, "V (Agent): report status successfully")
 	return v1alpha2.COAResponse{
 		State:       v1alpha2.OK,
 		Body:        data,

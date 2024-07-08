@@ -134,7 +134,7 @@ func (i *MaterializeStageProvider) Process(ctx context.Context, mgrContext conte
 		namespace = "default"
 	}
 
-	mLog.Debugf("  P (Materialize Processor): masterialize %v in namespace %s", prefixedNames, namespace)
+	mLog.DebugfCtx(ctx, "  P (Materialize Processor): masterialize %v in namespace %s", prefixedNames, namespace)
 
 	var catalogs []model.CatalogState
 	catalogs, err = i.ApiClient.GetCatalogs(ctx, namespace, i.Config.User, i.Config.Password)
@@ -157,12 +157,12 @@ func (i *MaterializeStageProvider) Process(ctx context.Context, mgrContext conte
 					var instanceState model.InstanceState
 					err = json.Unmarshal(objectData, &instanceState)
 					if err != nil {
-						mLog.Errorf("Failed to unmarshal instance state for catalog %s: %s", name, err.Error())
+						mLog.ErrorfCtx(ctx, "Failed to unmarshal instance state for catalog %s: %s", name, err.Error())
 						return outputs, false, err
 					}
 
 					if instanceState.ObjectMeta.Name == "" {
-						mLog.Errorf("Instance name is empty: catalog - %s", name)
+						mLog.ErrorfCtx(ctx, "Instance name is empty: catalog - %s", name)
 						return outputs, false, v1alpha2.NewCOAError(nil, fmt.Sprintf("Empty instance name: catalog - %s", name), v1alpha2.BadRequest)
 					}
 
@@ -172,32 +172,32 @@ func (i *MaterializeStageProvider) Process(ctx context.Context, mgrContext conte
 						instanceState.Spec.RootResource = parts[0]
 						instanceState.Spec.Version = parts[1]
 					} else {
-						mLog.Errorf("Instance name is invalid: instance - %s, catalog - %s", instanceName, name)
+						mLog.ErrorfCtx(ctx, "Instance name is invalid: instance - %s, catalog - %s", instanceName, name)
 						return outputs, false, v1alpha2.NewCOAError(nil, fmt.Sprintf("Instance name is invalid: catalog - %s", name), v1alpha2.BadRequest)
 					}
 
-					mLog.Debugf("  P (Materialize Processor): check instance contains %v, namespace %s", instanceState.ObjectMeta.Name, namespace)
+					mLog.DebugfCtx(ctx, "  P (Materialize Processor): check instance contains %v, namespace %s", instanceState.ObjectMeta.Name, namespace)
 					_, err := i.ApiClient.GetInstanceContainer(ctx, instanceState.Spec.RootResource, namespace, i.Config.User, i.Config.Password)
 					if err != nil && strings.Contains(err.Error(), constants.NotFound) {
-						mLog.Debugf("Instance container %s doesn't exist: %s", instanceState.Spec.RootResource, err.Error())
+						mLog.DebugfCtx(ctx, "Instance container %s doesn't exist: %s", instanceState.Spec.RootResource, err.Error())
 						instanceContainerState := model.InstanceContainerState{ObjectMeta: model.ObjectMeta{Name: instanceState.Spec.RootResource, Namespace: namespace}}
 						containerObjectData, _ := json.Marshal(instanceContainerState)
 						err = i.ApiClient.CreateInstanceContainer(ctx, instanceState.Spec.RootResource, containerObjectData, namespace, i.Config.User, i.Config.Password)
 						if err != nil {
-							mLog.Errorf("Failed to create instance container %s: %s", instanceState.Spec.RootResource, err.Error())
+							mLog.ErrorfCtx(ctx, "Failed to create instance container %s: %s", instanceState.Spec.RootResource, err.Error())
 							return outputs, false, err
 						}
 					} else if err != nil {
-						mLog.Errorf("Failed to get instance container %s: %s", instanceState.Spec.RootResource, err.Error())
+						mLog.ErrorfCtx(ctx, "Failed to get instance container %s: %s", instanceState.Spec.RootResource, err.Error())
 						return outputs, false, err
 					}
 
 					instanceState.ObjectMeta = updateObjectMeta(instanceState.ObjectMeta, inputs)
 					objectData, _ := json.Marshal(instanceState)
-					mLog.Debugf("  P (Materialize Processor): materialize instance %v to namespace %s", instanceState.ObjectMeta.Name, instanceState.ObjectMeta.Namespace)
+					mLog.DebugfCtx(ctx, "  P (Materialize Processor): materialize instance %v to namespace %s", instanceState.ObjectMeta.Name, instanceState.ObjectMeta.Namespace)
 					err = i.ApiClient.CreateInstance(ctx, instanceState.ObjectMeta.Name, objectData, instanceState.ObjectMeta.Namespace, i.Config.User, i.Config.Password)
 					if err != nil {
-						mLog.Errorf("Failed to create instance %s: %s", name, err.Error())
+						mLog.ErrorfCtx(ctx, "Failed to create instance %s: %s", name, err.Error())
 						return outputs, false, err
 					}
 					creationCount++
@@ -205,12 +205,12 @@ func (i *MaterializeStageProvider) Process(ctx context.Context, mgrContext conte
 					var solutionState model.SolutionState
 					err = json.Unmarshal(objectData, &solutionState)
 					if err != nil {
-						mLog.Errorf("Failed to unmarshal solution state for catalog %s: %s: %s", name, err.Error())
+						mLog.ErrorfCtx(ctx, "Failed to unmarshal solution state for catalog %s: %s: %s", name, err.Error())
 						return outputs, false, err
 					}
 
 					if solutionState.ObjectMeta.Name == "" {
-						mLog.Errorf("Solution name is empty: catalog - %s", name)
+						mLog.ErrorfCtx(ctx, "Solution name is empty: catalog - %s", name)
 						return outputs, false, v1alpha2.NewCOAError(nil, fmt.Sprintf("Empty solution name: catalog - %s", name), v1alpha2.BadRequest)
 					}
 
@@ -220,32 +220,32 @@ func (i *MaterializeStageProvider) Process(ctx context.Context, mgrContext conte
 						solutionState.Spec.RootResource = parts[0]
 						solutionState.Spec.Version = parts[1]
 					} else {
-						mLog.Errorf("Solution name is invalid: solution - %s, catalog - %s", solutionName, name)
+						mLog.ErrorfCtx(ctx, "Solution name is invalid: solution - %s, catalog - %s", solutionName, name)
 						return outputs, false, v1alpha2.NewCOAError(nil, fmt.Sprintf("Invalid solution name: catalog - %s", name), v1alpha2.BadRequest)
 					}
 
-					mLog.Debugf("  P (Materialize Processor): check solution contains %v, namespace %s", solutionState.Spec.RootResource, namespace)
+					mLog.DebugfCtx(ctx, "  P (Materialize Processor): check solution contains %v, namespace %s", solutionState.Spec.RootResource, namespace)
 					_, err := i.ApiClient.GetSolutionContainer(ctx, solutionState.Spec.RootResource, namespace, i.Config.User, i.Config.Password)
 					if err != nil && strings.Contains(err.Error(), constants.NotFound) {
-						mLog.Debugf("Solution container %s doesn't exist: %s", solutionState.Spec.RootResource, err.Error())
+						mLog.DebugfCtx(ctx, "Solution container %s doesn't exist: %s", solutionState.Spec.RootResource, err.Error())
 						solutionContainerState := model.SolutionContainerState{ObjectMeta: model.ObjectMeta{Name: solutionState.Spec.RootResource, Namespace: namespace}}
 						containerObjectData, _ := json.Marshal(solutionContainerState)
 						err = i.ApiClient.CreateSolutionContainer(ctx, solutionState.Spec.RootResource, containerObjectData, namespace, i.Config.User, i.Config.Password)
 						if err != nil {
-							mLog.Errorf("Failed to create solution container %s: %s", solutionState.Spec.RootResource, err.Error())
+							mLog.ErrorfCtx(ctx, "Failed to create solution container %s: %s", solutionState.Spec.RootResource, err.Error())
 							return outputs, false, err
 						}
 					} else if err != nil {
-						mLog.Errorf("Failed to get solution container %s: %s", solutionState.Spec.RootResource, err.Error())
+						mLog.ErrorfCtx(ctx, "Failed to get solution container %s: %s", solutionState.Spec.RootResource, err.Error())
 						return outputs, false, err
 					}
 
 					solutionState.ObjectMeta = updateObjectMeta(solutionState.ObjectMeta, inputs)
 					objectData, _ := json.Marshal(solutionState)
-					mLog.Debugf("  P (Materialize Processor): materialize solution %v to namespace %s", solutionState.ObjectMeta.Name, solutionState.ObjectMeta.Namespace)
+					mLog.DebugfCtx(ctx, "  P (Materialize Processor): materialize solution %v to namespace %s", solutionState.ObjectMeta.Name, solutionState.ObjectMeta.Namespace)
 					err = i.ApiClient.UpsertSolution(ctx, solutionState.ObjectMeta.Name, objectData, solutionState.ObjectMeta.Namespace, i.Config.User, i.Config.Password)
 					if err != nil {
-						mLog.Errorf("Failed to create solution %s: %s", name, err.Error())
+						mLog.ErrorfCtx(ctx, "Failed to create solution %s: %s", name, err.Error())
 						return outputs, false, err
 					}
 					creationCount++
@@ -253,12 +253,12 @@ func (i *MaterializeStageProvider) Process(ctx context.Context, mgrContext conte
 					var targetState model.TargetState
 					err = json.Unmarshal(objectData, &targetState)
 					if err != nil {
-						mLog.Errorf("Failed to unmarshal target state for catalog %s: %s", name, err.Error())
+						mLog.ErrorfCtx(ctx, "Failed to unmarshal target state for catalog %s: %s", name, err.Error())
 						return outputs, false, err
 					}
 
 					if targetState.ObjectMeta.Name == "" {
-						mLog.Errorf("Target name is empty: catalog - %s", name)
+						mLog.ErrorfCtx(ctx, "Target name is empty: catalog - %s", name)
 						return outputs, false, v1alpha2.NewCOAError(nil, fmt.Sprintf("Empty target name: catalog - %s", name), v1alpha2.BadRequest)
 					}
 
@@ -268,32 +268,32 @@ func (i *MaterializeStageProvider) Process(ctx context.Context, mgrContext conte
 						targetState.Spec.RootResource = parts[0]
 						targetState.Spec.Version = parts[1]
 					} else {
-						mLog.Errorf("Target name is invalid: target - %s, catalog - %s", targetName, name)
+						mLog.ErrorfCtx(ctx, "Target name is invalid: target - %s, catalog - %s", targetName, name)
 						return outputs, false, v1alpha2.NewCOAError(nil, fmt.Sprintf("Invalid target name: %s", name), v1alpha2.BadRequest)
 					}
 
-					mLog.Debugf("  P (Materialize Processor): check target contains %v, namespace %s", targetState.Spec.RootResource, namespace)
+					mLog.DebugfCtx(ctx, "  P (Materialize Processor): check target contains %v, namespace %s", targetState.Spec.RootResource, namespace)
 					_, err := i.ApiClient.GetTargetContainer(ctx, targetState.Spec.RootResource, namespace, i.Config.User, i.Config.Password)
 					if err != nil && strings.Contains(err.Error(), constants.NotFound) {
-						mLog.Debugf("Target container %s doesn't exist: %s", targetState.Spec.RootResource, err.Error())
+						mLog.DebugfCtx(ctx, "Target container %s doesn't exist: %s", targetState.Spec.RootResource, err.Error())
 						targetContainerState := model.TargetContainerState{ObjectMeta: model.ObjectMeta{Name: targetState.Spec.RootResource, Namespace: namespace}}
 						containerObjectData, _ := json.Marshal(targetContainerState)
 						err = i.ApiClient.CreateTargetContainer(ctx, targetState.Spec.RootResource, containerObjectData, namespace, i.Config.User, i.Config.Password)
 						if err != nil {
-							mLog.Errorf("Failed to create target container %s: %s", targetState.Spec.RootResource, err.Error())
+							mLog.ErrorfCtx(ctx, "Failed to create target container %s: %s", targetState.Spec.RootResource, err.Error())
 							return outputs, false, err
 						}
 					} else if err != nil {
-						mLog.Errorf("Failed to get target container %s: %s", targetState.Spec.RootResource, err.Error())
+						mLog.ErrorfCtx(ctx, "Failed to get target container %s: %s", targetState.Spec.RootResource, err.Error())
 						return outputs, false, err
 					}
 
 					targetState.ObjectMeta = updateObjectMeta(targetState.ObjectMeta, inputs)
 					objectData, _ := json.Marshal(targetState)
-					mLog.Debugf("  P (Materialize Processor): materialize target %v to namespace %s", targetState.ObjectMeta.Name, targetState.ObjectMeta.Namespace)
+					mLog.DebugfCtx(ctx, "  P (Materialize Processor): materialize target %v to namespace %s", targetState.ObjectMeta.Name, targetState.ObjectMeta.Namespace)
 					err = i.ApiClient.CreateTarget(ctx, targetState.ObjectMeta.Name, objectData, targetState.ObjectMeta.Namespace, i.Config.User, i.Config.Password)
 					if err != nil {
-						mLog.Errorf("Failed to create target %s: %s", name, err.Error())
+						mLog.ErrorfCtx(ctx, "Failed to create target %s: %s", name, err.Error())
 						return outputs, false, err
 					}
 					creationCount++
@@ -302,12 +302,12 @@ func (i *MaterializeStageProvider) Process(ctx context.Context, mgrContext conte
 					var catalogState model.CatalogState
 					err = json.Unmarshal(objectData, &catalogState)
 					if err != nil {
-						mLog.Errorf("Failed to unmarshal catalog state for catalog %s: %s", name, err.Error())
+						mLog.ErrorfCtx(ctx, "Failed to unmarshal catalog state for catalog %s: %s", name, err.Error())
 						return outputs, false, err
 					}
 
 					if catalogState.ObjectMeta.Name == "" {
-						mLog.Errorf("Catalog name is empty %s", name)
+						mLog.ErrorfCtx(ctx, "Catalog name is empty %s", name)
 						return outputs, false, v1alpha2.NewCOAError(nil, fmt.Sprintf("Empty catalog name: %s", name), v1alpha2.BadRequest)
 					}
 
@@ -317,32 +317,32 @@ func (i *MaterializeStageProvider) Process(ctx context.Context, mgrContext conte
 						catalogState.Spec.RootResource = parts[0]
 						catalogState.Spec.Version = parts[1]
 					} else {
-						mLog.Errorf("Catalog name is invalid: catalog - %s, parent catalog - %s", catalogName, name)
+						mLog.ErrorfCtx(ctx, "Catalog name is invalid: catalog - %s, parent catalog - %s", catalogName, name)
 						return outputs, false, v1alpha2.NewCOAError(nil, fmt.Sprintf("Invalid catalog name: catalog - %s", name), v1alpha2.BadRequest)
 					}
 
-					mLog.Debugf("  P (Materialize Processor): check catalog contains %v, namespace %s", catalogState.Spec.RootResource, namespace)
+					mLog.DebugfCtx(ctx, "  P (Materialize Processor): check catalog contains %v, namespace %s", catalogState.Spec.RootResource, namespace)
 					_, err := i.ApiClient.GetCatalogContainer(ctx, catalogState.Spec.RootResource, namespace, i.Config.User, i.Config.Password)
 					if err != nil && strings.Contains(err.Error(), constants.NotFound) {
-						mLog.Debugf("Catalog container %s doesn't exist: %s", catalogState.Spec.RootResource, err.Error())
+						mLog.DebugfCtx(ctx, "Catalog container %s doesn't exist: %s", catalogState.Spec.RootResource, err.Error())
 						catalogContainerState := model.CatalogContainerState{ObjectMeta: model.ObjectMeta{Name: catalogState.Spec.RootResource, Namespace: namespace}}
 						containerObjectData, _ := json.Marshal(catalogContainerState)
 						err = i.ApiClient.CreateCatalogContainer(ctx, catalogState.Spec.RootResource, containerObjectData, namespace, i.Config.User, i.Config.Password)
 						if err != nil {
-							mLog.Errorf("Failed to create catalog container %s: %s", catalogState.Spec.RootResource, err.Error())
+							mLog.ErrorfCtx(ctx, "Failed to create catalog container %s: %s", catalogState.Spec.RootResource, err.Error())
 							return outputs, false, err
 						}
 					} else if err != nil {
-						mLog.Errorf("Failed to get catalog container %s: %s", catalogState.Spec.RootResource, err.Error())
+						mLog.ErrorfCtx(ctx, "Failed to get catalog container %s: %s", catalogState.Spec.RootResource, err.Error())
 						return outputs, false, err
 					}
 
 					catalogState.ObjectMeta = updateObjectMeta(catalogState.ObjectMeta, inputs)
 					objectData, _ := json.Marshal(catalogState)
-					mLog.Debugf("  P (Materialize Processor): materialize catalog %v to namespace %s", catalogState.ObjectMeta.Name, catalogState.ObjectMeta.Namespace)
+					mLog.DebugfCtx(ctx, "  P (Materialize Processor): materialize catalog %v to namespace %s", catalogState.ObjectMeta.Name, catalogState.ObjectMeta.Namespace)
 					err = i.ApiClient.UpsertCatalog(ctx, catalogState.ObjectMeta.Name, objectData, i.Config.User, i.Config.Password)
 					if err != nil {
-						mLog.Errorf("Failed to create catalog %s: %s", catalogState.ObjectMeta.Name, err.Error())
+						mLog.ErrorfCtx(ctx, "Failed to create catalog %s: %s", catalogState.ObjectMeta.Name, err.Error())
 						return outputs, false, err
 					}
 					creationCount++

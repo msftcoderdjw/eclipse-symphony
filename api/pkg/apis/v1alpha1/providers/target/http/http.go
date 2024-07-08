@@ -57,17 +57,17 @@ func (s *HttpTargetProvider) SetContext(ctx *contexts.ManagerContext) {
 }
 
 func (i *HttpTargetProvider) Init(config providers.IProviderConfig) error {
-	_, span := observability.StartSpan("Http Target Provider", context.TODO(), &map[string]string{
+	ctx, span := observability.StartSpan("Http Target Provider", context.TODO(), &map[string]string{
 		"method": "Init",
 	})
 	var err error = nil
 	defer observ_utils.CloseSpanWithError(span, &err)
 
-	sLog.Info("  P (HTTP Target): Init()")
+	sLog.InfoCtx(ctx, "  P (HTTP Target): Init()")
 
 	updateConfig, err := toHttpTargetProviderConfig(config)
 	if err != nil {
-		sLog.Errorf("  P (HTTP Target): expected HttpTargetProviderConfig: %+v", err)
+		sLog.ErrorfCtx(ctx, "  P (HTTP Target): expected HttpTargetProviderConfig: %+v", err)
 		return err
 	}
 	i.Config = updateConfig

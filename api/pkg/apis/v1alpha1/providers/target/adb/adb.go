@@ -56,13 +56,13 @@ func (s *AdbProvider) SetContext(ctx *contexts.ManagerContext) {
 }
 
 func (i *AdbProvider) Init(config providers.IProviderConfig) error {
-	_, span := observability.StartSpan("Android ADB Provider", context.TODO(), &map[string]string{
+	ctx, span := observability.StartSpan("Android ADB Provider", context.TODO(), &map[string]string{
 		"method": "Init",
 	})
 	var err error = nil
 	defer observ_utils.CloseSpanWithError(span, &err)
 
-	aLog.Info("  P (Android ADB): Init()")
+	aLog.InfoCtx(ctx, "  P (Android ADB): Init()")
 
 	updateConfig, err := toAdbProviderConfig(config)
 	if err != nil {

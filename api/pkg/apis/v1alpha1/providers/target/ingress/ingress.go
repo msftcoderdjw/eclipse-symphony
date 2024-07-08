@@ -107,7 +107,7 @@ func (i *IngressTargetProvider) InitWithMap(properties map[string]string) error 
 
 // Init initializes the ingress target provider
 func (i *IngressTargetProvider) Init(config providers.IProviderConfig) error {
-	_, span := observability.StartSpan(
+	ctx, span := observability.StartSpan(
 		"Ingress Target Provider",
 		context.TODO(),
 		&map[string]string{
@@ -116,11 +116,11 @@ func (i *IngressTargetProvider) Init(config providers.IProviderConfig) error {
 	)
 	var err error
 	defer utils.CloseSpanWithError(span, &err)
-	sLog.Info("  P (Ingress Target): Init()")
+	sLog.InfoCtx(ctx, "  P (Ingress Target): Init()")
 
 	updateConfig, err := toIngressTargetProviderConfig(config)
 	if err != nil {
-		sLog.Errorf("  P (Ingress Target): expected IngressTargetProviderConfig - %+v", err)
+		sLog.ErrorfCtx(ctx, "  P (Ingress Target): expected IngressTargetProviderConfig - %+v", err)
 		return err
 	}
 
@@ -136,7 +136,7 @@ func (i *IngressTargetProvider) Init(config providers.IProviderConfig) error {
 					i.Config.ConfigData = filepath.Join(home, ".kube", "config")
 				} else {
 					err = v1alpha2.NewCOAError(nil, "can't locate home direction to read default kubernetes config file, to run in cluster, set inCluster config setting to true", v1alpha2.BadConfig)
-					sLog.Errorf("  P (Ingress Target): %+v", err)
+					sLog.ErrorfCtx(ctx, "  P (Ingress Target): %+v", err)
 					return err
 				}
 			}
@@ -145,40 +145,40 @@ func (i *IngressTargetProvider) Init(config providers.IProviderConfig) error {
 			if i.Config.ConfigData != "" {
 				kConfig, err = clientcmd.RESTConfigFromKubeConfig([]byte(i.Config.ConfigData))
 				if err != nil {
-					sLog.Errorf("  P (Ingress Target):  %+v", err)
+					sLog.ErrorfCtx(ctx, "  P (Ingress Target):  %+v", err)
 					return err
 				}
 			} else {
 				err = v1alpha2.NewCOAError(nil, "config data is not supplied", v1alpha2.BadConfig)
-				sLog.Errorf("  P (Ingress Target): %+v", err)
+				sLog.ErrorfCtx(ctx, "  P (Ingress Target): %+v", err)
 				return err
 			}
 		default:
 			err = v1alpha2.NewCOAError(nil, "unrecognized config type, accepted values are: path and inline", v1alpha2.BadConfig)
-			sLog.Errorf("  P (Ingress Target): %+v", err)
+			sLog.ErrorfCtx(ctx, "  P (Ingress Target): %+v", err)
 			return err
 		}
 	}
 	if err != nil {
-		sLog.Errorf("  P (Ingress Target): failed to get the cluster config: %+v", err)
+		sLog.ErrorfCtx(ctx, "  P (Ingress Target): failed to get the cluster config: %+v", err)
 		return err
 	}
 
 	i.Client, err = kubernetes.NewForConfig(kConfig)
 	if err != nil {
-		sLog.Errorf("  P (Ingress Target): failed to create a new clientset: %+v", err)
+		sLog.ErrorfCtx(ctx, "  P (Ingress Target): failed to create a new clientset: %+v", err)
 		return err
 	}
 
 	i.DynamicClient, err = dynamic.NewForConfig(kConfig)
 	if err != nil {
-		sLog.Errorf("  P (Ingress Target): failed to create a dynamic client: %+v", err)
+		sLog.ErrorfCtx(ctx, "  P (Ingress Target): failed to create a dynamic client: %+v", err)
 		return err
 	}
 
 	i.DiscoveryClient, err = discovery.NewDiscoveryClientForConfig(kConfig)
 	if err != nil {
-		sLog.Errorf("  P (Ingress Target): failed to create a discovery client: %+v", err)
+		sLog.ErrorfCtx(ctx, "  P (Ingress Target): failed to create a discovery client: %+v", err)
 		return err
 	}
 

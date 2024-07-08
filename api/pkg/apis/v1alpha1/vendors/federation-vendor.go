@@ -185,7 +185,7 @@ func (c *FederationVendor) onStatus(request v1alpha2.COARequest) v1alpha2.COARes
 	})
 	defer span.End()
 
-	tLog.Info("V (Federation): OnStatus")
+	tLog.InfoCtx(pCtx, "V (Federation): OnStatus")
 	switch request.Method {
 	case fasthttp.MethodPost:
 		var state model.SiteState
@@ -313,7 +313,7 @@ func (f *FederationVendor) onSync(request v1alpha2.COARequest) v1alpha2.COARespo
 		var status model.ActivationStatus
 		err := json.Unmarshal(request.Body, &status)
 		if err != nil {
-			tLog.Errorf("V (Federation): failed to unmarshal activation status: %v", err)
+			tLog.ErrorfCtx(pCtx, "V (Federation): failed to unmarshal activation status: %v", err)
 			return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 				State: v1alpha2.BadRequest,
 				Body:  []byte(err.Error()),
@@ -323,7 +323,7 @@ func (f *FederationVendor) onSync(request v1alpha2.COARequest) v1alpha2.COARespo
 			Body: status,
 		})
 		if err != nil {
-			tLog.Errorf("V (Federation): failed to publish job report: %v", err)
+			tLog.ErrorfCtx(pCtx, "V (Federation): failed to publish job report: %v", err)
 			return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 				State: v1alpha2.InternalError,
 				Body:  []byte(err.Error()),

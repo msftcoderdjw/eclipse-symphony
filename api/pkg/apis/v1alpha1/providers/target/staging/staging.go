@@ -61,16 +61,16 @@ func (s *StagingTargetProvider) SetContext(ctx *contexts.ManagerContext) {
 }
 
 func (i *StagingTargetProvider) Init(config providers.IProviderConfig) error {
-	_, span := observability.StartSpan("Staging Target Provider", context.TODO(), &map[string]string{
+	ctx, span := observability.StartSpan("Staging Target Provider", context.TODO(), &map[string]string{
 		"method": "Init",
 	})
 	var err error = nil
 	defer observ_utils.CloseSpanWithError(span, &err)
-	sLog.Info("  P (Staging Target): Init()")
+	sLog.InfoCtx(ctx, "  P (Staging Target): Init()")
 
 	updateConfig, err := toStagingTargetProviderConfig(config)
 	if err != nil {
-		sLog.Errorf("  P (Staging Target): expected StagingTargetProviderConfig: %+v", err)
+		sLog.ErrorfCtx(ctx, "  P (Staging Target): expected StagingTargetProviderConfig: %+v", err)
 		return err
 	}
 	i.Config = updateConfig
@@ -154,7 +154,7 @@ func (i *StagingTargetProvider) Apply(ctx context.Context, deployment model.Depl
 		return nil, err
 	}
 	if isDryRun {
-		sLog.Infof("  P (Staging Target): dry run, skipping apply")
+		sLog.InfofCtx(ctx, "  P (Staging Target): dry run, skipping apply")
 		return nil, nil
 	}
 	ret := step.PrepareResultMap()

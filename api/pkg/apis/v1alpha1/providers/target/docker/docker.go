@@ -59,18 +59,18 @@ func (s *DockerTargetProvider) SetContext(ctx *contexts.ManagerContext) {
 }
 
 func (d *DockerTargetProvider) Init(config providers.IProviderConfig) error {
-	_, span := observability.StartSpan("Docker Target Provider", context.TODO(), &map[string]string{
+	ctx, span := observability.StartSpan("Docker Target Provider", context.TODO(), &map[string]string{
 		"method": "Init",
 	})
 	var err error = nil
 	defer observ_utils.CloseSpanWithError(span, &err)
 
-	sLog.Info("  P (Docker Target): Init()")
+	sLog.InfoCtx(ctx, "  P (Docker Target): Init()")
 
 	// convert config to DockerTargetProviderConfig type
 	dockerConfig, err := toDockerTargetProviderConfig(config)
 	if err != nil {
-		sLog.Errorf("  P (Docker Target): expected DockerTargetProviderConfig: %+v", err)
+		sLog.ErrorfCtx(ctx, "  P (Docker Target): expected DockerTargetProviderConfig: %+v", err)
 		return err
 	}
 

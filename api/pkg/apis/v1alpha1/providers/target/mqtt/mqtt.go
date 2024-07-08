@@ -133,20 +133,20 @@ func (i *MQTTTargetProvider) Init(config providers.IProviderConfig) error {
 	lock.Lock()
 	defer lock.Unlock()
 
-	_, span := observability.StartSpan("MQTT Target Provider", context.TODO(), &map[string]string{
+	ctx, span := observability.StartSpan("MQTT Target Provider", context.TODO(), &map[string]string{
 		"method": "Init",
 	})
 	var err error = nil
 	defer observ_utils.CloseSpanWithError(span, &err)
 
-	sLog.Info("  P (MQTT Target): Init()")
+	sLog.InfoCtx(ctx, "  P (MQTT Target): Init()")
 
 	if i.Initialized {
 		return nil
 	}
 	updateConfig, err := toMQTTTargetProviderConfig(config)
 	if err != nil {
-		sLog.Errorf("  P (MQTT Target): expected HttpTargetProviderConfig: %+v", err)
+		sLog.ErrorfCtx(ctx, "  P (MQTT Target): expected HttpTargetProviderConfig: %+v", err)
 		return err
 	}
 	i.Config = updateConfig
@@ -157,7 +157,7 @@ func (i *MQTTTargetProvider) Init(config providers.IProviderConfig) error {
 	opts.CleanSession = true
 	i.MQTTClient = gmqtt.NewClient(opts)
 	if token := i.MQTTClient.Connect(); token.Wait() && token.Error() != nil {
-		sLog.Errorf("  P (MQTT Target): faild to connect to MQTT broker - %+v", err)
+		sLog.ErrorfCtx(ctx, "  P (MQTT Target): faild to connect to MQTT broker - %+v", err)
 		return v1alpha2.NewCOAError(token.Error(), "failed to connect to MQTT broker", v1alpha2.InternalError)
 	}
 
@@ -185,7 +185,7 @@ func (i *MQTTTargetProvider) Init(config providers.IProviderConfig) error {
 				var ret []model.ComponentSpec
 				err = json.Unmarshal(response.Body, &ret)
 				if err != nil {
-					sLog.Errorf("  P (MQTT Target): faild to deserialize components from MQTT - %+v, %s", err, string(response.Body))
+					sLog.ErrorfCtx(ctx, "  P (MQTT Target): faild to deserialize components from MQTT - %+v, %s", err, string(response.Body))
 				}
 				proxyResponse.Payload = ret
 			}
@@ -208,7 +208,7 @@ func (i *MQTTTargetProvider) Init(config providers.IProviderConfig) error {
 		}
 	}); token.Wait() && token.Error() != nil {
 		if token.Error().Error() != "subscription exists" {
-			sLog.Errorf("  P (MQTT Target): faild to connect to subscribe to the response topic - %+v", token.Error())
+			sLog.ErrorfCtx(ctx, "  P (MQTT Target): faild to connect to subscribe to the response topic - %+v", token.Error())
 			err = v1alpha2.NewCOAError(token.Error(), "failed to subscribe to response topic", v1alpha2.InternalError)
 			return err
 		}

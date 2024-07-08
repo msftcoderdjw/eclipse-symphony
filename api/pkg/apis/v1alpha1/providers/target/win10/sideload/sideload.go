@@ -88,17 +88,17 @@ func (s *Win10SideLoadProvider) SetContext(ctx *contexts.ManagerContext) {
 }
 
 func (i *Win10SideLoadProvider) Init(config providers.IProviderConfig) error {
-	_, span := observability.StartSpan("Win 10 Sideload Provider", context.TODO(), &map[string]string{
+	ctx, span := observability.StartSpan("Win 10 Sideload Provider", context.TODO(), &map[string]string{
 		"method": "Init",
 	})
 	var err error = nil
 	defer observ_utils.CloseSpanWithError(span, &err)
 
-	sLog.Info("  P (Win10Sideload Target): Init()")
+	sLog.InfoCtx(ctx, "  P (Win10Sideload Target): Init()")
 
 	updateConfig, err := toWin10SideLoadProviderConfig(config)
 	if err != nil {
-		sLog.Errorf("  P (Win10Sideload Target): expected Win10SideLoadProviderConfig - %+v", err)
+		sLog.ErrorfCtx(ctx, "  P (Win10Sideload Target): expected Win10SideLoadProviderConfig - %+v", err)
 		err = errors.New("expected Win10SideLoadProviderConfig")
 		return err
 	}
@@ -165,7 +165,7 @@ func (i *Win10SideLoadProvider) Get(ctx context.Context, deployment model.Deploy
 
 	return ret, nil
 }
-func (i *Win10SideLoadProvider) getPackageReferenceName(name string) string {
+func (i *Win10SideLoadProvider) getPackageReferenceName(ctx context.Context, name string) string {
 
 	params := make([]string, 0)
 	params = append(params, "list")
@@ -179,7 +179,7 @@ func (i *Win10SideLoadProvider) getPackageReferenceName(name string) string {
 	out, err := exec.Command(i.Config.WinAppDeployCmdPath, params...).Output()
 
 	if err != nil {
-		sLog.Errorf("  P (Win10Sideload Target): failed to run deploy cmd %s, error: %+v", i.Config.WinAppDeployCmdPath, err)
+		sLog.ErrorfCtx(ctx, "  P (Win10Sideload Target): failed to run deploy cmd %s, error: %+v", i.Config.WinAppDeployCmdPath, err)
 		return ""
 	}
 	str := string(out)
@@ -266,7 +266,7 @@ func (i *Win10SideLoadProvider) Apply(ctx context.Context, deployment model.Depl
 
 				name := component.Name
 
-				refName := i.getPackageReferenceName(name)
+				refName := i.getPackageReferenceName(ctx, name)
 				if refName != "" {
 					name = refName
 				}
