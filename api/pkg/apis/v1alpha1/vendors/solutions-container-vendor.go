@@ -74,7 +74,7 @@ func (c *SolutionContainersVendor) onSolutionContainers(request v1alpha2.COARequ
 		"method": "onSolutionContainers",
 	})
 	defer span.End()
-	scLog.WithContext(pCtx).Infof("V (SolutionContainers): onSolutionContainers, method: %s", request.Method)
+	scLog.InfofCtx(pCtx, "V (SolutionContainers): onSolutionContainers, method: %s", request.Method)
 
 	id := request.Parameters["__name"]
 	namespace, exist := request.Parameters["namespace"]
@@ -99,7 +99,7 @@ func (c *SolutionContainersVendor) onSolutionContainers(request v1alpha2.COARequ
 			state, err = c.SolutionContainersManager.GetState(ctx, id, namespace)
 		}
 		if err != nil {
-			scLog.WithContext(ctx).Errorf("V (SolutionContainers): onSolutionContainers failed - %s", err.Error())
+			scLog.ErrorfCtx(ctx, "V (SolutionContainers): onSolutionContainers failed - %s", err.Error())
 			return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 				State: v1alpha2.InternalError,
 				Body:  []byte(err.Error()),
@@ -127,7 +127,7 @@ func (c *SolutionContainersVendor) onSolutionContainers(request v1alpha2.COARequ
 
 		err := c.SolutionContainersManager.UpsertState(ctx, id, solution)
 		if err != nil {
-			scLog.WithContext(ctx).Errorf("V (SolutionContainers): onSolutionContainers failed - %s", err.Error())
+			scLog.ErrorfCtx(ctx, "V (SolutionContainers): onSolutionContainers failed - %s", err.Error())
 			return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 				State: v1alpha2.InternalError,
 				Body:  []byte(err.Error()),
@@ -141,7 +141,7 @@ func (c *SolutionContainersVendor) onSolutionContainers(request v1alpha2.COARequ
 		ctx, span := observability.StartSpan("onSolutionContainers-DELETE", pCtx, nil)
 		err := c.SolutionContainersManager.DeleteState(ctx, id, namespace)
 		if err != nil {
-			scLog.WithContext(ctx).Errorf("V (SolutionContainers): onSolutionContainers failed - %s", err.Error())
+			scLog.ErrorfCtx(ctx, "V (SolutionContainers): onSolutionContainers failed - %s", err.Error())
 			return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 				State: v1alpha2.InternalError,
 				Body:  []byte(err.Error()),
@@ -151,7 +151,7 @@ func (c *SolutionContainersVendor) onSolutionContainers(request v1alpha2.COARequ
 			State: v1alpha2.OK,
 		})
 	}
-	scLog.WithContext(pCtx).Error("V (SolutionContainers): onSolutionContainers failed - 405 method not allowed")
+	scLog.ErrorCtx(pCtx, "V (SolutionContainers): onSolutionContainers failed - 405 method not allowed")
 	resp := v1alpha2.COAResponse{
 		State:       v1alpha2.MethodNotAllowed,
 		Body:        []byte("{\"result\":\"405 - method not allowed\"}"),

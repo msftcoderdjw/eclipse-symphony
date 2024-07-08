@@ -283,10 +283,10 @@ func (i *HelmTargetProvider) Get(ctx context.Context, deployment model.Deploymen
 	var err error
 	var actionConfig *action.Configuration
 	defer utils.CloseSpanWithError(span, &err)
-	sLog.WithContext(ctx).Infof("  P (Helm Target): getting artifacts: %s - %s", deployment.Instance.Spec.Scope, deployment.Instance.ObjectMeta.Name)
+	sLog.InfofCtx(ctx, "  P (Helm Target): getting artifacts: %s - %s", deployment.Instance.Spec.Scope, deployment.Instance.ObjectMeta.Name)
 	actionConfig, err = i.createActionConfig(ctx, deployment.Instance.Spec.Scope)
 	if err != nil {
-		sLog.WithContext(ctx).Error(err)
+		sLog.ErrorCtx(ctx, err)
 		return nil, err
 	}
 	listClient := action.NewList(actionConfig)
@@ -294,7 +294,7 @@ func (i *HelmTargetProvider) Get(ctx context.Context, deployment model.Deploymen
 	var results []*release.Release
 	results, err = listClient.Run()
 	if err != nil {
-		sLog.WithContext(ctx).Errorf("  P (Helm Target): failed to create Helm list client: %+v", err)
+		sLog.ErrorfCtx(ctx, "  P (Helm Target): failed to create Helm list client: %+v", err)
 		err = v1alpha2.NewCOAError(err, fmt.Sprintf("%s: failed to create Helm list client", providerName), v1alpha2.HelmActionFailed)
 		return nil, err
 	}
@@ -392,14 +392,14 @@ func (i *HelmTargetProvider) Apply(ctx context.Context, deployment model.Deploym
 	)
 	var err error
 	defer utils.CloseSpanWithError(span, &err)
-	sLog.WithContext(ctx).Infof("  P (Helm Target): applying artifacts: %s - %s", deployment.Instance.Spec.Scope, deployment.Instance.ObjectMeta.Name)
+	sLog.InfofCtx(ctx, "  P (Helm Target): applying artifacts: %s - %s", deployment.Instance.Spec.Scope, deployment.Instance.ObjectMeta.Name)
 
 	functionName := utils.GetFunctionName()
 	applyTime := time.Now().UTC()
 	components := step.GetComponents()
 	err = i.GetValidationRule(ctx).Validate(components)
 	if err != nil {
-		sLog.WithContext(ctx).Errorf("  P (Helm Target): failed to validate components: %+v", err)
+		sLog.ErrorfCtx(ctx, "  P (Helm Target): failed to validate components: %+v", err)
 		providerOperationMetrics.ProviderOperationErrors(
 			helm,
 			functionName,
@@ -421,7 +421,7 @@ func (i *HelmTargetProvider) Apply(ctx context.Context, deployment model.Deploym
 	var actionConfig *action.Configuration
 	actionConfig, err = i.createActionConfig(ctx, deployment.Instance.Spec.Scope)
 	if err != nil {
-		sLog.WithContext(ctx).Error(err)
+		sLog.ErrorCtx(ctx, err)
 		providerOperationMetrics.ProviderOperationErrors(
 			helm,
 			functionName,
@@ -438,7 +438,7 @@ func (i *HelmTargetProvider) Apply(ctx context.Context, deployment model.Deploym
 			var helmProp *HelmProperty
 			helmProp, err = getHelmPropertyFromComponent(component.Component)
 			if err != nil {
-				sLog.WithContext(ctx).Errorf("  P (Helm Target): failed to get Helm properties: %+v", err)
+				sLog.ErrorfCtx(ctx, "  P (Helm Target): failed to get Helm properties: %+v", err)
 				err = v1alpha2.NewCOAError(err, fmt.Sprintf("%s: failed to get helm properties", providerName), v1alpha2.GetHelmPropertyFailed)
 				ret[component.Component.Name] = model.ComponentResultSpec{
 					Status:  v1alpha2.UpdateFailed,
@@ -458,7 +458,7 @@ func (i *HelmTargetProvider) Apply(ctx context.Context, deployment model.Deploym
 			var fileName string
 			fileName, err = i.pullChart(&helmProp.Chart)
 			if err != nil {
-				sLog.WithContext(ctx).Errorf("  P (Helm Target): failed to pull chart: %+v", err)
+				sLog.ErrorfCtx(ctx, "  P (Helm Target): failed to pull chart: %+v", err)
 				err = v1alpha2.NewCOAError(err, fmt.Sprintf("%s: failed to pull chart", providerName), v1alpha2.HelmActionFailed)
 				ret[component.Component.Name] = model.ComponentResultSpec{
 					Status:  v1alpha2.UpdateFailed,
@@ -479,7 +479,7 @@ func (i *HelmTargetProvider) Apply(ctx context.Context, deployment model.Deploym
 			var chart *chart.Chart
 			chart, err = loader.Load(fileName)
 			if err != nil {
-				sLog.WithContext(ctx).Errorf("  P (Helm Target): failed to load chart: %+v", err)
+				sLog.ErrorfCtx(ctx, "  P (Helm Target): failed to load chart: %+v", err)
 				err = v1alpha2.NewCOAError(err, fmt.Sprintf("%s: failed to load chart", providerName), v1alpha2.HelmActionFailed)
 				ret[component.Component.Name] = model.ComponentResultSpec{
 					Status:  v1alpha2.UpdateFailed,
@@ -507,7 +507,7 @@ func (i *HelmTargetProvider) Apply(ctx context.Context, deployment model.Deploym
 
 			if _, err = upgradeClient.Run(component.Component.Name, chart, helmProp.Values); err != nil {
 				if _, err = installClient.Run(chart, helmProp.Values); err != nil {
-					sLog.WithContext(ctx).Errorf("  P (Helm Target): failed to apply: %+v", err)
+					sLog.ErrorfCtx(ctx, "  P (Helm Target): failed to apply: %+v", err)
 					err = v1alpha2.NewCOAError(err, fmt.Sprintf("%s: failed to apply chart", providerName), v1alpha2.HelmActionFailed)
 					ret[component.Component.Name] = model.ComponentResultSpec{
 						Status:  v1alpha2.UpdateFailed,
@@ -543,7 +543,7 @@ func (i *HelmTargetProvider) Apply(ctx context.Context, deployment model.Deploym
 				uninstallClient := configureUninstallClient(&deployment, actionConfig)
 				_, err = uninstallClient.Run(component.Component.Name)
 				if err != nil && !errors.Is(err, driver.ErrReleaseNotFound) {
-					sLog.WithContext(ctx).Errorf("  P (Helm Target): failed to uninstall Helm chart: %+v", err)
+					sLog.ErrorfCtx(ctx, "  P (Helm Target): failed to uninstall Helm chart: %+v", err)
 					err = v1alpha2.NewCOAError(err, fmt.Sprintf("%s: failed to uninstall chart", providerName), v1alpha2.HelmActionFailed)
 					ret[component.Component.Name] = model.ComponentResultSpec{
 						Status:  v1alpha2.DeleteFailed,
@@ -565,7 +565,7 @@ func (i *HelmTargetProvider) Apply(ctx context.Context, deployment model.Deploym
 					Message: "",
 				}
 			default:
-				sLog.WithContext(ctx).Errorf("  P (Helm Target): Failed to apply as %v is an invalid helm version", component.Component.Type)
+				sLog.ErrorfCtx(ctx, "  P (Helm Target): Failed to apply as %v is an invalid helm version", component.Component.Type)
 			}
 		}
 

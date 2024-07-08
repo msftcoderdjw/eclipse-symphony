@@ -344,11 +344,11 @@ func TestDeployment(t *testing.T) {
 	provider.Init(K8sTargetProviderConfig{DeploymentStrategy: SERVICES})
 
 	projector, _ := createProjector("")
-	ctx, span := observability.StartSpan("K8s Target Provider test", context.Background(), &map[string]string{
+	ctx, _ := observability.StartSpan("K8s Target Provider test", context.Background(), &map[string]string{
 		"method": "deploy",
 	})
 
-	err = provider.deployComponents(ctx, span, "default", "name", map[string]string{
+	err = provider.deployComponents(ctx, "default", "name", map[string]string{
 		"service.ports": "[{\"name\":\"port8888\",\"port\":8888}]",
 		"service.annotation.service.beta.kubernetes.io/azure-load-balancer-resource-group": "MC_EVS_evsfoakssouth_southcentralus",
 		"service.annotation.service.beta.kubernetes.io/azure-dns-label-name":               "evsfoakssouth",

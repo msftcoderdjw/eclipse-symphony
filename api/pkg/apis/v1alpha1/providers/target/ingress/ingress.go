@@ -209,7 +209,7 @@ func (i *IngressTargetProvider) Get(ctx context.Context, deployment model.Deploy
 	)
 	var err error
 	defer utils.CloseSpanWithError(span, &err)
-	sLog.WithContext(ctx).Infof("  P (Ingress Target): getting artifacts: %s - %s", deployment.Instance.Spec.Scope, deployment.Instance.ObjectMeta.Name)
+	sLog.InfofCtx(ctx, "  P (Ingress Target): getting artifacts: %s - %s", deployment.Instance.Spec.Scope, deployment.Instance.ObjectMeta.Name)
 
 	ret := make([]model.ComponentSpec, 0)
 	for _, component := range references {
@@ -217,10 +217,10 @@ func (i *IngressTargetProvider) Get(ctx context.Context, deployment model.Deploy
 		obj, err = i.Client.NetworkingV1().Ingresses(deployment.Instance.Spec.Scope).Get(ctx, component.Component.Name, metav1.GetOptions{})
 		if err != nil {
 			if kerrors.IsNotFound(err) {
-				sLog.WithContext(ctx).Infof("  P (Ingress Target): resource not found: %v", err)
+				sLog.InfofCtx(ctx, "  P (Ingress Target): resource not found: %v", err)
 				continue
 			}
-			sLog.WithContext(ctx).Errorf("  P (Ingress Target): failed to read object: %+v", err)
+			sLog.ErrorfCtx(ctx, "  P (Ingress Target): failed to read object: %+v", err)
 			return nil, err
 		}
 		component.Component.Properties = make(map[string]interface{})
@@ -243,7 +243,7 @@ func (i *IngressTargetProvider) Apply(ctx context.Context, deployment model.Depl
 	)
 	var err error
 	defer utils.CloseSpanWithError(span, &err)
-	sLog.WithContext(ctx).Infof("  P (Ingress Target):  applying artifacts: %s - %s", deployment.Instance.Spec.Scope, deployment.Instance.ObjectMeta.Name)
+	sLog.InfofCtx(ctx, "  P (Ingress Target):  applying artifacts: %s - %s", deployment.Instance.Spec.Scope, deployment.Instance.ObjectMeta.Name)
 
 	components := step.GetComponents()
 	err = i.GetValidationRule(ctx).Validate(components)
@@ -273,7 +273,7 @@ func (i *IngressTargetProvider) Apply(ctx context.Context, deployment model.Depl
 					var rules []networkingv1.IngressRule
 					err = json.Unmarshal(jData, &rules)
 					if err != nil {
-						sLog.WithContext(ctx).Errorf("  P (Ingress Target): failed to unmarshal ingress: %+v", err)
+						sLog.ErrorfCtx(ctx, "  P (Ingress Target): failed to unmarshal ingress: %+v", err)
 						return ret, err
 					}
 					newIngress.Spec.Rules = rules
@@ -284,7 +284,7 @@ func (i *IngressTargetProvider) Apply(ctx context.Context, deployment model.Depl
 					if ok {
 						newIngress.Spec.IngressClassName = &s
 					} else {
-						sLog.WithContext(ctx).Errorf("  P (Ingress Target): failed to convert ingress class name: %+v", v)
+						sLog.ErrorfCtx(ctx, "  P (Ingress Target): failed to convert ingress class name: %+v", v)
 						return ret, err
 					}
 				}
@@ -301,7 +301,7 @@ func (i *IngressTargetProvider) Apply(ctx context.Context, deployment model.Depl
 				i.ensureNamespace(ctx, deployment.Instance.Spec.Scope)
 				err = i.applyIngress(ctx, newIngress, deployment.Instance.Spec.Scope)
 				if err != nil {
-					sLog.WithContext(ctx).Errorf("  P (Ingress Target): failed to apply ingress: %+v", err)
+					sLog.ErrorfCtx(ctx, "  P (Ingress Target): failed to apply ingress: %+v", err)
 					return ret, err
 				}
 			}
@@ -313,7 +313,7 @@ func (i *IngressTargetProvider) Apply(ctx context.Context, deployment model.Depl
 			if component.Type == "ingress" {
 				err = i.deleteIngress(ctx, component.Name, deployment.Instance.Spec.Scope)
 				if err != nil {
-					sLog.WithContext(ctx).Errorf("  P (Ingress Target): failed to delete ingress: %+v", err)
+					sLog.ErrorfCtx(ctx, "  P (Ingress Target): failed to delete ingress: %+v", err)
 					return ret, err
 				}
 			}
@@ -333,7 +333,7 @@ func (k *IngressTargetProvider) ensureNamespace(ctx context.Context, namespace s
 	)
 	var err error
 	defer utils.CloseSpanWithError(span, &err)
-	sLog.WithContext(ctx).Infof("  P (Ingress Target): ensureNamespace %s", namespace)
+	sLog.InfofCtx(ctx, "  P (Ingress Target): ensureNamespace %s", namespace)
 
 	_, err = k.Client.CoreV1().Namespaces().Get(ctx, namespace, metav1.GetOptions{})
 	if err == nil {
@@ -347,11 +347,11 @@ func (k *IngressTargetProvider) ensureNamespace(ctx context.Context, namespace s
 			},
 		}, metav1.CreateOptions{})
 		if err != nil && !kerrors.IsAlreadyExists(err) {
-			sLog.WithContext(ctx).Errorf("  P (Ingress Target): failed to create namespace: %+v", err)
+			sLog.ErrorfCtx(ctx, "  P (Ingress Target): failed to create namespace: %+v", err)
 			return err
 		}
 	} else {
-		sLog.WithContext(ctx).Errorf("  P (Ingress Target): failed to get namespace: %+v", err)
+		sLog.ErrorfCtx(ctx, "  P (Ingress Target): failed to get namespace: %+v", err)
 		return err
 	}
 
@@ -393,12 +393,12 @@ func (i *IngressTargetProvider) deleteIngress(ctx context.Context, name string, 
 	)
 	var err error
 	defer utils.CloseSpanWithError(span, &err)
-	sLog.WithContext(ctx).Infof("  P (Ingress Target): deleteIngress name %s, namespace %s", name, namespace)
+	sLog.InfofCtx(ctx, "  P (Ingress Target): deleteIngress name %s, namespace %s", name, namespace)
 
 	err = i.Client.NetworkingV1().Ingresses(namespace).Delete(ctx, name, metav1.DeleteOptions{})
 	if err != nil {
 		if !kerrors.IsNotFound(err) {
-			sLog.WithContext(ctx).Errorf("  P (Ingress Target): failed to delete ingress: %+v", err)
+			sLog.ErrorfCtx(ctx, "  P (Ingress Target): failed to delete ingress: %+v", err)
 			return err
 		}
 	}
@@ -416,20 +416,20 @@ func (i *IngressTargetProvider) applyIngress(ctx context.Context, ingress *netwo
 	)
 	var err error
 	defer utils.CloseSpanWithError(span, &err)
-	sLog.WithContext(ctx).Infof("  P (Ingress Target): applyIngress namespace %s, name %s", namespace, ingress.Name)
+	sLog.InfofCtx(ctx, "  P (Ingress Target): applyIngress namespace %s, name %s", namespace, ingress.Name)
 
 	existingIngress, err := i.Client.NetworkingV1().Ingresses(namespace).Get(ctx, ingress.Name, metav1.GetOptions{})
 	if err != nil {
 		if kerrors.IsNotFound(err) {
-			sLog.WithContext(ctx).Infof("  P (Ingress Target): resource not found: %v", err)
+			sLog.InfofCtx(ctx, "  P (Ingress Target): resource not found: %v", err)
 			_, err = i.Client.NetworkingV1().Ingresses(namespace).Create(ctx, ingress, metav1.CreateOptions{})
 			if err != nil {
-				sLog.WithContext(ctx).Errorf("  P (Ingress Target): failed to create ingress: %+v", err)
+				sLog.ErrorfCtx(ctx, "  P (Ingress Target): failed to create ingress: %+v", err)
 				return err
 			}
 			return nil
 		}
-		sLog.WithContext(ctx).Errorf("  P (Ingress Target): failed to read object: %+v", err)
+		sLog.ErrorfCtx(ctx, "  P (Ingress Target): failed to read object: %+v", err)
 		return err
 	}
 
@@ -439,7 +439,7 @@ func (i *IngressTargetProvider) applyIngress(ctx context.Context, ingress *netwo
 	}
 	_, err = i.Client.NetworkingV1().Ingresses(namespace).Update(ctx, existingIngress, metav1.UpdateOptions{})
 	if err != nil {
-		sLog.WithContext(ctx).Errorf("  P (Ingress Target): failed to update ingress: %+v", err)
+		sLog.ErrorfCtx(ctx, "  P (Ingress Target): failed to update ingress: %+v", err)
 		return err
 	}
 	return nil

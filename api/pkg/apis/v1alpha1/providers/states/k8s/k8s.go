@@ -182,7 +182,7 @@ func (s *K8sStateProvider) Upsert(ctx context.Context, entry states.UpsertReques
 	if namespace == "" {
 		namespace = "default"
 	}
-	sLog.WithContext(ctx).Infof("  P (K8s State): upsert state %s in namespace %s", entry.Value.ID, namespace)
+	sLog.InfofCtx(ctx, "  P (K8s State): upsert state %s in namespace %s", entry.Value.ID, namespace)
 
 	resourceId := schema.GroupVersionResource{
 		Group:    group,
@@ -326,7 +326,7 @@ func (s *K8sStateProvider) List(ctx context.Context, request states.ListRequest)
 	version := model.ReadPropertyCompat(request.Metadata, "version", nil)
 	resource := model.ReadPropertyCompat(request.Metadata, "resource", nil)
 
-	sLog.WithContext(ctx).Infof("  P (K8s State): list state for %s.%s in namespace %s", resource, group, namespace)
+	sLog.InfofCtx(ctx, "  P (K8s State): list state for %s.%s in namespace %s", resource, group, namespace)
 
 	var namespaces []string
 	if namespace == "" {
@@ -446,7 +446,7 @@ func (s *K8sStateProvider) Delete(ctx context.Context, request states.DeleteRequ
 	if namespace == "" {
 		namespace = "default"
 	}
-	sLog.WithContext(ctx).Infof("  P (K8s State): delete state %s in namespace %s", request.ID, namespace)
+	sLog.InfofCtx(ctx, "  P (K8s State): delete state %s in namespace %s", request.ID, namespace)
 
 	if request.ID == "" {
 		err := v1alpha2.NewCOAError(nil, "found invalid request ID", v1alpha2.BadRequest)
@@ -477,7 +477,7 @@ func (s *K8sStateProvider) Get(ctx context.Context, request states.GetRequest) (
 		namespace = "default"
 	}
 
-	sLog.WithContext(ctx).Infof("  P (K8s State): get state %s in namespace %s", request.ID, namespace)
+	sLog.InfofCtx(ctx, "  P (K8s State): get state %s in namespace %s", request.ID, namespace)
 
 	resourceId := schema.GroupVersionResource{
 		Group:    group,

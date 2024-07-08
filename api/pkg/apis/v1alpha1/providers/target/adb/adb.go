@@ -92,10 +92,10 @@ func (i *AdbProvider) Get(ctx context.Context, deployment model.DeploymentSpec, 
 
 	if deployment.Instance.Spec == nil {
 		err = errors.New("deployment instance spec is nil")
-		aLog.WithContext(ctx).Errorf("  P (Android ADB): failed to get deployment, error: %+v", err)
+		aLog.ErrorfCtx(ctx, "  P (Android ADB): failed to get deployment, error: %+v", err)
 		return nil, err
 	}
-	aLog.WithContext(ctx).Infof("  P (Android ADB): getting artifacts: %s - %s", deployment.Instance.Spec.Scope, deployment.Instance.ObjectMeta.Name)
+	aLog.InfofCtx(ctx, "  P (Android ADB): getting artifacts: %s - %s", deployment.Instance.Spec.Scope, deployment.Instance.ObjectMeta.Name)
 
 	ret := make([]model.ComponentSpec, 0)
 
@@ -113,7 +113,7 @@ func (i *AdbProvider) Get(ctx context.Context, deployment model.DeploymentSpec, 
 			out, err = exec.Command("adb", params...).Output()
 
 			if err != nil {
-				aLog.WithContext(ctx).Errorf("  P (Android ADB): failed to get application %+v, error: %+v", p, err)
+				aLog.ErrorfCtx(ctx, "  P (Android ADB): failed to get application %+v, error: %+v", p, err)
 				return nil, err
 			}
 			str := string(out)
@@ -138,13 +138,13 @@ func (i *AdbProvider) Apply(ctx context.Context, deployment model.DeploymentSpec
 	var err error = nil
 	defer observ_utils.CloseSpanWithError(span, &err)
 
-	aLog.WithContext(ctx).Infof("  P (Android ADB Provider): applying artifacts: %s - %s", deployment.Instance.Spec.Scope, deployment.Instance.ObjectMeta.Name)
+	aLog.InfofCtx(ctx, "  P (Android ADB Provider): applying artifacts: %s - %s", deployment.Instance.Spec.Scope, deployment.Instance.ObjectMeta.Name)
 
 	components := step.GetComponents()
 
 	err = i.GetValidationRule(ctx).Validate(components)
 	if err != nil {
-		aLog.WithContext(ctx).Errorf("  P (Android ADB Provider): failed to validate components, error: %v", err)
+		aLog.ErrorfCtx(ctx, "  P (Android ADB Provider): failed to validate components, error: %v", err)
 		return nil, err
 	}
 	if isDryRun {
@@ -164,7 +164,7 @@ func (i *AdbProvider) Apply(ctx context.Context, deployment model.DeploymentSpec
 						cmd := exec.Command("adb", params...)
 						err = cmd.Run()
 						if err != nil {
-							aLog.WithContext(ctx).Errorf("  P (Android ADB): failed to install application %+v, error: %+v", p, err)
+							aLog.ErrorfCtx(ctx, "  P (Android ADB): failed to install application %+v, error: %+v", p, err)
 							ret[component.Name] = model.ComponentResultSpec{
 								Status:  v1alpha2.UpdateFailed,
 								Message: err.Error(),
@@ -188,7 +188,7 @@ func (i *AdbProvider) Apply(ctx context.Context, deployment model.DeploymentSpec
 					cmd := exec.Command("adb", params...)
 					err = cmd.Run()
 					if err != nil {
-						aLog.WithContext(ctx).Errorf("  P (Android ADB): failed to uninstall application %+v, error: %+v", p, err)
+						aLog.ErrorfCtx(ctx, "  P (Android ADB): failed to uninstall application %+v, error: %+v", p, err)
 						ret[component.Name] = model.ComponentResultSpec{
 							Status:  v1alpha2.DeleteFailed,
 							Message: err.Error(),

@@ -93,7 +93,7 @@ func (i *StagingTargetProvider) Get(ctx context.Context, deployment model.Deploy
 	ctx, span := observability.StartSpan("Staging Target Provider", ctx, &map[string]string{
 		"method": "Get",
 	})
-	sLog.WithContext(ctx).Infof("  P (Staging Target): getting artifacts: %s - %s", deployment.Instance.Spec.Scope, deployment.Instance.ObjectMeta.Name)
+	sLog.InfofCtx(ctx, "  P (Staging Target): getting artifacts: %s - %s", deployment.Instance.Spec.Scope, deployment.Instance.ObjectMeta.Name)
 
 	var err error
 	defer observ_utils.CloseSpanWithError(span, &err)
@@ -111,10 +111,10 @@ func (i *StagingTargetProvider) Get(ctx context.Context, deployment model.Deploy
 
 	if err != nil {
 		if v1alpha2.IsNotFound(err) {
-			sLog.WithContext(ctx).Infof("  P (Staging Target): no staged artifact found: %v", err)
+			sLog.InfofCtx(ctx, "  P (Staging Target): no staged artifact found: %v", err)
 			return nil, nil
 		}
-		sLog.WithContext(ctx).Errorf("  P (Staging Target): failed to get staged artifact: %v", err)
+		sLog.ErrorfCtx(ctx, "  P (Staging Target): failed to get staged artifact: %v", err)
 		return nil, err
 	}
 
@@ -123,7 +123,7 @@ func (i *StagingTargetProvider) Get(ctx context.Context, deployment model.Deploy
 		jData, _ := json.Marshal(spec)
 		err = json.Unmarshal(jData, &components)
 		if err != nil {
-			sLog.WithContext(ctx).Errorf("  P (Staging Target): failed to get staged artifact: %v", err)
+			sLog.ErrorfCtx(ctx, "  P (Staging Target): failed to get staged artifact: %v", err)
 			return nil, err
 		}
 		ret := make([]model.ComponentSpec, len(references))
@@ -143,14 +143,14 @@ func (i *StagingTargetProvider) Apply(ctx context.Context, deployment model.Depl
 	ctx, span := observability.StartSpan("Staging Target Provider", ctx, &map[string]string{
 		"method": "Apply",
 	})
-	sLog.WithContext(ctx).Infof("  P (Staging Target): applying artifacts: %s - %s", deployment.Instance.Spec.Scope, deployment.Instance.ObjectMeta.Name)
+	sLog.InfofCtx(ctx, "  P (Staging Target): applying artifacts: %s - %s", deployment.Instance.Spec.Scope, deployment.Instance.ObjectMeta.Name)
 
 	var err error
 	defer observ_utils.CloseSpanWithError(span, &err)
 
 	err = i.GetValidationRule(ctx).Validate([]model.ComponentSpec{}) //this provider doesn't handle any components	TODO: is this right?
 	if err != nil {
-		sLog.WithContext(ctx).Errorf("  P (Staging Target): failed to validate components: %v", err)
+		sLog.ErrorfCtx(ctx, "  P (Staging Target): failed to validate components: %v", err)
 		return nil, err
 	}
 	if isDryRun {
@@ -174,7 +174,7 @@ func (i *StagingTargetProvider) Apply(ctx context.Context, deployment model.Depl
 		i.Context.SiteInfo.CurrentSite.Password)
 
 	if err != nil && !v1alpha2.IsNotFound(err) {
-		sLog.WithContext(ctx).Errorf("  P (Staging Target): failed to get staged artifact: %v", err)
+		sLog.ErrorfCtx(ctx, "  P (Staging Target): failed to get staged artifact: %v", err)
 		return ret, err
 	}
 
@@ -204,7 +204,7 @@ func (i *StagingTargetProvider) Apply(ctx context.Context, deployment model.Depl
 		jData, _ := json.Marshal(v)
 		err = json.Unmarshal(jData, &existing)
 		if err != nil {
-			sLog.WithContext(ctx).Errorf("  P (Staging Target): failed to unmarshall catalog components: %v", err)
+			sLog.ErrorfCtx(ctx, "  P (Staging Target): failed to unmarshall catalog components: %v", err)
 			return ret, err
 		}
 	}
@@ -214,7 +214,7 @@ func (i *StagingTargetProvider) Apply(ctx context.Context, deployment model.Depl
 		jData, _ := json.Marshal(v)
 		err = json.Unmarshal(jData, &deleted)
 		if err != nil {
-			sLog.WithContext(ctx).Errorf("  P (Staging Target): failed to get staged artifact: %v", err)
+			sLog.ErrorfCtx(ctx, "  P (Staging Target): failed to get staged artifact: %v", err)
 			return ret, err
 		}
 	}
@@ -279,7 +279,7 @@ func (i *StagingTargetProvider) Apply(ctx context.Context, deployment model.Depl
 		i.Context.SiteInfo.CurrentSite.Username,
 		i.Context.SiteInfo.CurrentSite.Password)
 	if err != nil {
-		sLog.WithContext(ctx).Errorf("  P (Staging Target): failed to upsert staged artifact: %v", err)
+		sLog.ErrorfCtx(ctx, "  P (Staging Target): failed to upsert staged artifact: %v", err)
 	}
 	return ret, err
 }

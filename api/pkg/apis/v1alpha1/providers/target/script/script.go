@@ -191,7 +191,7 @@ func (i *ScriptProvider) Get(ctx context.Context, deployment model.DeploymentSpe
 	var err error = nil
 	defer observ_utils.CloseSpanWithError(span, &err)
 
-	sLog.WithContext(ctx).Infof("  P (Script Target): getting artifacts: %s - %s", deployment.Instance.Spec.Scope, deployment.Instance.ObjectMeta.Name)
+	sLog.InfofCtx(ctx, "  P (Script Target): getting artifacts: %s - %s", deployment.Instance.Spec.Scope, deployment.Instance.ObjectMeta.Name)
 
 	id := uuid.New().String()
 	input := id + ".json"
@@ -218,10 +218,10 @@ func (i *ScriptProvider) Get(ctx context.Context, deployment model.DeploymentSpe
 	}
 
 	o, err := i.runCommand(scriptAbs, abs, abs_ref)
-	sLog.WithContext(ctx).Debugf("  P (Script Target): get script output: %s", string(o))
+	sLog.DebugfCtx(ctx, "  P (Script Target): get script output: %s", string(o))
 
 	if err != nil {
-		sLog.WithContext(ctx).Errorf("  P (Script Target): failed to run get script: %+v", err)
+		sLog.ErrorfCtx(ctx, "  P (Script Target): failed to run get script: %+v", err)
 		return nil, err
 	}
 
@@ -230,7 +230,7 @@ func (i *ScriptProvider) Get(ctx context.Context, deployment model.DeploymentSpe
 	data, err := os.ReadFile(outputStaging)
 
 	if err != nil {
-		sLog.WithContext(ctx).Errorf("  P (Script Target): failed to read output file: %+v", err)
+		sLog.ErrorfCtx(ctx, "  P (Script Target): failed to read output file: %+v", err)
 		return nil, err
 	}
 
@@ -241,7 +241,7 @@ func (i *ScriptProvider) Get(ctx context.Context, deployment model.DeploymentSpe
 	ret := make([]model.ComponentSpec, 0)
 	err = json.Unmarshal(data, &ret)
 	if err != nil {
-		sLog.WithContext(ctx).Errorf("  P (Script Target): failed to parse get script output (expected []ComponentSpec): %+v", err)
+		sLog.ErrorfCtx(ctx, "  P (Script Target): failed to parse get script output (expected []ComponentSpec): %+v", err)
 		return nil, err
 	}
 	return ret, nil
@@ -313,7 +313,7 @@ func (i *ScriptProvider) Apply(ctx context.Context, deployment model.DeploymentS
 	})
 	var err error = nil
 	defer observ_utils.CloseSpanWithError(span, &err)
-	sLog.WithContext(ctx).Infof("  P (Script Target): applying artifacts: %s - %s", deployment.Instance.Spec.Scope, deployment.Instance.ObjectMeta.Name)
+	sLog.InfofCtx(ctx, "  P (Script Target): applying artifacts: %s - %s", deployment.Instance.Spec.Scope, deployment.Instance.ObjectMeta.Name)
 
 	functionName := observ_utils.GetFunctionName()
 	err = i.GetValidationRule(ctx).Validate([]model.ComponentSpec{}) //this provider doesn't handle any components	TODO: is this right?
@@ -339,7 +339,7 @@ func (i *ScriptProvider) Apply(ctx context.Context, deployment model.DeploymentS
 		var retU map[string]model.ComponentResultSpec
 		retU, err = i.runScriptOnComponents(deployment, components, false)
 		if err != nil {
-			sLog.WithContext(ctx).Errorf("  P (Script Target): failed to run apply script: %+v", err)
+			sLog.ErrorfCtx(ctx, "  P (Script Target): failed to run apply script: %+v", err)
 			providerOperationMetrics.ProviderOperationErrors(
 				script,
 				functionName,
@@ -367,7 +367,7 @@ func (i *ScriptProvider) Apply(ctx context.Context, deployment model.DeploymentS
 		var retU map[string]model.ComponentResultSpec
 		retU, err = i.runScriptOnComponents(deployment, components, true)
 		if err != nil {
-			sLog.WithContext(ctx).Errorf("  P (Script Target): failed to run remove script: %+v", err)
+			sLog.ErrorfCtx(ctx, "  P (Script Target): failed to run remove script: %+v", err)
 			providerOperationMetrics.ProviderOperationErrors(
 				script,
 				functionName,

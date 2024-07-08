@@ -62,12 +62,29 @@ type Logger interface {
 	SetAppID(id string)
 	// SetOutputLevel sets log output level
 	SetOutputLevel(outputLevel LogLevel)
-
 	// WithLogType specify the log_type field in log. Default value is LogTypeLog
 	WithLogType(logType string) Logger
 
-	// WithContext add a context to the log entry.
-	WithContext(ctx context.Context) Logger
+	// Info logs a message at level Info.
+	InfoCtx(ctx context.Context, args ...interface{})
+	// Infof logs a message at level Info.
+	InfofCtx(ctx context.Context, format string, args ...interface{})
+	// Debug logs a message at level Debug.
+	DebugCtx(ctx context.Context, args ...interface{})
+	// Debugf logs a message at level Debug.
+	DebugfCtx(ctx context.Context, format string, args ...interface{})
+	// Warn logs a message at level Warn.
+	WarnCtx(ctx context.Context, args ...interface{})
+	// Warnf logs a message at level Warn.
+	WarnfCtx(ctx context.Context, format string, args ...interface{})
+	// Error logs a message at level Error.
+	ErrorCtx(ctx context.Context, args ...interface{})
+	// Errorf logs a message at level Error.
+	ErrorfCtx(ctx context.Context, format string, args ...interface{})
+	// Fatal logs a message at level Fatal then the process will exit with status set to 1.
+	FatalCtx(ctx context.Context, args ...interface{})
+	// Fatalf logs a message at level Fatal then the process will exit with status set to 1.
+	FatalfCtx(ctx context.Context, format string, args ...interface{})
 
 	// Info logs a message at level Info.
 	Info(args ...interface{})

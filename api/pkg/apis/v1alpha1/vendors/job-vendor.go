@@ -103,20 +103,20 @@ func (c *JobVendor) onHello(request v1alpha2.COARequest) v1alpha2.COAResponse {
 	})
 	defer span.End()
 
-	jLog.WithContext(ctx).Infof("V (Job): onHello, method: %s", string(request.Method))
+	jLog.InfofCtx(ctx, "V (Job): onHello, method: %s", string(request.Method))
 	switch request.Method {
 	case fasthttp.MethodPost:
 		var activationData v1alpha2.ActivationData
 		err := json.Unmarshal(request.Body, &activationData)
 		if err != nil {
-			jLog.WithContext(ctx).Errorf("V (Job): onHello failed - %s", err.Error())
+			jLog.ErrorfCtx(ctx, "V (Job): onHello failed - %s", err.Error())
 			return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 				State:       v1alpha2.BadRequest,
 				Body:        []byte("{\"result\":\"400 - bad request\"}"),
 				ContentType: "application/json",
 			})
 		}
-		jLog.WithContext(ctx).Infof("V (Job): onHello, activationData: %v", activationData)
+		jLog.InfofCtx(ctx, "V (Job): onHello, activationData: %v", activationData)
 		c.Vendor.Context.Publish("activation", v1alpha2.Event{
 			Body: activationData,
 		})
@@ -124,7 +124,7 @@ func (c *JobVendor) onHello(request v1alpha2.COARequest) v1alpha2.COAResponse {
 			State: v1alpha2.OK,
 		})
 	}
-	jLog.WithContext(ctx).Error("V (Job): onHello failed - 405 method not allowed")
+	jLog.ErrorCtx(ctx, "V (Job): onHello failed - 405 method not allowed")
 	resp := v1alpha2.COAResponse{
 		State:       v1alpha2.MethodNotAllowed,
 		Body:        []byte("{\"result\":\"405 - method not allowed\"}"),

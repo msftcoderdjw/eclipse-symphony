@@ -107,7 +107,7 @@ func (i *MaterializeStageProvider) Process(ctx context.Context, mgrContext conte
 	})
 	var err error = nil
 	defer observ_utils.CloseSpanWithError(span, &err)
-	mLog.WithContext(ctx).Info("  P (Materialize Processor): processing inputs")
+	mLog.InfoCtx(ctx, "  P (Materialize Processor): processing inputs")
 
 	outputs := make(map[string]interface{})
 

@@ -9,6 +9,7 @@ package logger
 import (
 	"context"
 	"os"
+	"sync"
 	"time"
 
 	"github.com/eclipse-symphony/symphony/coa/pkg/logger/hooks"
@@ -19,8 +20,13 @@ import (
 type daprLogger struct {
 	// name is the name of logger that is published to log as a scope
 	name string
-	// loger is the instance of logrus logger
-	logger *logrus.Entry
+	// logger is the logrus logger
+	logger *logrus.Logger
+
+	// sharedFieldsLock is the mutex for sharedFields
+	sharedFieldsLock sync.Mutex
+	// sharedFields is the fields that are shared among loggers
+	sharedFields logrus.Fields
 }
 
 var DaprVersion string = "unknown"
@@ -31,11 +37,12 @@ func newDaprLogger(name string) *daprLogger {
 	newLogger.SetOutput(os.Stdout)
 
 	dl := &daprLogger{
-		name: name,
-		logger: newLogger.WithFields(logrus.Fields{
+		name:   name,
+		logger: newLogger,
+		sharedFields: logrus.Fields{
 			logFieldScope: name,
 			logFieldType:  LogTypeLog,
-		}),
+		},
 	}
 
 	dl.EnableJSONOutput(defaultJSONOutput)
@@ -56,12 +63,14 @@ func (l *daprLogger) EnableJSONOutput(enabled bool) {
 	}
 
 	hostname, _ := os.Hostname()
-	l.logger.Data = logrus.Fields{
-		logFieldScope:    l.logger.Data[logFieldScope],
+	l.sharedFieldsLock.Lock()
+	l.sharedFields = logrus.Fields{
+		logFieldScope:    l.sharedFields[logFieldScope],
 		logFieldType:     LogTypeLog,
 		logFieldInstance: hostname,
 		logFieldDaprVer:  DaprVersion,
 	}
+	l.sharedFieldsLock.Unlock()
 
 	if enabled {
 		formatter = &logrus.JSONFormatter{
@@ -75,13 +84,15 @@ func (l *daprLogger) EnableJSONOutput(enabled bool) {
 		}
 	}
 
-	l.logger.Logger.SetFormatter(formatter)
-	l.logger.Logger.SetReportCaller(true)
+	l.logger.SetFormatter(formatter)
+	l.logger.SetReportCaller(true)
 }
 
 // SetAppID sets app_id field in the log. Default value is empty string
 func (l *daprLogger) SetAppID(id string) {
-	l.logger = l.logger.WithField(logFieldAppID, id)
+	l.sharedFieldsLock.Lock()
+	defer l.sharedFieldsLock.Unlock()
+	l.sharedFields[logFieldAppID] = id
 }
 
 func toLogrusLevel(lvl LogLevel) logrus.Level {
@@ -92,73 +103,119 @@ func toLogrusLevel(lvl LogLevel) logrus.Level {
 
 // SetOutputLevel sets log output level
 func (l *daprLogger) SetOutputLevel(outputLevel LogLevel) {
-	l.logger.Logger.SetLevel(toLogrusLevel(outputLevel))
+	l.logger.SetLevel(toLogrusLevel(outputLevel))
 }
 
 // WithLogType specify the log_type field in log. Default value is LogTypeLog
 func (l *daprLogger) WithLogType(logType string) Logger {
-	return &daprLogger{
-		name:   l.name,
-		logger: l.logger.WithField(logFieldType, logType),
-	}
+	l.sharedFieldsLock.Lock()
+	defer l.sharedFieldsLock.Unlock()
+	l.sharedFields[logFieldType] = logType
+	return l
 }
 
-func (l *daprLogger) WithContext(ctx context.Context) Logger {
-	if l.logger == nil {
-		l.logger = newDaprLogger(l.name).logger.WithContext(ctx)
-		return l
-	} else {
-		l.logger = l.logger.WithContext(ctx)
-		return l
-	}
+func (l *daprLogger) GetSharedFields() logrus.Fields {
+	l.sharedFieldsLock.Lock()
+	defer l.sharedFieldsLock.Unlock()
+	return l.sharedFields
+}
+
+// Info logs a message at level Info.
+func (l *daprLogger) InfoCtx(ctx context.Context, args ...interface{}) {
+	l.logger.WithContext(ctx).WithFields(l.GetSharedFields()).Log(logrus.InfoLevel, args...)
+}
+
+// Infof logs a message at level Info.
+func (l *daprLogger) InfofCtx(ctx context.Context, format string, args ...interface{}) {
+	l.logger.WithContext(ctx).WithFields(l.GetSharedFields()).Logf(logrus.InfoLevel, format, args...)
+}
+
+// Debug logs a message at level Debug.
+func (l *daprLogger) DebugCtx(ctx context.Context, args ...interface{}) {
+	l.logger.WithContext(ctx).WithFields(l.GetSharedFields()).Log(logrus.DebugLevel, args...)
+}
+
+// Debugf logs a message at level Debug.
+func (l *daprLogger) DebugfCtx(ctx context.Context, format string, args ...interface{}) {
+	l.logger.WithContext(ctx).WithFields(l.GetSharedFields()).Logf(logrus.DebugLevel, format, args...)
+}
+
+// Warn logs a message at level Warn.
+func (l *daprLogger) WarnCtx(ctx context.Context, args ...interface{}) {
+	l.logger.WithContext(ctx).WithFields(l.GetSharedFields()).Log(logrus.WarnLevel, args...)
+}
+
+// Warnf logs a message at level Warn.
+func (l *daprLogger) WarnfCtx(ctx context.Context, format string, args ...interface{}) {
+	l.logger.WithContext(ctx).WithFields(l.GetSharedFields()).Logf(logrus.WarnLevel, format, args...)
+}
+
+// Error logs a message at level Error.
+func (l *daprLogger) ErrorCtx(ctx context.Context, args ...interface{}) {
+	l.logger.WithContext(ctx).WithFields(l.GetSharedFields()).Log(logrus.ErrorLevel, args...)
+}
+
+// Errorf logs a message at level Error.
+func (l *daprLogger) ErrorfCtx(ctx context.Context, format string, args ...interface{}) {
+	l.logger.WithContext(ctx).WithFields(l.GetSharedFields()).Logf(logrus.ErrorLevel, format, args...)
+}
+
+// Fatal logs a message at level Fatal then the process will exit with status set to 1.
+func (l *daprLogger) FatalCtx(ctx context.Context, args ...interface{}) {
+	l.logger.WithContext(ctx).WithFields(l.GetSharedFields()).Fatal(args...)
+}
+
+// Fatalf logs a message at level Fatal then the process will exit with status set to 1.
+func (l *daprLogger) FatalfCtx(ctx context.Context, format string, args ...interface{}) {
+	l.logger.WithContext(ctx).WithFields(l.GetSharedFields()).Fatalf(format, args...)
 }
 
 // Info logs a message at level Info.
 func (l *daprLogger) Info(args ...interface{}) {
-	l.logger.Log(logrus.InfoLevel, args...)
+	l.logger.WithFields(l.GetSharedFields()).Log(logrus.InfoLevel, args...)
 }
 
 // Infof logs a message at level Info.
 func (l *daprLogger) Infof(format string, args ...interface{}) {
-	l.logger.Logf(logrus.InfoLevel, format, args...)
+	l.logger.WithFields(l.GetSharedFields()).Logf(logrus.InfoLevel, format, args...)
 }
 
 // Debug logs a message at level Debug.
 func (l *daprLogger) Debug(args ...interface{}) {
-	l.logger.Log(logrus.DebugLevel, args...)
+	l.logger.WithFields(l.GetSharedFields()).Log(logrus.DebugLevel, args...)
 }
 
 // Debugf logs a message at level Debug.
 func (l *daprLogger) Debugf(format string, args ...interface{}) {
-	l.logger.Logf(logrus.DebugLevel, format, args...)
+	l.logger.WithFields(l.GetSharedFields()).Logf(logrus.DebugLevel, format, args...)
 }
 
 // Warn logs a message at level Warn.
 func (l *daprLogger) Warn(args ...interface{}) {
-	l.logger.Log(logrus.WarnLevel, args...)
+	l.logger.WithFields(l.GetSharedFields()).Log(logrus.WarnLevel, args...)
 }
 
 // Warnf logs a message at level Warn.
 func (l *daprLogger) Warnf(format string, args ...interface{}) {
-	l.logger.Logf(logrus.WarnLevel, format, args...)
+	l.logger.WithFields(l.GetSharedFields()).Logf(logrus.WarnLevel, format, args...)
 }
 
 // Error logs a message at level Error.
 func (l *daprLogger) Error(args ...interface{}) {
-	l.logger.Log(logrus.ErrorLevel, args...)
+	l.logger.WithFields(l.GetSharedFields()).Log(logrus.ErrorLevel, args...)
 }
 
 // Errorf logs a message at level Error.
 func (l *daprLogger) Errorf(format string, args ...interface{}) {
-	l.logger.Logf(logrus.ErrorLevel, format, args...)
+	l.logger.WithFields(l.GetSharedFields()).Logf(logrus.ErrorLevel, format, args...)
 }
 
 // Fatal logs a message at level Fatal then the process will exit with status set to 1.
 func (l *daprLogger) Fatal(args ...interface{}) {
-	l.logger.Fatal(args...)
+	l.logger.WithFields(l.GetSharedFields()).Fatal(args...)
 }
 
 // Fatalf logs a message at level Fatal then the process will exit with status set to 1.
 func (l *daprLogger) Fatalf(format string, args ...interface{}) {
-	l.logger.Fatalf(format, args...)
+	l.logger.WithFields(l.GetSharedFields()).Fatalf(format, args...)
 }

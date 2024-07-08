@@ -90,7 +90,7 @@ func (i *HttpTargetProvider) Get(ctx context.Context, deployment model.Deploymen
 	var err error = nil
 	defer observ_utils.CloseSpanWithError(span, &err)
 
-	sLog.WithContext(ctx).Infof("  P (HTTP Target): getting artifacts: %s - %s", deployment.Instance.Spec.Scope, deployment.Instance.ObjectMeta.Name)
+	sLog.InfofCtx(ctx, "  P (HTTP Target): getting artifacts: %s - %s", deployment.Instance.Spec.Scope, deployment.Instance.ObjectMeta.Name)
 
 	// This provider doesn't remember what it does, so it always return nil when asked
 	return nil, nil
@@ -103,7 +103,7 @@ func (i *HttpTargetProvider) Apply(ctx context.Context, deployment model.Deploym
 	var err error = nil
 	defer observ_utils.CloseSpanWithError(span, &err)
 
-	sLog.WithContext(ctx).Infof("  P (HTTP Target): applying artifacts: %s - %s", deployment.Instance.Spec.Scope, deployment.Instance.ObjectMeta.Name)
+	sLog.InfofCtx(ctx, "  P (HTTP Target): applying artifacts: %s - %s", deployment.Instance.Spec.Scope, deployment.Instance.ObjectMeta.Name)
 
 	injections := &model.ValueInjections{
 		InstanceId: deployment.Instance.ObjectMeta.Name,
@@ -114,7 +114,7 @@ func (i *HttpTargetProvider) Apply(ctx context.Context, deployment model.Deploym
 	components := step.GetComponents()
 	err = i.GetValidationRule(ctx).Validate(components)
 	if err != nil {
-		sLog.WithContext(ctx).Errorf("  P (HTTP Target): failed to validate components: %+v", err)
+		sLog.ErrorfCtx(ctx, "  P (HTTP Target): failed to validate components: %+v", err)
 		return nil, err
 	}
 	if isDryRun {
@@ -135,7 +135,7 @@ func (i *HttpTargetProvider) Apply(ctx context.Context, deployment model.Deploym
 					Status:  v1alpha2.UpdateFailed,
 					Message: err.Error(),
 				}
-				sLog.WithContext(ctx).Errorf("  P (HTTP Target): %v", err)
+				sLog.ErrorfCtx(ctx, "  P (HTTP Target): %v", err)
 				return ret, err
 			}
 			if method == "" {
@@ -149,7 +149,7 @@ func (i *HttpTargetProvider) Apply(ctx context.Context, deployment model.Deploym
 					Status:  v1alpha2.UpdateFailed,
 					Message: err.Error(),
 				}
-				sLog.WithContext(ctx).Errorf("  P (HTTP Target): %v", err)
+				sLog.ErrorfCtx(ctx, "  P (HTTP Target): %v", err)
 				return ret, err
 			}
 			request.Header.Set("Content-Type", "application/json; charset=UTF-8")
@@ -162,7 +162,7 @@ func (i *HttpTargetProvider) Apply(ctx context.Context, deployment model.Deploym
 					Status:  v1alpha2.UpdateFailed,
 					Message: err.Error(),
 				}
-				sLog.WithContext(ctx).Errorf("  P (HTTP Target): %v", err)
+				sLog.ErrorfCtx(ctx, "  P (HTTP Target): %v", err)
 				return ret, err
 			}
 			if resp.StatusCode != http.StatusOK {
@@ -178,7 +178,7 @@ func (i *HttpTargetProvider) Apply(ctx context.Context, deployment model.Deploym
 					Message: message,
 				}
 				err = errors.New("HTTP request didn't respond 200 OK")
-				sLog.WithContext(ctx).Errorf("  P (HTTP Target): %v", err)
+				sLog.ErrorfCtx(ctx, "  P (HTTP Target): %v", err)
 				return ret, err
 			}
 

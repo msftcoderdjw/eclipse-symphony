@@ -75,7 +75,7 @@ func (c *SkillsVendor) onSkills(request v1alpha2.COARequest) v1alpha2.COARespons
 		"method": "onSkills",
 	})
 	defer span.End()
-	kLog.WithContext(pCtx).Infof("V (Skills): onSkills, method: %s", request.Method)
+	kLog.InfofCtx(pCtx, "V (Skills): onSkills, method: %s", request.Method)
 
 	namespace, namespaceSupplied := request.Parameters["namespace"]
 	if !namespaceSupplied {
@@ -100,9 +100,9 @@ func (c *SkillsVendor) onSkills(request v1alpha2.COARequest) v1alpha2.COARespons
 		}
 		if err != nil {
 			if isArray {
-				kLog.WithContext(ctx).Errorf(" V (Skills): onSkills failed to ListSpec, err: %v", err)
+				kLog.ErrorfCtx(ctx, " V (Skills): onSkills failed to ListSpec, err: %v", err)
 			} else {
-				kLog.WithContext(ctx).Errorf(" V (Skills): onSkills failed to GetSpec, id: %s, err: %v", id, err)
+				kLog.ErrorfCtx(ctx, " V (Skills): onSkills failed to GetSpec, id: %s, err: %v", id, err)
 			}
 			return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 				State: v1alpha2.InternalError,
@@ -127,7 +127,7 @@ func (c *SkillsVendor) onSkills(request v1alpha2.COARequest) v1alpha2.COARespons
 
 		err := json.Unmarshal(request.Body, &skill)
 		if err != nil {
-			kLog.WithContext(ctx).Errorf("V (Skills): onSkills failed to pause skill from request body, error: %v", err)
+			kLog.ErrorfCtx(ctx, "V (Skills): onSkills failed to pause skill from request body, error: %v", err)
 			return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 				State: v1alpha2.InternalError,
 				Body:  []byte(err.Error()),
@@ -136,7 +136,7 @@ func (c *SkillsVendor) onSkills(request v1alpha2.COARequest) v1alpha2.COARespons
 
 		err = c.SkillsManager.UpsertState(ctx, id, skill)
 		if err != nil {
-			kLog.WithContext(ctx).Errorf("V (Skills): onSkills failed to UpsertSpec, id: %s, error: %v", id, err)
+			kLog.ErrorfCtx(ctx, "V (Skills): onSkills failed to UpsertSpec, id: %s, error: %v", id, err)
 			return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 				State: v1alpha2.InternalError,
 				Body:  []byte(err.Error()),
@@ -150,7 +150,7 @@ func (c *SkillsVendor) onSkills(request v1alpha2.COARequest) v1alpha2.COARespons
 		id := request.Parameters["__name"]
 		err := c.SkillsManager.DeleteState(ctx, id, namespace)
 		if err != nil {
-			kLog.WithContext(ctx).Errorf("V (Skills): onSkills failed to DeleteSpec, id: %s, error: %v", id, err)
+			kLog.ErrorfCtx(ctx, "V (Skills): onSkills failed to DeleteSpec, id: %s, error: %v", id, err)
 			return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 				State: v1alpha2.InternalError,
 				Body:  []byte(err.Error()),
@@ -160,7 +160,7 @@ func (c *SkillsVendor) onSkills(request v1alpha2.COARequest) v1alpha2.COARespons
 			State: v1alpha2.OK,
 		})
 	}
-	kLog.WithContext(pCtx).Error("V (Skills): onSkills returned MethodNotAllowed")
+	kLog.ErrorCtx(pCtx, "V (Skills): onSkills returned MethodNotAllowed")
 	resp := v1alpha2.COAResponse{
 		State:       v1alpha2.MethodNotAllowed,
 		Body:        []byte("{\"result\":\"405 - method not allowed\"}"),

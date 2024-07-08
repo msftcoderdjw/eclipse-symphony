@@ -74,7 +74,7 @@ func (c *CatalogContainersVendor) onCatalogContainers(request v1alpha2.COAReques
 		"method": "onCatalogContainers",
 	})
 	defer span.End()
-	ctLog.WithContext(pCtx).Infof("V (CatalogContainers): onCatalogContainers, method: %s", request.Method)
+	ctLog.InfofCtx(pCtx, "V (CatalogContainers): onCatalogContainers, method: %s", request.Method)
 
 	id := request.Parameters["__name"]
 	namespace, exist := request.Parameters["namespace"]
@@ -82,7 +82,7 @@ func (c *CatalogContainersVendor) onCatalogContainers(request v1alpha2.COAReques
 		namespace = constants.DefaultScope
 	}
 
-	ctLog.WithContext(pCtx).Infof("V (CatalogContainers): onCatalogContainers, method: %s", string(request.Method))
+	ctLog.InfofCtx(pCtx, "V (CatalogContainers): onCatalogContainers, method: %s", string(request.Method))
 	switch request.Method {
 	case fasthttp.MethodGet:
 		ctx, span := observability.StartSpan("onCatalogContainers-GET", pCtx, nil)
@@ -100,7 +100,7 @@ func (c *CatalogContainersVendor) onCatalogContainers(request v1alpha2.COAReques
 			state, err = c.CatalogContainersManager.GetState(ctx, id, namespace)
 		}
 		if err != nil {
-			ctLog.WithContext(ctx).Errorf("V (CatalogContainers): onCatalogContainers failed - %s", err.Error())
+			ctLog.ErrorfCtx(ctx, "V (CatalogContainers): onCatalogContainers failed - %s", err.Error())
 			return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 				State: v1alpha2.InternalError,
 				Body:  []byte(err.Error()),
@@ -128,7 +128,7 @@ func (c *CatalogContainersVendor) onCatalogContainers(request v1alpha2.COAReques
 
 		err := c.CatalogContainersManager.UpsertState(ctx, id, catalog)
 		if err != nil {
-			ctLog.WithContext(ctx).Errorf("V (CatalogContainers): onCatalogContainers failed - %s", err.Error())
+			ctLog.ErrorfCtx(ctx, "V (CatalogContainers): onCatalogContainers failed - %s", err.Error())
 			return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 				State: v1alpha2.InternalError,
 				Body:  []byte(err.Error()),
@@ -142,7 +142,7 @@ func (c *CatalogContainersVendor) onCatalogContainers(request v1alpha2.COAReques
 		ctx, span := observability.StartSpan("onCatalogContainers-DELETE", pCtx, nil)
 		err := c.CatalogContainersManager.DeleteState(ctx, id, namespace)
 		if err != nil {
-			ctLog.WithContext(ctx).Errorf("V (CatalogContainers): onCatalogContainers failed - %s", err.Error())
+			ctLog.ErrorfCtx(ctx, "V (CatalogContainers): onCatalogContainers failed - %s", err.Error())
 			return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 				State: v1alpha2.InternalError,
 				Body:  []byte(err.Error()),
@@ -152,7 +152,7 @@ func (c *CatalogContainersVendor) onCatalogContainers(request v1alpha2.COAReques
 			State: v1alpha2.OK,
 		})
 	}
-	ctLog.WithContext(pCtx).Info("V (CatalogContainers): onCatalogContainers failed - 405 method not allowed")
+	ctLog.InfoCtx(pCtx, "V (CatalogContainers): onCatalogContainers failed - 405 method not allowed")
 	resp := v1alpha2.COAResponse{
 		State:       v1alpha2.MethodNotAllowed,
 		Body:        []byte("{\"result\":\"405 - method not allowed\"}"),

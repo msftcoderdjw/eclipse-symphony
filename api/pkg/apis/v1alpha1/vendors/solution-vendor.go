@@ -86,7 +86,7 @@ func (c *SolutionVendor) onQueue(request v1alpha2.COARequest) v1alpha2.COARespon
 	})
 	defer span.End()
 
-	sLog.WithContext(rContext).Infof("V (Solution): onQueue, method: %s", request.Method)
+	sLog.InfofCtx(rContext, "V (Solution): onQueue, method: %s", request.Method)
 
 	namespace, exist := request.Parameters["namespace"]
 	if !exist {
@@ -99,7 +99,7 @@ func (c *SolutionVendor) onQueue(request v1alpha2.COARequest) v1alpha2.COARespon
 		instance := request.Parameters["instance"]
 
 		if instance == "" {
-			sLog.WithContext(ctx).Error("V (Solution): onQueue failed - 400 instance parameter is not found")
+			sLog.ErrorCtx(ctx, "V (Solution): onQueue failed - 400 instance parameter is not found")
 			return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 				State:       v1alpha2.BadRequest,
 				Body:        []byte("{\"result\":\"400 - instance parameter is not found\"}"),
@@ -109,7 +109,7 @@ func (c *SolutionVendor) onQueue(request v1alpha2.COARequest) v1alpha2.COARespon
 		summary, err := c.SolutionManager.GetSummary(ctx, instance, namespace)
 		data, _ := json.Marshal(summary)
 		if err != nil {
-			sLog.WithContext(ctx).Errorf("V (Solution): onQueue failed - %s", err.Error())
+			sLog.ErrorfCtx(ctx, "V (Solution): onQueue failed - %s", err.Error())
 			if v1alpha2.IsNotFound(err) {
 				return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 					State: v1alpha2.NotFound,
@@ -156,7 +156,7 @@ func (c *SolutionVendor) onQueue(request v1alpha2.COARequest) v1alpha2.COARespon
 		}
 
 		if instance == "" {
-			sLog.WithContext(rContext).Error("V (Solution): onQueue failed - 400 instance parameter is not found")
+			sLog.ErrorCtx(rContext, "V (Solution): onQueue failed - 400 instance parameter is not found")
 			return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 				State:       v1alpha2.BadRequest,
 				Body:        []byte("{\"result\":\"400 - instance parameter is not found\"}"),
@@ -185,7 +185,7 @@ func (c *SolutionVendor) onQueue(request v1alpha2.COARequest) v1alpha2.COARespon
 			ContentType: "application/json",
 		})
 	}
-	sLog.WithContext(rContext).Error("V (Solution): onQueue failed - 405 method not allowed")
+	sLog.ErrorCtx(rContext, "V (Solution): onQueue failed - 405 method not allowed")
 	return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 		State:       v1alpha2.MethodNotAllowed,
 		Body:        []byte("{\"result\":\"405 - method not allowed\"}"),
@@ -198,7 +198,7 @@ func (c *SolutionVendor) onReconcile(request v1alpha2.COARequest) v1alpha2.COARe
 	})
 	defer span.End()
 
-	sLog.WithContext(rContext).Infof("V (Solution): onReconcile, method: %s", request.Method)
+	sLog.InfofCtx(rContext, "V (Solution): onReconcile, method: %s", request.Method)
 	namespace, exist := request.Parameters["namespace"]
 	if !exist {
 		namespace = constants.DefaultScope
@@ -210,7 +210,7 @@ func (c *SolutionVendor) onReconcile(request v1alpha2.COARequest) v1alpha2.COARe
 		var deployment model.DeploymentSpec
 		err := json.Unmarshal(request.Body, &deployment)
 		if err != nil {
-			sLog.WithContext(ctx).Errorf("V (Solution): onReconcile failed POST - unmarshal request %s", err.Error())
+			sLog.ErrorfCtx(ctx, "V (Solution): onReconcile failed POST - unmarshal request %s", err.Error())
 			return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 				State: v1alpha2.InternalError,
 				Body:  []byte(err.Error()),
@@ -226,7 +226,7 @@ func (c *SolutionVendor) onReconcile(request v1alpha2.COARequest) v1alpha2.COARe
 		summary, err := c.SolutionManager.Reconcile(ctx, deployment, delete == "true", namespace, targetName)
 		data, _ := json.Marshal(summary)
 		if err != nil {
-			sLog.WithContext(ctx).Errorf("V (Solution): onReconcile failed POST - reconcile %s", err.Error())
+			sLog.ErrorfCtx(ctx, "V (Solution): onReconcile failed POST - reconcile %s", err.Error())
 			return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 				State: v1alpha2.InternalError,
 				Body:  data,
@@ -238,7 +238,7 @@ func (c *SolutionVendor) onReconcile(request v1alpha2.COARequest) v1alpha2.COARe
 			ContentType: "application/json",
 		})
 	}
-	sLog.WithContext(rContext).Error("V (Solution): onReconcile failed - 405 method not allowed")
+	sLog.ErrorCtx(rContext, "V (Solution): onReconcile failed - 405 method not allowed")
 	return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 		State:       v1alpha2.MethodNotAllowed,
 		Body:        []byte("{\"result\":\"405 - method not allowed\"}"),
@@ -252,7 +252,7 @@ func (c *SolutionVendor) onApplyDeployment(request v1alpha2.COARequest) v1alpha2
 	})
 	defer span.End()
 
-	sLog.WithContext(rContext).Infof("V (Solution): onApplyDeployment %s", request.Method)
+	sLog.InfofCtx(rContext, "V (Solution): onApplyDeployment %s", request.Method)
 	namespace, exist := request.Parameters["namespace"]
 	if !exist {
 		namespace = constants.DefaultScope
@@ -270,7 +270,7 @@ func (c *SolutionVendor) onApplyDeployment(request v1alpha2.COARequest) v1alpha2
 		deployment := new(model.DeploymentSpec)
 		err := json.Unmarshal(request.Body, &deployment)
 		if err != nil {
-			sLog.WithContext(ctx).Errorf("V (Solution): onApplyDeployment failed - %s", err.Error())
+			sLog.ErrorfCtx(ctx, "V (Solution): onApplyDeployment failed - %s", err.Error())
 			return v1alpha2.COAResponse{
 				State: v1alpha2.InternalError,
 				Body:  []byte(err.Error()),
@@ -284,7 +284,7 @@ func (c *SolutionVendor) onApplyDeployment(request v1alpha2.COARequest) v1alpha2
 		deployment := new(model.DeploymentSpec)
 		err := json.Unmarshal(request.Body, &deployment)
 		if err != nil {
-			sLog.WithContext(ctx).Errorf("V (Solution): onApplyDeployment failed - %s", err.Error())
+			sLog.ErrorfCtx(ctx, "V (Solution): onApplyDeployment failed - %s", err.Error())
 			return v1alpha2.COAResponse{
 				State: v1alpha2.InternalError,
 				Body:  []byte(err.Error()),
@@ -298,7 +298,7 @@ func (c *SolutionVendor) onApplyDeployment(request v1alpha2.COARequest) v1alpha2
 		var deployment model.DeploymentSpec
 		err := json.Unmarshal(request.Body, &deployment)
 		if err != nil {
-			sLog.WithContext(ctx).Errorf("V (Solution): onApplyDeployment failed - %s", err.Error())
+			sLog.ErrorfCtx(ctx, "V (Solution): onApplyDeployment failed - %s", err.Error())
 			return v1alpha2.COAResponse{
 				State: v1alpha2.InternalError,
 				Body:  []byte(err.Error()),
@@ -307,7 +307,7 @@ func (c *SolutionVendor) onApplyDeployment(request v1alpha2.COARequest) v1alpha2
 		response := c.doRemove(ctx, deployment, namespace, targetName)
 		return observ_utils.CloseSpanWithCOAResponse(span, response)
 	}
-	sLog.WithContext(rContext).Error("V (Solution): onApplyDeployment failed - 405 method not allowed")
+	sLog.ErrorCtx(rContext, "V (Solution): onApplyDeployment failed - 405 method not allowed")
 	resp := v1alpha2.COAResponse{
 		State:       v1alpha2.MethodNotAllowed,
 		Body:        []byte("{\"result\":\"405 - method not allowed\"}"),
@@ -322,11 +322,11 @@ func (c *SolutionVendor) doGet(ctx context.Context, deployment model.DeploymentS
 		"method": "doGet",
 	})
 	defer span.End()
-	sLog.WithContext(ctx).Info("V (Solution): doGet")
+	sLog.InfoCtx(ctx, "V (Solution): doGet")
 
 	_, components, err := c.SolutionManager.Get(ctx, deployment, targetName)
 	if err != nil {
-		sLog.WithContext(ctx).Errorf("V (Solution): doGet failed - %s", err.Error())
+		sLog.ErrorfCtx(ctx, "V (Solution): doGet failed - %s", err.Error())
 		response := v1alpha2.COAResponse{
 			State: v1alpha2.InternalError,
 			Body:  []byte(err.Error()),
@@ -348,11 +348,11 @@ func (c *SolutionVendor) doDeploy(ctx context.Context, deployment model.Deployme
 		"method": "doDeploy",
 	})
 	defer span.End()
-	sLog.WithContext(ctx).Info("V (Solution): doDeploy")
+	sLog.InfoCtx(ctx, "V (Solution): doDeploy")
 	summary, err := c.SolutionManager.Reconcile(ctx, deployment, false, namespace, targetName)
 	data, _ := json.Marshal(summary)
 	if err != nil {
-		sLog.WithContext(ctx).Errorf("V (Solution): doDeploy failed - %s", err.Error())
+		sLog.ErrorfCtx(ctx, "V (Solution): doDeploy failed - %s", err.Error())
 		response := v1alpha2.COAResponse{
 			State: v1alpha2.InternalError,
 			Body:  data,
@@ -374,11 +374,11 @@ func (c *SolutionVendor) doRemove(ctx context.Context, deployment model.Deployme
 	})
 	defer span.End()
 
-	sLog.WithContext(ctx).Info("V (Solution): doRemove")
+	sLog.InfoCtx(ctx, "V (Solution): doRemove")
 	summary, err := c.SolutionManager.Reconcile(ctx, deployment, true, namespace, targetName)
 	data, _ := json.Marshal(summary)
 	if err != nil {
-		sLog.WithContext(ctx).Errorf("V (Solution): doRemove failed - %s", err.Error())
+		sLog.ErrorfCtx(ctx, "V (Solution): doRemove failed - %s", err.Error())
 		response := v1alpha2.COAResponse{
 			State: v1alpha2.InternalError,
 			Body:  data,

@@ -78,7 +78,7 @@ func (c *SettingsVendor) onConfig(request v1alpha2.COARequest) v1alpha2.COARespo
 		"method": "onConfig",
 	})
 	defer span.End()
-	csLog.WithContext(ctx).Infof("V (Settings): onConfig method: %s", request.Method)
+	csLog.InfofCtx(ctx, "V (Settings): onConfig method: %s", request.Method)
 
 	switch request.Method {
 	case fasthttp.MethodGet:
@@ -92,7 +92,7 @@ func (c *SettingsVendor) onConfig(request v1alpha2.COARequest) v1alpha2.COARespo
 		if field != "" {
 			val, err := c.EvaluationContext.ConfigProvider.Get(id, field, parts, nil)
 			if err != nil {
-				log.WithContext(ctx).Errorf("V (Settings): onConfig failed to get config %s, error: %v", id, err)
+				log.ErrorfCtx(ctx, "V (Settings): onConfig failed to get config %s, error: %v", id, err)
 				return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 					State: v1alpha2.InternalError,
 					Body:  []byte(err.Error()),
@@ -107,7 +107,7 @@ func (c *SettingsVendor) onConfig(request v1alpha2.COARequest) v1alpha2.COARespo
 		} else {
 			val, err := c.EvaluationContext.ConfigProvider.GetObject(id, parts, nil)
 			if err != nil {
-				log.WithContext(ctx).Errorf("V (Settings): onConfig failed to get object %s, error: %v", id, err)
+				log.ErrorfCtx(ctx, "V (Settings): onConfig failed to get object %s, error: %v", id, err)
 				return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 					State: v1alpha2.InternalError,
 					Body:  []byte(err.Error()),
@@ -122,7 +122,7 @@ func (c *SettingsVendor) onConfig(request v1alpha2.COARequest) v1alpha2.COARespo
 		}
 	}
 
-	log.WithContext(ctx).Error("V (Settings): onConfig returned MethodNotAllowed")
+	log.ErrorCtx(ctx, "V (Settings): onConfig returned MethodNotAllowed")
 	resp := v1alpha2.COAResponse{
 		State:       v1alpha2.MethodNotAllowed,
 		Body:        []byte("{\"result\":\"405 - method not allowed\"}"),

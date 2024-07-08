@@ -158,26 +158,26 @@ func (i *K8sTargetProvider) Init(config providers.IProviderConfig) error {
 
 	updateConfig, err := toK8sTargetProviderConfig(config)
 	if err != nil {
-		log.WithContext(ctx).Errorf("  P (K8s Target): expected K8sTargetProviderConfig - %+v", err)
+		log.ErrorfCtx(ctx, "  P (K8s Target): expected K8sTargetProviderConfig - %+v", err)
 		return v1alpha2.NewCOAError(err, fmt.Sprintf("%s: failed to convert to K8sTargetProviderConfig", componentName), v1alpha2.InitFailed)
 	}
 	i.Config = updateConfig
 	var kConfig *rest.Config
 	kConfig, err = i.getKubernetesConfig()
 	if err != nil {
-		log.WithContext(ctx).Errorf("  P (K8s Target): failed to get the cluster config: %+v", err)
+		log.ErrorfCtx(ctx, "  P (K8s Target): failed to get the cluster config: %+v", err)
 		return v1alpha2.NewCOAError(err, fmt.Sprintf("%s: failed to get kubernetes config", componentName), v1alpha2.InitFailed)
 	}
 
 	i.Client, err = kubernetes.NewForConfig(kConfig)
 	if err != nil {
-		log.WithContext(ctx).Errorf("  P (K8s Target): failed to create a new clientset: %+v", err)
+		log.ErrorfCtx(ctx, "  P (K8s Target): failed to create a new clientset: %+v", err)
 		return v1alpha2.NewCOAError(err, fmt.Sprintf("%s: failed to create kubernetes client", componentName), v1alpha2.InitFailed)
 	}
 
 	i.DynamicClient, err = dynamic.NewForConfig(kConfig)
 	if err != nil {
-		log.WithContext(ctx).Errorf("  P (K8s Target): failed to create a discovery client: %+v", err)
+		log.ErrorfCtx(ctx, "  P (K8s Target): failed to create a discovery client: %+v", err)
 		return v1alpha2.NewCOAError(err, fmt.Sprintf("%s: failed to create dynamic client", componentName), v1alpha2.InitFailed)
 	}
 	return nil
@@ -234,7 +234,7 @@ func (i *K8sTargetProvider) getDeployment(ctx context.Context, namespace string,
 	})
 	var err error = nil
 	defer observ_utils.CloseSpanWithError(span, &err)
-	log.WithContext(ctx).Infof("  P (K8s Target Provider): getDeployment scope - %s, name - %s", namespace, name)
+	log.InfofCtx(ctx, "  P (K8s Target Provider): getDeployment scope - %s, name - %s", namespace, name)
 
 	if namespace == "" {
 		namespace = "default"
@@ -289,7 +289,7 @@ func (i *K8sTargetProvider) Get(ctx context.Context, dep model.DeploymentSpec, r
 	})
 	var err error = nil
 	defer observ_utils.CloseSpanWithError(span, &err)
-	log.WithContext(ctx).Infof("  P (K8s Target Provider): getting artifacts: %s - %s", dep.Instance.Spec.Scope, dep.Instance.ObjectMeta.Name)
+	log.InfofCtx(ctx, "  P (K8s Target Provider): getting artifacts: %s - %s", dep.Instance.Spec.Scope, dep.Instance.ObjectMeta.Name)
 
 	var components []model.ComponentSpec
 
@@ -297,7 +297,7 @@ func (i *K8sTargetProvider) Get(ctx context.Context, dep model.DeploymentSpec, r
 	case "", SINGLE_POD:
 		components, err = i.getDeployment(ctx, dep.Instance.Spec.Scope, dep.Instance.ObjectMeta.Name)
 		if err != nil {
-			log.WithContext(ctx).Debugf("  P (K8s Target Provider): failed to get - %s", err.Error())
+			log.DebugfCtx(ctx, "  P (K8s Target Provider): failed to get - %s", err.Error())
 			err = v1alpha2.NewCOAError(err, fmt.Sprintf("%s: failed to get components from deployment spec", componentName), v1alpha2.GetComponentSpecFailed)
 			return nil, err
 		}
@@ -312,12 +312,12 @@ func (i *K8sTargetProvider) Get(ctx context.Context, dep model.DeploymentSpec, r
 			var cComponents []model.ComponentSpec
 			cComponents, err = i.getDeployment(ctx, scope, component.Name)
 			if err != nil {
-				log.WithContext(ctx).Debugf("  P (K8s Target Provider): failed to get deployment: %s", err.Error())
+				log.DebugfCtx(ctx, "  P (K8s Target Provider): failed to get deployment: %s", err.Error())
 				err = v1alpha2.NewCOAError(err, fmt.Sprintf("%s: failed to get components from deployment spec", componentName), v1alpha2.GetComponentSpecFailed)
 				return nil, err
 			}
 			if len(cComponents) > 1 {
-				log.WithContext(ctx).Debugf("  P (K8s Target Provider): can't read multiple components %s", err.Error())
+				log.DebugfCtx(ctx, "  P (K8s Target Provider): can't read multiple components %s", err.Error())
 				err = v1alpha2.NewCOAError(nil, fmt.Sprintf("%s: can't read multiple components when %s strategy or %s strategy is used", componentName, SERVICES, SERVICES_NS), v1alpha2.GetComponentSpecFailed)
 				return nil, err
 			}
@@ -335,7 +335,7 @@ func (i *K8sTargetProvider) Get(ctx context.Context, dep model.DeploymentSpec, r
 
 				err = i.fillServiceMeta(ctx, scope, serviceName, cComponents[0])
 				if err != nil {
-					log.WithContext(ctx).Debugf("  P (K8s Target Provider): failed to get: %s", err.Error())
+					log.DebugfCtx(ctx, "  P (K8s Target Provider): failed to get: %s", err.Error())
 					err = v1alpha2.NewCOAError(err, fmt.Sprintf("%s: failed to fill service meta data", componentName), v1alpha2.GetComponentSpecFailed)
 					return nil, err
 				}
@@ -398,7 +398,7 @@ func (i *K8sTargetProvider) removeNamespace(ctx context.Context, namespace strin
 	})
 	var err error = nil
 	defer observ_utils.CloseSpanWithError(span, &err)
-	log.WithContext(ctx).Infof("  P (K8s Target Provider): removeNamespace namespace - %s", namespace)
+	log.InfofCtx(ctx, "  P (K8s Target Provider): removeNamespace namespace - %s", namespace)
 
 	_, err = i.Client.CoreV1().Namespaces().Get(ctx, namespace, metav1.GetOptions{})
 	if err != nil {
@@ -513,7 +513,7 @@ func (i *K8sTargetProvider) upsertDeployment(ctx context.Context, namespace stri
 	})
 	var err error = nil
 	defer observ_utils.CloseSpanWithError(span, &err)
-	log.WithContext(ctx).Infof("  P (K8s Target Provider): upsertDeployment namespace - %s, name - %s", namespace, name)
+	log.InfofCtx(ctx, "  P (K8s Target Provider): upsertDeployment namespace - %s, name - %s", namespace, name)
 
 	if namespace == "" {
 		namespace = "default"
@@ -540,7 +540,7 @@ func (i *K8sTargetProvider) upsertService(ctx context.Context, namespace string,
 	})
 	var err error = nil
 	defer observ_utils.CloseSpanWithError(span, &err)
-	log.WithContext(ctx).Infof("  P (K8s Target Provider): upsertService namespace - %s, name - %s", namespace, name)
+	log.InfofCtx(ctx, "  P (K8s Target Provider): upsertService namespace - %s, name - %s", namespace, name)
 
 	if namespace == "" {
 		namespace = "default"
@@ -563,7 +563,7 @@ func (i *K8sTargetProvider) upsertService(ctx context.Context, namespace string,
 }
 func (i *K8sTargetProvider) deployComponents(ctx context.Context, namespace string, name string, metadata map[string]string, components []model.ComponentSpec, projector IK8sProjector, instanceName string) error {
 	var err error = nil
-	log.WithContext(ctx).Infof("  P (K8s Target Provider): deployComponents namespace - %s, name - %s", namespace, name)
+	log.InfofCtx(ctx, "  P (K8s Target Provider): deployComponents namespace - %s, name - %s", namespace, name)
 
 	if namespace == "" {
 		namespace = "default"
@@ -573,46 +573,46 @@ func (i *K8sTargetProvider) deployComponents(ctx context.Context, namespace stri
 	if projector != nil {
 		err = projector.ProjectDeployment(namespace, name, metadata, components, deployment)
 		if err != nil {
-			log.WithContext(ctx).Debugf("  P (K8s Target Provider): failed to project deployment: %s", err.Error())
+			log.DebugfCtx(ctx, "  P (K8s Target Provider): failed to project deployment: %s", err.Error())
 			return err
 		}
 	}
 	if err != nil {
-		log.WithContext(ctx).Debugf("  P (K8s Target Provider): failed to apply: %s", err.Error())
+		log.DebugfCtx(ctx, "  P (K8s Target Provider): failed to apply: %s", err.Error())
 		return err
 	}
 	service, err := metadataToService(namespace, name, metadata)
 	if err != nil {
-		log.WithContext(ctx).Debugf("  P (K8s Target Provider): failed to apply (convert): %s", err.Error())
+		log.DebugfCtx(ctx, "  P (K8s Target Provider): failed to apply (convert): %s", err.Error())
 		return err
 	}
 	if projector != nil {
 		err = projector.ProjectService(namespace, name, metadata, service)
 		if err != nil {
-			log.WithContext(ctx).Debugf("  P (K8s Target Provider): failed to project service: %s", err.Error())
+			log.DebugfCtx(ctx, "  P (K8s Target Provider): failed to project service: %s", err.Error())
 			return err
 		}
 	}
 
-	log.WithContext(ctx).Debug("  P (K8s Target Provider): checking namespace")
+	log.DebugCtx(ctx, "  P (K8s Target Provider): checking namespace")
 	err = i.createNamespace(ctx, namespace)
 	if err != nil {
-		log.WithContext(ctx).Debugf("  P (K8s Target Provider): failed to create namespace: %s", err.Error())
+		log.DebugfCtx(ctx, "  P (K8s Target Provider): failed to create namespace: %s", err.Error())
 		return err
 	}
 
-	log.WithContext(ctx).Debug("  P (K8s Target Provider): creating deployment")
+	log.DebugCtx(ctx, "  P (K8s Target Provider): creating deployment")
 	err = i.upsertDeployment(ctx, namespace, name, deployment)
 	if err != nil {
-		log.WithContext(ctx).Debugf("  P (K8s Target Provider): failed to apply (API): %s", err.Error())
+		log.DebugfCtx(ctx, "  P (K8s Target Provider): failed to apply (API): %s", err.Error())
 		return err
 	}
 
 	if service != nil {
-		log.WithContext(ctx).Debug("  P (K8s Target Provider): creating service")
+		log.DebugCtx(ctx, "  P (K8s Target Provider): creating service")
 		err = i.upsertService(ctx, namespace, service.Name, service)
 		if err != nil {
-			log.WithContext(ctx).Debugf("  P (K8s Target Provider): failed to apply (service): %s", err.Error())
+			log.DebugfCtx(ctx, "  P (K8s Target Provider): failed to apply (service): %s", err.Error())
 			return err
 		}
 	}
@@ -649,12 +649,12 @@ func (i *K8sTargetProvider) Apply(ctx context.Context, dep model.DeploymentSpec,
 	var err error = nil
 	defer observ_utils.CloseSpanWithError(span, &err)
 
-	log.WithContext(ctx).Infof("  P (K8s Target Provider): applying artifacts: %s - %s", dep.Instance.Spec.Scope, dep.Instance.ObjectMeta.Name)
+	log.InfofCtx(ctx, "  P (K8s Target Provider): applying artifacts: %s - %s", dep.Instance.Spec.Scope, dep.Instance.ObjectMeta.Name)
 
 	components := step.GetComponents()
 	err = i.GetValidationRule(ctx).Validate(components)
 	if err != nil {
-		log.WithContext(ctx).Errorf("  P (K8s Target Provider): failed to validate components, error: %v", err)
+		log.ErrorfCtx(ctx, "  P (K8s Target Provider): failed to validate components, error: %v", err)
 		err = v1alpha2.NewCOAError(err, fmt.Sprintf("%s: the rule validation failed", componentName), v1alpha2.ValidateFailed)
 		return nil, err
 	}
@@ -666,7 +666,7 @@ func (i *K8sTargetProvider) Apply(ctx context.Context, dep model.DeploymentSpec,
 
 	projector, err := createProjector(i.Config.Projector)
 	if err != nil {
-		log.WithContext(ctx).Debugf("  P (K8s Target Provider): failed to create projector: %s", err.Error())
+		log.DebugfCtx(ctx, "  P (K8s Target Provider): failed to create projector: %s", err.Error())
 		err = v1alpha2.NewCOAError(err, fmt.Sprintf("%s: failed to create projector", componentName), v1alpha2.CreateProjectorFailed)
 		return ret, err
 	}
@@ -677,7 +677,7 @@ func (i *K8sTargetProvider) Apply(ctx context.Context, dep model.DeploymentSpec,
 		if len(updated) > 0 {
 			err = i.deployComponents(ctx, dep.Instance.Spec.Scope, dep.Instance.ObjectMeta.Name, dep.Instance.Spec.Metadata, components, projector, dep.Instance.ObjectMeta.Name)
 			if err != nil {
-				log.WithContext(ctx).Debugf("  P (K8s Target Provider): failed to apply components: %s", err.Error())
+				log.DebugfCtx(ctx, "  P (K8s Target Provider): failed to apply components: %s", err.Error())
 				err = v1alpha2.NewCOAError(err, fmt.Sprintf("%s: failed to deploy components", componentName), v1alpha2.K8sDeploymentFailed)
 				return ret, err
 			}
@@ -690,20 +690,20 @@ func (i *K8sTargetProvider) Apply(ctx context.Context, dep model.DeploymentSpec,
 			}
 			err = i.removeService(ctx, dep.Instance.Spec.Scope, serviceName)
 			if err != nil {
-				log.WithContext(ctx).Debugf("  P (K8s Target Provider): failed to remove service: %s", err.Error())
+				log.DebugfCtx(ctx, "  P (K8s Target Provider): failed to remove service: %s", err.Error())
 				err = v1alpha2.NewCOAError(err, fmt.Sprintf("%s: failed to remove k8s service", componentName), v1alpha2.K8sRemoveServiceFailed)
 				return ret, err
 			}
 			err = i.removeDeployment(ctx, dep.Instance.Spec.Scope, dep.Instance.ObjectMeta.Name)
 			if err != nil {
-				log.WithContext(ctx).Debugf("  P (K8s Target Provider): failed to remove deployment: %s", err.Error())
+				log.DebugfCtx(ctx, "  P (K8s Target Provider): failed to remove deployment: %s", err.Error())
 				err = v1alpha2.NewCOAError(err, fmt.Sprintf("%s: failed to remove k8s deployment", componentName), v1alpha2.K8sRemoveDeploymentFailed)
 				return ret, err
 			}
 			if i.Config.DeleteEmptyNamespace {
 				err = i.removeNamespace(ctx, dep.Instance.Spec.Scope, i.Config.RetryCount, i.Config.RetryIntervalInSec)
 				if err != nil {
-					log.WithContext(ctx).Debugf("  P (K8s Target Provider): failed to remove namespace: %s", err.Error())
+					log.DebugfCtx(ctx, "  P (K8s Target Provider): failed to remove namespace: %s", err.Error())
 				}
 			}
 		}
@@ -725,7 +725,7 @@ func (i *K8sTargetProvider) Apply(ctx context.Context, dep model.DeploymentSpec,
 				}
 				err = i.deployComponents(ctx, scope, component.Name, component.Metadata, []model.ComponentSpec{component}, projector, dep.Instance.ObjectMeta.Name)
 				if err != nil {
-					log.WithContext(ctx).Debugf("  P (K8s Target Provider): failed to apply components: %s", err.Error())
+					log.DebugfCtx(ctx, "  P (K8s Target Provider): failed to apply components: %s", err.Error())
 					err = v1alpha2.NewCOAError(err, fmt.Sprintf("%s: failed to deploy components", componentName), v1alpha2.K8sDeploymentFailed)
 					return ret, err
 				}
@@ -750,7 +750,7 @@ func (i *K8sTargetProvider) Apply(ctx context.Context, dep model.DeploymentSpec,
 						Status:  v1alpha2.DeleteFailed,
 						Message: err.Error(),
 					}
-					log.WithContext(ctx).Debugf("P (K8s Target Provider): failed to remove service: %s", err.Error())
+					log.DebugfCtx(ctx, "P (K8s Target Provider): failed to remove service: %s", err.Error())
 					err = v1alpha2.NewCOAError(err, fmt.Sprintf("%s: failed to remove k8s service", componentName), v1alpha2.K8sRemoveServiceFailed)
 					return ret, err
 				}
@@ -760,14 +760,14 @@ func (i *K8sTargetProvider) Apply(ctx context.Context, dep model.DeploymentSpec,
 						Status:  v1alpha2.DeleteFailed,
 						Message: err.Error(),
 					}
-					log.WithContext(ctx).Debugf("P (K8s Target Provider): failed to remove deployment: %s", err.Error())
+					log.DebugfCtx(ctx, "P (K8s Target Provider): failed to remove deployment: %s", err.Error())
 					err = v1alpha2.NewCOAError(err, fmt.Sprintf("%s: failed to remove k8s deployment", componentName), v1alpha2.K8sRemoveDeploymentFailed)
 					return ret, err
 				}
 				if i.Config.DeleteEmptyNamespace {
 					err = i.removeNamespace(ctx, dep.Instance.Spec.Scope, i.Config.RetryCount, i.Config.RetryIntervalInSec)
 					if err != nil {
-						log.WithContext(ctx).Debugf("P (K8s Target Provider): failed to remove namespace: %s", err.Error())
+						log.DebugfCtx(ctx, "P (K8s Target Provider): failed to remove namespace: %s", err.Error())
 					}
 				}
 			}

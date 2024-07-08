@@ -235,7 +235,7 @@ func (i *MQTTTargetProvider) Get(ctx context.Context, deployment model.Deploymen
 	})
 	var err error = nil
 	defer observ_utils.CloseSpanWithError(span, &err)
-	sLog.WithContext(ctx).Infof("  P (MQTT Target): getting artifacts: %s - %s", deployment.Instance.Spec.Scope, deployment.Instance.ObjectMeta.Name)
+	sLog.InfofCtx(ctx, "  P (MQTT Target): getting artifacts: %s - %s", deployment.Instance.Spec.Scope, deployment.Instance.ObjectMeta.Name)
 
 	data, _ := json.Marshal(deployment)
 	request := v1alpha2.COARequest{
@@ -250,7 +250,7 @@ func (i *MQTTTargetProvider) Get(ctx context.Context, deployment model.Deploymen
 	data, _ = json.Marshal(request)
 
 	if token := i.MQTTClient.Publish(i.Config.RequestTopic, 0, false, data); token.Wait() && token.Error() != nil {
-		sLog.WithContext(ctx).Errorf("  P (MQTT Target): failed to getting artifacts - %s", token.Error())
+		sLog.ErrorfCtx(ctx, "  P (MQTT Target): failed to getting artifacts - %s", token.Error())
 		err = token.Error()
 		return nil, err
 	}
@@ -261,26 +261,26 @@ func (i *MQTTTargetProvider) Get(ctx context.Context, deployment model.Deploymen
 			var data []byte
 			data, err = json.Marshal(resp.Payload)
 			if err != nil {
-				sLog.WithContext(ctx).Errorf("  P (MQTT Target): failed to serialize payload - %s - %s", err.Error(), fmt.Sprint(resp.Payload))
+				sLog.ErrorfCtx(ctx, "  P (MQTT Target): failed to serialize payload - %s - %s", err.Error(), fmt.Sprint(resp.Payload))
 				err = v1alpha2.NewCOAError(nil, err.Error(), v1alpha2.InternalError)
 				return nil, err
 			}
 			var ret []model.ComponentSpec
 			err = json.Unmarshal(data, &ret)
 			if err != nil {
-				sLog.WithContext(ctx).Errorf("  P (MQTT Target): failed to deserialize components - %s - %s", err.Error(), fmt.Sprint(data))
+				sLog.ErrorfCtx(ctx, "  P (MQTT Target): failed to deserialize components - %s - %s", err.Error(), fmt.Sprint(data))
 				err = v1alpha2.NewCOAError(nil, err.Error(), v1alpha2.InternalError)
 				return nil, err
 			}
 			return ret, nil
 		} else {
 			err = v1alpha2.NewCOAError(nil, fmt.Sprint(resp.Payload), resp.State)
-			sLog.WithContext(ctx).Errorf("  P (MQTT Target): failed to get response - %s - %s", err.Error(), fmt.Sprint(string(data)))
+			sLog.ErrorfCtx(ctx, "  P (MQTT Target): failed to get response - %s - %s", err.Error(), fmt.Sprint(string(data)))
 			return nil, err
 		}
 	case <-timeout:
 		err = v1alpha2.NewCOAError(nil, "didn't get response to Get() call over MQTT", v1alpha2.InternalError)
-		sLog.WithContext(ctx).Errorf("  P (MQTT Target): request timeout - %s - %s", err.Error(), fmt.Sprint(string(data)))
+		sLog.ErrorfCtx(ctx, "  P (MQTT Target): request timeout - %s - %s", err.Error(), fmt.Sprint(string(data)))
 		return nil, err
 	}
 }
@@ -291,7 +291,7 @@ func (i *MQTTTargetProvider) Remove(ctx context.Context, deployment model.Deploy
 	var err error = nil
 	defer observ_utils.CloseSpanWithError(span, &err)
 
-	sLog.WithContext(ctx).Infof("  P (MQTT Target): deleting artifacts: %s - %s", deployment.Instance.Spec.Scope, deployment.Instance.ObjectMeta.Name)
+	sLog.InfofCtx(ctx, "  P (MQTT Target): deleting artifacts: %s - %s", deployment.Instance.Spec.Scope, deployment.Instance.ObjectMeta.Name)
 
 	data, _ := json.Marshal(deployment)
 	request := v1alpha2.COARequest{
@@ -318,12 +318,12 @@ func (i *MQTTTargetProvider) Remove(ctx context.Context, deployment model.Deploy
 			return err
 		} else {
 			err = v1alpha2.NewCOAError(nil, fmt.Sprint(resp.Payload), resp.State)
-			sLog.WithContext(ctx).Errorf("  P (MQTT Target): failed to get correct response - %v", err)
+			sLog.ErrorfCtx(ctx, "  P (MQTT Target): failed to get correct response - %v", err)
 			return err
 		}
 	case <-timeout:
 		err = v1alpha2.NewCOAError(nil, "didn't get response to Remove() call over MQTT", v1alpha2.InternalError)
-		sLog.WithContext(ctx).Errorf("  P (MQTT Target): request timeout - %v", err)
+		sLog.ErrorfCtx(ctx, "  P (MQTT Target): request timeout - %v", err)
 		return err
 	}
 }
@@ -335,7 +335,7 @@ func (i *MQTTTargetProvider) Apply(ctx context.Context, deployment model.Deploym
 	var err error = nil
 	defer observ_utils.CloseSpanWithError(span, &err)
 
-	sLog.WithContext(ctx).Infof("  P (MQTT Target): applying artifacts: %s - %s", deployment.Instance.Spec.Scope, deployment.Instance.ObjectMeta.Name)
+	sLog.InfofCtx(ctx, "  P (MQTT Target): applying artifacts: %s - %s", deployment.Instance.Spec.Scope, deployment.Instance.ObjectMeta.Name)
 
 	components := step.GetComponents()
 	err = i.GetValidationRule(ctx).Validate(components)
@@ -386,12 +386,12 @@ func (i *MQTTTargetProvider) Apply(ctx context.Context, deployment model.Deploym
 				return ret, err
 			} else {
 				err = v1alpha2.NewCOAError(nil, fmt.Sprint(resp.Payload), resp.State)
-				sLog.WithContext(ctx).Errorf("  P (MQTT Target): failed to get correct response from Apply() - %v", err)
+				sLog.ErrorfCtx(ctx, "  P (MQTT Target): failed to get correct response from Apply() - %v", err)
 				return ret, err
 			}
 		case <-timeout:
 			err = v1alpha2.NewCOAError(nil, "didn't get response to Apply()-Update call over MQTT", v1alpha2.InternalError)
-			sLog.WithContext(ctx).Errorf("  P (MQTT Target): request timeout - %v", err)
+			sLog.ErrorfCtx(ctx, "  P (MQTT Target): request timeout - %v", err)
 			return ret, err
 		}
 	}
@@ -420,12 +420,12 @@ func (i *MQTTTargetProvider) Apply(ctx context.Context, deployment model.Deploym
 				return ret, err
 			} else {
 				err = v1alpha2.NewCOAError(nil, fmt.Sprint(resp.Payload), resp.State)
-				sLog.WithContext(ctx).Errorf("  P (MQTT Target): failed to get correct reponse from Apply() delete action - %v", err)
+				sLog.ErrorfCtx(ctx, "  P (MQTT Target): failed to get correct reponse from Apply() delete action - %v", err)
 				return ret, err
 			}
 		case <-timeout:
 			err = v1alpha2.NewCOAError(nil, "didn't get response to Apply()-Delete call over MQTT", v1alpha2.InternalError)
-			sLog.WithContext(ctx).Errorf("  P (MQTT Target): request timeout - %v", err)
+			sLog.ErrorfCtx(ctx, "  P (MQTT Target): request timeout - %v", err)
 			return ret, err
 		}
 	}
