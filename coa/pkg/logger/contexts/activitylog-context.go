@@ -49,6 +49,11 @@ func (ctx *ActivityLogContext) FromMap(m map[string]interface{}) {
 	}
 }
 
+func (ctx *ActivityLogContext) String() string {
+	b, _ := json.Marshal(ctx.ToMap())
+	return string(b)
+}
+
 // Deadline returns the time when work done on behalf of this context
 func (ctx *ActivityLogContext) Deadline() (deadline time.Time, ok bool) {
 	// No deadline set
