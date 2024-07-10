@@ -19,8 +19,8 @@ func TestNewContextHook(t *testing.T) {
 func TestContextHook_Fire_WithKeys(t *testing.T) {
 	hook := NewContextHook()
 	entry := logrus.NewEntry(logrus.StandardLogger())
-	diagCtx := contexts.NewDiagnosticLogContext("traceId", "spanId", "correlationId", "requestId")
-	actCtx := contexts.NewActivityLogContext("operationId", "callerId", "resourceCloudId", "resourceK8SId")
+	diagCtx := contexts.NewDiagnosticLogContext("correlationId", "resourceId", "traceId", "spanId")
+	actCtx := contexts.NewActivityLogContext("resourceId", "cloudLocation", "operationName", "category", "correlationId", "callerId", "resourceK8SId")
 	entry = entry.WithFields(logrus.Fields{
 		string(contexts.DiagnosticLogContextKey): diagCtx,
 		string(contexts.ActivityLogContextKey):   actCtx,
@@ -34,9 +34,12 @@ func TestContextHook_Fire_WithKeys(t *testing.T) {
 
 	innerActCtx := innerEntry.(*contexts.ActivityLogContext)
 
-	assert.Equal(t, "operationId", innerActCtx.GetOperationId())
+	assert.Equal(t, "resourceId", innerActCtx.GetResourceCloudId())
+	assert.Equal(t, "cloudLocation", innerActCtx.GetCloudLocation())
+	assert.Equal(t, "operationName", innerActCtx.GetOperationName())
+	assert.Equal(t, "category", innerActCtx.GetCategory())
+	assert.Equal(t, "correlationId", innerActCtx.GetCorrelationId())
 	assert.Equal(t, "callerId", innerActCtx.GetCallerId())
-	assert.Equal(t, "resourceCloudId", innerActCtx.GetResourceCloudId())
 	assert.Equal(t, "resourceK8SId", innerActCtx.GetResourceK8SId())
 
 	innerEntry = entry.Data[string(contexts.DiagnosticLogContextKey)]
@@ -44,17 +47,17 @@ func TestContextHook_Fire_WithKeys(t *testing.T) {
 
 	innerDiagCtx := innerEntry.(*contexts.DiagnosticLogContext)
 
+	assert.Equal(t, "correlationId", innerDiagCtx.GetCorrelationId())
+	assert.Equal(t, "resourceId", innerDiagCtx.GetResourceId())
 	assert.Equal(t, "traceId", innerDiagCtx.GetTraceId())
 	assert.Equal(t, "spanId", innerDiagCtx.GetSpanId())
-	assert.Equal(t, "correlationId", innerDiagCtx.GetCorrelationId())
-	assert.Equal(t, "requestId", innerDiagCtx.GetRequestId())
 
 }
 
 func TestContextHook_Fire_WithActivityLogContext(t *testing.T) {
 	hook := NewContextHook()
 	entry := logrus.NewEntry(logrus.StandardLogger())
-	actCtx := contexts.NewActivityLogContext("operationId", "callerId", "resourceCloudId", "resourceK8SId")
+	actCtx := contexts.NewActivityLogContext("resourceId", "cloudLocation", "operationId", "category", "correlationId", "callerId", "resourceK8SId")
 	entry = entry.WithContext(actCtx)
 	err := hook.Fire(entry)
 	assert.Nil(t, err)
@@ -65,16 +68,19 @@ func TestContextHook_Fire_WithActivityLogContext(t *testing.T) {
 
 	innerActCtx := innerEntry.(*contexts.ActivityLogContext)
 
-	assert.Equal(t, "operationId", innerActCtx.GetOperationId())
+	assert.Equal(t, "resourceId", innerActCtx.GetResourceCloudId())
+	assert.Equal(t, "cloudLocation", innerActCtx.GetCloudLocation())
+	assert.Equal(t, "operationId", innerActCtx.GetOperationName())
+	assert.Equal(t, "category", innerActCtx.GetCategory())
+	assert.Equal(t, "correlationId", innerActCtx.GetCorrelationId())
 	assert.Equal(t, "callerId", innerActCtx.GetCallerId())
-	assert.Equal(t, "resourceCloudId", innerActCtx.GetResourceCloudId())
 	assert.Equal(t, "resourceK8SId", innerActCtx.GetResourceK8SId())
 }
 
 func TestContextHook_Fire_WithDiagnosticLogContext(t *testing.T) {
 	hook := NewContextHook()
 	entry := logrus.NewEntry(logrus.StandardLogger())
-	diagCtx := contexts.NewDiagnosticLogContext("traceId", "spanId", "correlationId", "requestId")
+	diagCtx := contexts.NewDiagnosticLogContext("correlationId", "resourceId", "traceId", "spanId")
 	entry = entry.WithContext(diagCtx)
 	err := hook.Fire(entry)
 	assert.Nil(t, err)
@@ -85,10 +91,10 @@ func TestContextHook_Fire_WithDiagnosticLogContext(t *testing.T) {
 
 	innerDiagCtx := innerEntry.(*contexts.DiagnosticLogContext)
 
+	assert.Equal(t, "correlationId", innerDiagCtx.GetCorrelationId())
+	assert.Equal(t, "resourceId", innerDiagCtx.GetResourceId())
 	assert.Equal(t, "traceId", innerDiagCtx.GetTraceId())
 	assert.Equal(t, "spanId", innerDiagCtx.GetSpanId())
-	assert.Equal(t, "correlationId", innerDiagCtx.GetCorrelationId())
-	assert.Equal(t, "requestId", innerDiagCtx.GetRequestId())
 }
 
 func TestContextHook_Fire_WithOtherContext(t *testing.T) {

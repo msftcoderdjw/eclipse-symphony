@@ -1,33 +1,55 @@
 package contexts
 
 import (
+	"context"
 	"encoding/json"
 	"time"
 )
 
+const (
+	Activity_ResourceCloudId string = "resourceId"
+	Activity_OperationName   string = "operationName"
+	Activity_Location        string = "location"
+	Activity_Category        string = "category"
+	Activity_CorrelationId   string = "correlationId"
+	Activity_Properties      string = "properties"
+
+	Activity_Props_CallerId      string = "caller-id"
+	Activity_Props_ResourceK8SId string = "resource-k8s-id"
+)
+
 // ActivityLogContext is a context that holds activity information.
 type ActivityLogContext struct {
-	operationId     string
-	callerId        string
 	resourceCloudId string
-	resourceK8SId   string
+	operationName   string
+	cloudLocation   string
+	category        string
+	correlationId   string
+	properties      map[string]interface{}
 }
 
-func NewActivityLogContext(operationId, callerId, resourceCloudId, resourceK8SId string) *ActivityLogContext {
+func NewActivityLogContext(resourceCloudId, cloudLocation, operationName, category, correlationId, callerId, resourceK8SId string) *ActivityLogContext {
 	return &ActivityLogContext{
-		operationId:     operationId,
-		callerId:        callerId,
 		resourceCloudId: resourceCloudId,
-		resourceK8SId:   resourceK8SId,
+		operationName:   operationName,
+		cloudLocation:   cloudLocation,
+		category:        category,
+		correlationId:   correlationId,
+		properties: map[string]interface{}{
+			Activity_Props_CallerId:      callerId,
+			Activity_Props_ResourceK8SId: resourceK8SId,
+		},
 	}
 }
 
 func (ctx *ActivityLogContext) ToMap() map[string]interface{} {
 	return map[string]interface{}{
-		"operation-id":      ctx.operationId,
-		"caller-id":         ctx.callerId,
-		"resource-cloud-id": ctx.resourceCloudId,
-		"resource-k8s-id":   ctx.resourceK8SId,
+		Activity_ResourceCloudId: ctx.resourceCloudId,
+		Activity_OperationName:   ctx.operationName,
+		Activity_Location:        ctx.cloudLocation,
+		Activity_Category:        ctx.category,
+		Activity_CorrelationId:   ctx.correlationId,
+		Activity_Properties:      ctx.properties,
 	}
 }
 
@@ -35,17 +57,30 @@ func (ctx *ActivityLogContext) FromMap(m map[string]interface{}) {
 	if m == nil {
 		return
 	}
-	if m["operation-id"] != nil {
-		ctx.operationId = m["operation-id"].(string)
+	if m[Activity_ResourceCloudId] != nil {
+		ctx.resourceCloudId = m[Activity_ResourceCloudId].(string)
 	}
-	if m["caller-id"] != nil {
-		ctx.callerId = m["caller-id"].(string)
+	if m[Activity_OperationName] != nil {
+		ctx.operationName = m[Activity_OperationName].(string)
 	}
-	if m["resource-cloud-id"] != nil {
-		ctx.resourceCloudId = m["resource-cloud-id"].(string)
+	if m[Activity_Location] != nil {
+		ctx.cloudLocation = m[Activity_Location].(string)
 	}
-	if m["resource-k8s-id"] != nil {
-		ctx.resourceK8SId = m["resource-k8s-id"].(string)
+	if m[Activity_Category] != nil {
+		ctx.category = m[Activity_Category].(string)
+	}
+	if m[Activity_CorrelationId] != nil {
+		ctx.correlationId = m[Activity_CorrelationId].(string)
+	}
+	if m[Activity_Properties] != nil {
+		if props, ok := m[Activity_Properties].(map[string]interface{}); ok {
+			if ctx.properties == nil {
+				ctx.properties = make(map[string]interface{})
+			}
+			for k := range props {
+				ctx.properties[k] = props[k]
+			}
+		}
 	}
 }
 
@@ -75,14 +110,18 @@ func (a *ActivityLogContext) Err() error {
 // Value returns the value associated with this context for key, or nil if no value is associated with key.
 func (ctx *ActivityLogContext) Value(key interface{}) interface{} {
 	switch key {
-	case "operation-id":
-		return ctx.operationId
-	case "caller-id":
-		return ctx.callerId
-	case "resource-cloud-id":
+	case Activity_ResourceCloudId:
 		return ctx.resourceCloudId
-	case "resource-k8s-id":
-		return ctx.resourceK8SId
+	case Activity_OperationName:
+		return ctx.operationName
+	case Activity_Location:
+		return ctx.cloudLocation
+	case Activity_Category:
+		return ctx.category
+	case Activity_CorrelationId:
+		return ctx.correlationId
+	case Activity_Properties:
+		return ctx.properties
 	default:
 		return nil
 	}
@@ -101,12 +140,14 @@ func (ctx *ActivityLogContext) UnmarshalJSON(data []byte) error {
 	return nil
 }
 
-func (ctx *ActivityLogContext) GetOperationId() string {
-	return ctx.operationId
-}
-
 func (ctx *ActivityLogContext) GetCallerId() string {
-	return ctx.callerId
+	if ctx.properties == nil {
+		return ""
+	}
+	if ctx.properties[Activity_Props_CallerId] == nil {
+		return ""
+	}
+	return ctx.properties[Activity_Props_CallerId].(string)
 }
 
 func (ctx *ActivityLogContext) GetResourceCloudId() string {
@@ -114,15 +155,36 @@ func (ctx *ActivityLogContext) GetResourceCloudId() string {
 }
 
 func (ctx *ActivityLogContext) GetResourceK8SId() string {
-	return ctx.resourceK8SId
+	if ctx.properties == nil {
+		return ""
+	}
+	if ctx.properties[Activity_Props_ResourceK8SId] == nil {
+		return ""
+	}
+	return ctx.properties[Activity_Props_ResourceK8SId].(string)
 }
 
-func (ctx *ActivityLogContext) SetOperationId(operationId string) {
-	ctx.operationId = operationId
+func (ctx *ActivityLogContext) GetCorrelationId() string {
+	return ctx.correlationId
+}
+
+func (ctx *ActivityLogContext) GetOperationName() string {
+	return ctx.operationName
+}
+
+func (ctx *ActivityLogContext) GetCloudLocation() string {
+	return ctx.cloudLocation
+}
+
+func (ctx *ActivityLogContext) GetCategory() string {
+	return ctx.category
 }
 
 func (ctx *ActivityLogContext) SetCallerId(callerId string) {
-	ctx.callerId = callerId
+	if ctx.properties == nil {
+		ctx.properties = make(map[string]interface{})
+	}
+	ctx.properties[Activity_Props_CallerId] = callerId
 }
 
 func (ctx *ActivityLogContext) SetResourceCloudId(resourceCloudId string) {
@@ -130,5 +192,87 @@ func (ctx *ActivityLogContext) SetResourceCloudId(resourceCloudId string) {
 }
 
 func (ctx *ActivityLogContext) SetResourceK8SId(resourceK8SId string) {
-	ctx.resourceK8SId = resourceK8SId
+	if ctx.properties == nil {
+		ctx.properties = make(map[string]interface{})
+	}
+	ctx.properties[Activity_Props_ResourceK8SId] = resourceK8SId
+}
+
+func (ctx *ActivityLogContext) SetCorrelationId(correlationId string) {
+	ctx.correlationId = correlationId
+}
+
+func (ctx *ActivityLogContext) SetOperationName(operationName string) {
+	ctx.operationName = operationName
+}
+
+func (ctx *ActivityLogContext) SetCloudLocation(cloudLocation string) {
+	ctx.cloudLocation = cloudLocation
+}
+
+func (ctx *ActivityLogContext) SetCategory(category string) {
+	ctx.category = category
+}
+
+func (ctx *ActivityLogContext) SetProperties(properties map[string]interface{}) {
+	ctx.properties = properties
+}
+
+func (ctx *ActivityLogContext) GetProperties() map[string]interface{} {
+	return ctx.properties
+}
+
+func (ctx *ActivityLogContext) SetProperty(key string, value interface{}) {
+	if ctx.properties == nil {
+		ctx.properties = make(map[string]interface{})
+	}
+	ctx.properties[key] = value
+}
+
+func (ctx *ActivityLogContext) GetProperty(key string) interface{} {
+	if ctx.properties == nil {
+		return nil
+	}
+	return ctx.properties[key]
+}
+
+func OverrideActivityLogContextToCurrentContext(newActCtx ActivityLogContext, parent context.Context) context.Context {
+	if parent == nil {
+		return context.WithValue(context.Background(), ActivityLogContextKey, newActCtx)
+	}
+	return context.WithValue(parent, ActivityLogContextKey, newActCtx)
+}
+
+func PatchNewActivityLogContextToCurrentContext(newActCtx ActivityLogContext, parent context.Context) context.Context {
+	if parent == nil {
+		return context.WithValue(context.Background(), ActivityLogContextKey, newActCtx)
+	}
+	if actCtx, ok := parent.Value(ActivityLogContextKey).(ActivityLogContext); ok {
+		// merging
+		if newActCtx.resourceCloudId != "" {
+			actCtx.SetResourceCloudId(actCtx.resourceCloudId)
+		}
+		if newActCtx.operationName != "" {
+			actCtx.SetOperationName(actCtx.operationName)
+		}
+		if newActCtx.cloudLocation != "" {
+			actCtx.SetCloudLocation(actCtx.cloudLocation)
+		}
+		if newActCtx.category != "" {
+			actCtx.SetCategory(actCtx.category)
+		}
+		if newActCtx.correlationId != "" {
+			actCtx.SetCorrelationId(actCtx.correlationId)
+		}
+		if newActCtx.properties != nil {
+			for k := range newActCtx.properties {
+				if v := newActCtx.properties[k]; v != nil && v != "" {
+					actCtx.SetProperty(k, v)
+				}
+			}
+		}
+		return context.WithValue(parent, ActivityLogContextKey, actCtx)
+	} else {
+		return context.WithValue(parent, ActivityLogContextKey, newActCtx)
+	}
 }
