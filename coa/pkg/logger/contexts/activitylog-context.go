@@ -197,7 +197,7 @@ func (ctx *ActivityLogContext) Value(key interface{}) interface{} {
 	}
 }
 
-func (ctx *ActivityLogContext) MarshalJSON() ([]byte, error) {
+func (ctx ActivityLogContext) MarshalJSON() ([]byte, error) {
 	return json.Marshal(ctx.ToMap())
 }
 

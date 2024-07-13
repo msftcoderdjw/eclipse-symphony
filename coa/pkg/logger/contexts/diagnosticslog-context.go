@@ -162,7 +162,7 @@ func (ctx *DiagnosticLogContext) Value(key interface{}) interface{} {
 	}
 }
 
-func (ctx *DiagnosticLogContext) MarshalJSON() ([]byte, error) {
+func (ctx DiagnosticLogContext) MarshalJSON() ([]byte, error) {
 	return json.Marshal(ctx.ToMap())
 }
 
