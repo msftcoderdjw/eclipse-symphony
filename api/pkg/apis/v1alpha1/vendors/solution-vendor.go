@@ -128,7 +128,7 @@ func (c *SolutionVendor) onQueue(request v1alpha2.COARequest) v1alpha2.COARespon
 			ContentType: "application/json",
 		})
 	case fasthttp.MethodPost:
-		_, span := observability.StartSpan("onQueue-POST", rContext, nil)
+		ctx, span := observability.StartSpan("onQueue-POST", rContext, nil)
 		defer span.End()
 		instance := request.Parameters["instance"]
 		delete := request.Parameters["delete"]
@@ -156,7 +156,7 @@ func (c *SolutionVendor) onQueue(request v1alpha2.COARequest) v1alpha2.COARespon
 		}
 
 		if instance == "" {
-			sLog.ErrorCtx(rContext, "V (Solution): onQueue failed - 400 instance parameter is not found")
+			sLog.ErrorCtx(ctx, "V (Solution): onQueue failed - 400 instance parameter is not found")
 			return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 				State:       v1alpha2.BadRequest,
 				Body:        []byte("{\"result\":\"400 - instance parameter is not found\"}"),
@@ -178,6 +178,7 @@ func (c *SolutionVendor) onQueue(request v1alpha2.COARequest) v1alpha2.COARespon
 				Action: action,
 				Data:   request.Body,
 			},
+			Context: ctx,
 		})
 		return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 			State:       v1alpha2.OK,

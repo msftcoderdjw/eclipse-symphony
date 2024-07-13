@@ -189,6 +189,7 @@ func (c *InstancesVendor) onInstances(request v1alpha2.COARequest) v1alpha2.COAR
 					Action: v1alpha2.JobUpdate,
 					Scope:  instance.ObjectMeta.Namespace,
 				},
+				Context: ctx,
 			})
 		}
 		return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
@@ -208,6 +209,7 @@ func (c *InstancesVendor) onInstances(request v1alpha2.COARequest) v1alpha2.COAR
 					Action: v1alpha2.JobDelete,
 					Scope:  namespace,
 				},
+				Context: ctx,
 			})
 			return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 				State: v1alpha2.OK,

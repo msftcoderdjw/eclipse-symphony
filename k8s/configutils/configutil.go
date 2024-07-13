@@ -157,6 +157,6 @@ func PopulateActivityAndDiagnosticsContextFromAnnotations(objectId string, annot
 		}
 	}
 	retCtx := coacontexts.PopulateResourceIdAndCorrelationIdToDiagnosticLogContext(correlationId, resourceId, ctx)
-	retCtx = coacontexts.PatchNewActivityLogContextToCurrentContext(*coacontexts.NewActivityLogContext(resourceId, location, operationName, activityCategory, correlationId, callerId, resourceK8SId), retCtx)
+	retCtx = coacontexts.PatchActivityLogContextToCurrentContext(coacontexts.NewActivityLogContext(resourceId, location, operationName, activityCategory, correlationId, callerId, resourceK8SId), retCtx)
 	return retCtx
 }

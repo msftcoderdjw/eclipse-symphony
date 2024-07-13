@@ -108,6 +108,7 @@ func (i *RemoteStageProvider) Process(ctx context.Context, mgrContext contexts.M
 				Outputs: i.OutputContext,
 			},
 		},
+		Context: ctx,
 	})
 	if err != nil {
 		log.ErrorfCtx(ctx, "  P (Remote Processor): publish failed - %v", err)

@@ -214,6 +214,7 @@ func (s *SolutionManager) sendHeartbeat(id string, namespace string, remove bool
 				Metadata: map[string]string{
 					"namespace": namespace,
 				},
+				Context: context.Background(),
 			})
 		case <-stopCh:
 			return // Exit the goroutine when the stop signal is received

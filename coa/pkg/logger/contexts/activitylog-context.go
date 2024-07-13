@@ -3,16 +3,21 @@ package contexts
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"net/http"
 	"time"
+
+	"github.com/valyala/fasthttp"
 )
 
 const (
-	Activity_ResourceCloudId string = "resourceId"
-	Activity_OperationName   string = "operationName"
-	Activity_Location        string = "location"
-	Activity_Category        string = "category"
-	Activity_CorrelationId   string = "correlationId"
-	Activity_Properties      string = "properties"
+	ACTIVITY_HTTP_HEADER_PREFIX string = "X-Activity-"
+	Activity_ResourceCloudId    string = "resourceId"
+	Activity_OperationName      string = "operationName"
+	Activity_Location           string = "location"
+	Activity_Category           string = "category"
+	Activity_CorrelationId      string = "correlationId"
+	Activity_Properties         string = "properties"
 
 	Activity_Props_CallerId      string = "caller-id"
 	Activity_Props_ResourceK8SId string = "resource-k8s-id"
@@ -26,6 +31,71 @@ type ActivityLogContext struct {
 	category        string
 	correlationId   string
 	properties      map[string]interface{}
+}
+
+func ActivityLogContextEquals(a, b *ActivityLogContext) bool {
+	if a == nil && b == nil {
+		return true
+	}
+	if a == nil || b == nil {
+		return false
+	}
+
+	if a.resourceCloudId != b.resourceCloudId {
+		return false
+	}
+	if a.operationName != b.operationName {
+		return false
+	}
+	if a.cloudLocation != b.cloudLocation {
+		return false
+	}
+	if a.category != b.category {
+		return false
+	}
+	if a.correlationId != b.correlationId {
+		return false
+	}
+
+	if (a.properties == nil && b.properties != nil) || (a.properties != nil && b.properties == nil) {
+		return false
+	}
+
+	if a.properties != nil && b.properties != nil {
+		if len(a.properties) != len(b.properties) {
+			return false
+		}
+		for k := range a.properties {
+			if a.properties[k] != b.properties[k] {
+				return false
+			}
+		}
+	}
+
+	return true
+}
+
+func (ctx *ActivityLogContext) Equals(other *ActivityLogContext) bool {
+	return ActivityLogContextEquals(ctx, other)
+}
+
+func (ctx *ActivityLogContext) DeepCopy() *ActivityLogContext {
+	if ctx == nil {
+		return nil
+	}
+
+	newCtx := &ActivityLogContext{
+		resourceCloudId: ctx.resourceCloudId,
+		operationName:   ctx.operationName,
+		cloudLocation:   ctx.cloudLocation,
+		category:        ctx.category,
+		correlationId:   ctx.correlationId,
+		properties:      make(map[string]interface{}),
+	}
+	for k := range ctx.properties {
+		newCtx.properties[k] = ctx.properties[k]
+	}
+	return newCtx
 }
 
 func NewActivityLogContext(resourceCloudId, cloudLocation, operationName, category, correlationId, callerId, resourceK8SId string) *ActivityLogContext {
@@ -236,18 +306,18 @@ func (ctx *ActivityLogContext) GetProperty(key string) interface{} {
 	return ctx.properties[key]
 }
 
-func OverrideActivityLogContextToCurrentContext(newActCtx ActivityLogContext, parent context.Context) context.Context {
+func OverrideActivityLogContextToCurrentContext(newActCtx *ActivityLogContext, parent context.Context) context.Context {
 	if parent == nil {
-		return context.WithValue(context.Background(), ActivityLogContextKey, newActCtx)
+		return context.WithValue(context.TODO(), ActivityLogContextKey, newActCtx)
 	}
 	return context.WithValue(parent, ActivityLogContextKey, newActCtx)
 }
 
-func PatchNewActivityLogContextToCurrentContext(newActCtx ActivityLogContext, parent context.Context) context.Context {
+func PatchActivityLogContextToCurrentContext(newActCtx *ActivityLogContext, parent context.Context) context.Context {
 	if parent == nil {
-		return context.WithValue(context.Background(), ActivityLogContextKey, newActCtx)
+		return context.WithValue(context.TODO(), ActivityLogContextKey, newActCtx)
 	}
-	if actCtx, ok := parent.Value(ActivityLogContextKey).(ActivityLogContext); ok {
+	if actCtx, ok := parent.Value(ActivityLogContextKey).(*ActivityLogContext); ok {
 		// merging
 		if newActCtx.resourceCloudId != "" {
 			actCtx.SetResourceCloudId(actCtx.resourceCloudId)
@@ -274,5 +344,77 @@ func PatchNewActivityLogContextToCurrentContext(newActCtx ActivityLogContext, pa
 		return context.WithValue(parent, ActivityLogContextKey, actCtx)
 	} else {
 		return context.WithValue(parent, ActivityLogContextKey, newActCtx)
+	}
+}
+
+func ConstructHttpHeaderKeyForActivityLogContext(key string) string {
+	return fmt.Sprintf("%s%s", ACTIVITY_HTTP_HEADER_PREFIX, key)
+}
+
+func PropagateActivityLogContextToHttpRequestHeader(req *http.Request) {
+	if req == nil {
+		return
+	}
+
+	if actCtx, ok := req.Context().Value(ActivityLogContextKey).(*ActivityLogContext); ok {
+		req.Header.Set(ConstructHttpHeaderKeyForActivityLogContext(Activity_ResourceCloudId), actCtx.GetResourceCloudId())
+		req.Header.Set(ConstructHttpHeaderKeyForActivityLogContext(Activity_OperationName), actCtx.GetOperationName())
+		req.Header.Set(ConstructHttpHeaderKeyForActivityLogContext(Activity_Location), actCtx.GetCloudLocation())
+		req.Header.Set(ConstructHttpHeaderKeyForActivityLogContext(Activity_Category), actCtx.GetCategory())
+		req.Header.Set(ConstructHttpHeaderKeyForActivityLogContext(Activity_CorrelationId), actCtx.GetCorrelationId())
+
+		props := actCtx.GetProperties()
+		propsJson, err := json.Marshal(props)
+		if err != nil {
+			// skip
+		} else {
+			req.Header.Set(ConstructHttpHeaderKeyForActivityLogContext(Activity_Properties), string(propsJson))
+
+		}
+	}
+}
+
+func IsActivityLogContextPropertiesHeader(key string) bool {
+	return key == ConstructHttpHeaderKeyForActivityLogContext(Activity_Properties)
+}
+
+func ParseActivityLogContextFromHttpRequestHeader(ctx *fasthttp.RequestCtx) *ActivityLogContext {
+	if ctx == nil {
+		return nil
+	}
+
+	actCtx := ActivityLogContext{}
+	actCtx.SetResourceCloudId(string(ctx.Request.Header.Peek(ConstructHttpHeaderKeyForActivityLogContext(Activity_ResourceCloudId))))
+	actCtx.SetOperationName(string(ctx.Request.Header.Peek(ConstructHttpHeaderKeyForActivityLogContext(Activity_OperationName))))
+	actCtx.SetCloudLocation(string(ctx.Request.Header.Peek(ConstructHttpHeaderKeyForActivityLogContext(Activity_Location))))
+	actCtx.SetCategory(string(ctx.Request.Header.Peek(ConstructHttpHeaderKeyForActivityLogContext(Activity_Category))))
+	actCtx.SetCorrelationId(string(ctx.Request.Header.Peek(ConstructHttpHeaderKeyForActivityLogContext(Activity_CorrelationId))))
+
+	props := make(map[string]interface{})
+	propsJson := string(ctx.Request.Header.Peek(ConstructHttpHeaderKeyForActivityLogContext(Activity_Properties)))
+	if propsJson != "" {
+		if err := json.Unmarshal([]byte(propsJson), &props); err != nil {
+			// skip
+		} else {
+			actCtx.SetProperties(props)
+		}
+	}
+
+	return &actCtx
+}
+
+func InheritActivityLogContextFromOriginalContext(original context.Context, parent context.Context) context.Context {
+	if parent == nil {
+		return nil
+	}
+
+	if original == nil {
+		return parent
+	}
+
+	if actCtx, ok := original.Value(ActivityLogContextKey).(*ActivityLogContext); ok {
+		return context.WithValue(parent, ActivityLogContextKey, actCtx)
+	} else {
+		return parent
 	}
 }

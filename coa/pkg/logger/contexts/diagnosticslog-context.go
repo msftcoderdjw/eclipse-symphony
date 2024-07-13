@@ -3,10 +3,15 @@ package contexts
 import (
 	"context"
 	"encoding/json"
+	"fmt"
+	"net/http"
 	"time"
+
+	"github.com/valyala/fasthttp"
 )
 
 const (
+	DIAGNOSTICS_HTTP_HEADER_PREFIX   string = "X-Diagnostics-"
 	Diagnostics_CorrelationId        string = "correlationId"
 	Diagnostics_ResourceCloudId      string = "resourceId"
 	Diagnostics_TraceContext         string = "traceContext"
@@ -24,6 +29,57 @@ type DiagnosticLogContext struct {
 	correlationId   string
 	resourceCloudId string
 	traceContext    TraceContext
+}
+
+func TraceContextEquals(t1 *TraceContext, t2 *TraceContext) bool {
+	if t1 == nil && t2 == nil {
+		return true
+	}
+	if t1 == nil || t2 == nil {
+		return false
+	}
+	return t1.traceId == t2.traceId && t1.spanId == t2.spanId
+}
+
+func (ctx *TraceContext) Equals(other *TraceContext) bool {
+	return TraceContextEquals(ctx, other)
+}
+
+func DiagnosticLogContextEquals(d1 *DiagnosticLogContext, d2 *DiagnosticLogContext) bool {
+	if d1 == nil && d2 == nil {
+		return true
+	}
+	if d1 == nil || d2 == nil {
+		return false
+	}
+	return d1.correlationId == d2.correlationId &&
+		d1.resourceCloudId == d2.resourceCloudId &&
+		TraceContextEquals(&d1.traceContext, &d2.traceContext)
+}
+
+func (ctx *DiagnosticLogContext) Equals(other *DiagnosticLogContext) bool {
+	return DiagnosticLogContextEquals(ctx, other)
+}
+
+func (ctx *TraceContext) DeepCopy() *TraceContext {
+	if ctx == nil {
+		return nil
+	}
+	return &TraceContext{
+		traceId: ctx.traceId,
+		spanId:  ctx.spanId,
+	}
+}
+
+func (ctx *DiagnosticLogContext) DeepCopy() *DiagnosticLogContext {
+	if ctx == nil {
+		return nil
+	}
+	return &DiagnosticLogContext{
+		correlationId:   ctx.correlationId,
+		resourceCloudId: ctx.resourceCloudId,
+		traceContext:    *ctx.traceContext.DeepCopy(),
+	}
 }
 
 func NewDiagnosticLogContext(correlationId, resourceCloudId, traceId, spanId string) *DiagnosticLogContext {
@@ -159,10 +215,41 @@ func (ctx *DiagnosticLogContext) GetTraceContext() TraceContext {
 	return ctx.traceContext
 }
 
+func OverrideDiagnosticLogContextToCurrentContext(newDiagCtx *DiagnosticLogContext, parent context.Context) context.Context {
+	if parent == nil {
+		return context.WithValue(context.TODO(), DiagnosticLogContextKey, newDiagCtx)
+	}
+	return context.WithValue(parent, DiagnosticLogContextKey, newDiagCtx)
+}
+
+func PatchDiagnosticLogContextToCurrentContext(newDiagCtx *DiagnosticLogContext, parent context.Context) context.Context {
+	if parent == nil {
+		return context.WithValue(context.TODO(), DiagnosticLogContextKey, newDiagCtx)
+	}
+	if diagCtx, ok := parent.Value(DiagnosticLogContextKey).(*DiagnosticLogContext); ok {
+		// merging
+		if newDiagCtx.GetCorrelationId() != "" {
+			diagCtx.SetCorrelationId(newDiagCtx.GetCorrelationId())
+		}
+		if newDiagCtx.GetResourceId() != "" {
+			diagCtx.SetResourceId(newDiagCtx.GetResourceId())
+		}
+		if newDiagCtx.GetTraceId() != "" {
+			diagCtx.SetTraceId(newDiagCtx.GetTraceId())
+		}
+		if newDiagCtx.GetSpanId() != "" {
+			diagCtx.SetSpanId(newDiagCtx.GetSpanId())
+		}
+		return context.WithValue(parent, DiagnosticLogContextKey, diagCtx)
+	} else {
+		return context.WithValue(parent, DiagnosticLogContextKey, newDiagCtx)
+	}
+}
+
 func PopulateResourceIdAndCorrelationIdToDiagnosticLogContext(correlationId string, resourceCloudId string, parent context.Context) context.Context {
 	if parent == nil {
 		diagCtx := NewDiagnosticLogContext(correlationId, resourceCloudId, "", "")
-		return context.WithValue(context.Background(), DiagnosticLogContextKey, diagCtx)
+		return context.WithValue(context.TODO(), DiagnosticLogContextKey, diagCtx)
 	}
 	if diagCtx, ok := parent.Value(DiagnosticLogContextKey).(*DiagnosticLogContext); ok {
 		diagCtx.SetCorrelationId(correlationId)
@@ -189,7 +276,7 @@ func ClearResourceIdAndCorrelationIdFromDiagnosticLogContext(parent *context.Con
 func PopulateTraceAndSpanToDiagnosticLogContext(traceId string, spanId string, parent context.Context) context.Context {
 	if parent == nil {
 		diagCtx := NewDiagnosticLogContext("", "", traceId, spanId)
-		return context.WithValue(context.Background(), DiagnosticLogContextKey, diagCtx)
+		return context.WithValue(context.TODO(), DiagnosticLogContextKey, diagCtx)
 	}
 	if diagCtx, ok := parent.Value(DiagnosticLogContextKey).(*DiagnosticLogContext); ok {
 		diagCtx.SetTraceId(traceId)
@@ -210,5 +297,51 @@ func ClearTraceAndSpanFromDiagnosticLogContext(parent *context.Context) {
 			diagCtx.SetTraceId("")
 			diagCtx.SetSpanId("")
 		}
+	}
+}
+
+func ConstructHttpHeaderKeyForDiagnosticsLogContext(key string) string {
+	return fmt.Sprintf("%s%s", DIAGNOSTICS_HTTP_HEADER_PREFIX, key)
+}
+
+func PropagateDiagnosticLogContextToHttpRequestHeader(req *http.Request) {
+	if req == nil {
+		return
+	}
+	if diagCtx, ok := req.Context().Value(DiagnosticLogContextKey).(*DiagnosticLogContext); ok {
+		req.Header.Set(ConstructHttpHeaderKeyForDiagnosticsLogContext(Diagnostics_CorrelationId), diagCtx.GetCorrelationId())
+		req.Header.Set(ConstructHttpHeaderKeyForDiagnosticsLogContext(Diagnostics_ResourceCloudId), diagCtx.GetResourceId())
+		req.Header.Set(ConstructHttpHeaderKeyForDiagnosticsLogContext(Diagnostics_TraceContext_TraceId), diagCtx.GetTraceId())
+		req.Header.Set(ConstructHttpHeaderKeyForDiagnosticsLogContext(Diagnostics_TraceContext_SpanId), diagCtx.GetSpanId())
+	}
+}
+
+func ParseDiagnosticLogContextFromHttpRequestHeader(ctx *fasthttp.RequestCtx) *DiagnosticLogContext {
+	if ctx == nil {
+		return nil
+	}
+
+	correlationId := string(ctx.Request.Header.Peek(ConstructHttpHeaderKeyForDiagnosticsLogContext(Diagnostics_CorrelationId)))
+	resourceCloudId := string(ctx.Request.Header.Peek(ConstructHttpHeaderKeyForDiagnosticsLogContext(Diagnostics_ResourceCloudId)))
+	traceId := string(ctx.Request.Header.Peek(ConstructHttpHeaderKeyForDiagnosticsLogContext(Diagnostics_TraceContext_TraceId)))
+	spanId := string(ctx.Request.Header.Peek(ConstructHttpHeaderKeyForDiagnosticsLogContext(Diagnostics_TraceContext_SpanId)))
+
+	diagCtx := NewDiagnosticLogContext(correlationId, resourceCloudId, traceId, spanId)
+	return diagCtx
+}
+
+func InheritDiagnosticLogContextFromOriginalContext(orignal context.Context, parent context.Context) context.Context {
+	if parent == nil {
+		return nil
+	}
+
+	if orignal == nil {
+		return parent
+	}
+
+	if diagCtx, ok := orignal.Value(DiagnosticLogContextKey).(*DiagnosticLogContext); ok {
+		return context.WithValue(parent, DiagnosticLogContextKey, diagCtx)
+	} else {
+		return parent
 	}
 }

@@ -27,6 +27,7 @@ import (
 
 	"github.com/eclipse-symphony/symphony/coa/pkg/apis/v1alpha2/observability"
 	observ_utils "github.com/eclipse-symphony/symphony/coa/pkg/apis/v1alpha2/observability/utils"
+	coacontexts "github.com/eclipse-symphony/symphony/coa/pkg/logger/contexts"
 )
 
 type (
@@ -764,6 +765,8 @@ func (a *apiClient) callRestAPI(ctx context.Context, route string, method string
 
 	req, err = http.NewRequestWithContext(ctx, method, rUrl.String(), reqBody)
 	observ_utils.PropagateSpanContextToHttpRequestHeader(req)
+	coacontexts.PropagateActivityLogContextToHttpRequestHeader(req)
+	coacontexts.PropagateDiagnosticLogContextToHttpRequestHeader(req)
 	if err != nil {
 		return nil, err
 	}

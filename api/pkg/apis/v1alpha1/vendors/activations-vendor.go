@@ -218,6 +218,7 @@ func (c *ActivationsVendor) onActivations(request v1alpha2.COARequest) v1alpha2.
 					Inputs:               activation.Spec.Inputs,
 					Namespace:            activation.ObjectMeta.Namespace,
 				},
+				Context: ctx,
 			})
 		}
 		return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{

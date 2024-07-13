@@ -183,6 +183,7 @@ func (m *CatalogsManager) UpsertState(ctx context.Context, name string, state mo
 			Action: v1alpha2.JobUpdate,
 			Body:   state,
 		},
+		Context: ctx,
 	})
 	return nil
 }

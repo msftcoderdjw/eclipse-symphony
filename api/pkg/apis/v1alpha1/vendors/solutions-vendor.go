@@ -185,6 +185,7 @@ func (c *SolutionsVendor) onSolutions(request v1alpha2.COARequest) v1alpha2.COAR
 			Metadata: map[string]string{
 				"namespace": namespace,
 			},
+			Context: ctx,
 		})
 		return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 			State: v1alpha2.OK,

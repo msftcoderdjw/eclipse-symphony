@@ -127,6 +127,7 @@ func (s *JobsManager) pollObjects() []error {
 					Action: v1alpha2.JobUpdate,
 					Scope:  instance.ObjectMeta.Namespace,
 				},
+				Context: context,
 			})
 		}
 	}
@@ -165,6 +166,7 @@ func (s *JobsManager) pollObjects() []error {
 					Action: v1alpha2.JobUpdate,
 					Scope:  target.ObjectMeta.Namespace,
 				},
+				Context: context,
 			})
 		}
 	}
@@ -227,7 +229,8 @@ func (s *JobsManager) pollSchedules() []error {
 					return []error{err}
 				}
 				s.Context.Publish("trigger", v1alpha2.Event{
-					Body: activationData,
+					Body:    activationData,
+					Context: context,
 				})
 			}
 		}

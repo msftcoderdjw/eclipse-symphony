@@ -232,6 +232,7 @@ func (c *TargetsVendor) onRegistry(request v1alpha2.COARequest) v1alpha2.COAResp
 					Action: v1alpha2.JobUpdate,
 					Scope:  namespace,
 				},
+				Context: ctx,
 			})
 		}
 		return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
@@ -252,6 +253,7 @@ func (c *TargetsVendor) onRegistry(request v1alpha2.COARequest) v1alpha2.COAResp
 					Action: v1alpha2.JobDelete,
 					Scope:  namespace,
 				},
+				Context: ctx,
 			})
 			return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 				State: v1alpha2.OK,

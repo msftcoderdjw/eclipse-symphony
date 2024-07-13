@@ -326,7 +326,8 @@ func (s *StageManager) HandleDirectTriggerEvent(ctx context.Context, triggerData
 
 	if triggerData.Schedule != "" && !isRemote {
 		s.Context.Publish("schedule", v1alpha2.Event{
-			Body: triggerData,
+			Body:    triggerData,
+			Context: ctx,
 		})
 		status.Outputs["__status"] = v1alpha2.Delayed
 		status.Status = v1alpha2.Paused
@@ -574,7 +575,8 @@ func (s *StageManager) HandleTriggerEvent(ctx context.Context, campaign model.Ca
 
 				if triggerData.Schedule != "" {
 					s.Context.Publish("schedule", v1alpha2.Event{
-						Body: triggerData,
+						Body:    triggerData,
+						Context: ctx,
 					})
 					pauseRequested = true
 					results <- TaskResult{

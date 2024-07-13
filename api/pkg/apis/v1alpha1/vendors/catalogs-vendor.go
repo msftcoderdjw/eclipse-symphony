@@ -67,7 +67,11 @@ func (e *CatalogsVendor) Init(config vendors.VendorConfig, factories []managers.
 				if catalog.Spec.ParentName != "" {
 					catalog.Spec.ParentName = fmt.Sprintf("%s-%s", origin, catalog.Spec.ParentName)
 				}
-				err := e.CatalogsManager.UpsertState(context.TODO(), name, catalog)
+				ctx := context.TODO()
+				if event.Context != nil {
+					ctx = event.Context
+				}
+				err := e.CatalogsManager.UpsertState(ctx, name, catalog)
 				if err != nil {
 					return v1alpha2.NewCOAError(err, "failed to upsert catalog", v1alpha2.InternalError)
 				}

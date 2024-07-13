@@ -62,17 +62,29 @@ func (e *JobVendor) Init(config vendors.VendorConfig, factories []managers.IMana
 		return nil
 	})
 	e.Vendor.Context.Subscribe("job", func(topic string, event v1alpha2.Event) error {
-		err := e.JobsManager.HandleJobEvent(context.Background(), event)
+		ctx := context.TODO()
+		if event.Context != nil {
+			ctx = event.Context
+		}
+		err := e.JobsManager.HandleJobEvent(ctx, event)
 		if err != nil && v1alpha2.IsDelayed(err) {
 			go e.Vendor.Context.Publish(topic, event)
 		}
 		return err
 	})
 	e.Vendor.Context.Subscribe("heartbeat", func(topic string, event v1alpha2.Event) error {
-		return e.JobsManager.HandleHeartBeatEvent(context.Background(), event)
+		ctx := context.TODO()
+		if event.Context != nil {
+			ctx = event.Context
+		}
+		return e.JobsManager.HandleHeartBeatEvent(ctx, event)
 	})
 	e.Vendor.Context.Subscribe("schedule", func(topic string, event v1alpha2.Event) error {
-		return e.JobsManager.HandleScheduleEvent(context.Background(), event)
+		ctx := context.TODO()
+		if event.Context != nil {
+			ctx = event.Context
+		}
+		return e.JobsManager.HandleScheduleEvent(ctx, event)
 	})
 
 	if err != nil {
@@ -118,7 +130,8 @@ func (c *JobVendor) onHello(request v1alpha2.COARequest) v1alpha2.COAResponse {
 		}
 		jLog.InfofCtx(ctx, "V (Job): onHello, activationData: %v", activationData)
 		c.Vendor.Context.Publish("activation", v1alpha2.Event{
-			Body: activationData,
+			Body:    activationData,
+			Context: ctx,
 		})
 		return observ_utils.CloseSpanWithCOAResponse(span, v1alpha2.COAResponse{
 			State: v1alpha2.OK,
