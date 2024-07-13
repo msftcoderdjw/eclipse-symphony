@@ -87,7 +87,7 @@ func (e *Event) propagateActivityLogContextToEventMetadata() {
 	}
 }
 
-func (e *Event) parseActivityLogContextFromHttpEventMatadata() {
+func (e *Event) parseActivityLogContextFromEventMatadata() {
 	if e == nil || e.Metadata == nil {
 		return
 	}
@@ -151,7 +151,7 @@ func (e *Event) DeepCopy() *Event {
 	return &newEvent
 }
 
-func (e *Event) MarshalJSON() ([]byte, error) {
+func (e Event) MarshalJSON() ([]byte, error) {
 	type Alias Event
 	e1 := e.DeepCopy()
 	e1.propagateActivityLogContextToEventMetadata()
@@ -170,15 +170,15 @@ func (e *Event) UnmarshalJSON(data []byte) error {
 		return err
 	}
 	*e = Event(aux.Alias)
-	e.parseActivityLogContextFromHttpEventMatadata()
+	e.parseActivityLogContextFromEventMatadata()
 	e.parseDiagnosticLogContextFromEventMetadata()
 	e.clearActivityLogContextFromEventMetadata()
 	e.clearDiagnosticLogContextFromEventMetadata()
 	return nil
 }
 
-func (e *Event) Equals(other *Event) bool {
-	return EventEquals(e, other)
+func (e Event) DeepEquals(other Event) bool {
+	return EventEquals(&e, &other)
 }
 
 func EventEquals(e1, e2 *Event) bool {

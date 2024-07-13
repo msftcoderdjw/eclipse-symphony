@@ -41,8 +41,8 @@ func TraceContextEquals(t1 *TraceContext, t2 *TraceContext) bool {
 	return t1.traceId == t2.traceId && t1.spanId == t2.spanId
 }
 
-func (ctx *TraceContext) Equals(other *TraceContext) bool {
-	return TraceContextEquals(ctx, other)
+func (ctx TraceContext) DeepEquals(other TraceContext) bool {
+	return TraceContextEquals(&ctx, &other)
 }
 
 func DiagnosticLogContextEquals(d1 *DiagnosticLogContext, d2 *DiagnosticLogContext) bool {
@@ -57,8 +57,8 @@ func DiagnosticLogContextEquals(d1 *DiagnosticLogContext, d2 *DiagnosticLogConte
 		TraceContextEquals(&d1.traceContext, &d2.traceContext)
 }
 
-func (ctx *DiagnosticLogContext) Equals(other *DiagnosticLogContext) bool {
-	return DiagnosticLogContextEquals(ctx, other)
+func (ctx DiagnosticLogContext) DeepEquals(other DiagnosticLogContext) bool {
+	return DiagnosticLogContextEquals(&ctx, &other)
 }
 
 func (ctx *TraceContext) DeepCopy() *TraceContext {

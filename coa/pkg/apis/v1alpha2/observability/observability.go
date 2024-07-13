@@ -17,7 +17,6 @@ import (
 
 	v1alpha2 "github.com/eclipse-symphony/symphony/coa/pkg/apis/v1alpha2"
 	exporters "github.com/eclipse-symphony/symphony/coa/pkg/apis/v1alpha2/observability/exporters"
-	"github.com/eclipse-symphony/symphony/coa/pkg/logger"
 	coacontexts "github.com/eclipse-symphony/symphony/coa/pkg/logger/contexts"
 	"go.opentelemetry.io/otel"
 	"go.opentelemetry.io/otel/exporters/otlp/otlpmetric/otlpmetricgrpc"
@@ -35,8 +34,6 @@ import (
 )
 
 const defaultExporterTimeout = 300
-
-var test_logger = logger.NewLogger("observability")
 
 type ObservabilityConfig struct {
 	Pipelines   []PipelineConfig `json:"pipelines"`
@@ -102,21 +99,15 @@ func StartSpan(name string, ctx context.Context, attributes *map[string]string) 
 	if span != nil {
 		childCtx, childSpan := otel.Tracer(name).Start(trace.ContextWithSpan(ctx, *span), name)
 		childCtx = coacontexts.InheritActivityLogContextFromOriginalContext(ctx, childCtx)
-		test_logger.InfofCtx(childCtx, "StartSpan: InheritActivityLogContextFromOriginalContext")
 		childCtx = coacontexts.InheritDiagnosticLogContextFromOriginalContext(ctx, childCtx)
-		test_logger.InfofCtx(childCtx, "StartSpan: InheritActivityLogContextFromOriginalContext")
 		childCtx = populateSpanContextToDiagnosticLogContext(childSpan, childCtx)
-		test_logger.InfofCtx(childCtx, "StartSpan: InheritActivityLogContextFromOriginalContext")
 		setSpanAttributes(childSpan, attributes)
 		return childCtx, childSpan
 	} else {
 		childCtx, childSpan := otel.Tracer(name).Start(ctx, name)
 		childCtx = coacontexts.InheritActivityLogContextFromOriginalContext(ctx, childCtx)
-		test_logger.InfofCtx(childCtx, "else: StartSpan: InheritActivityLogContextFromOriginalContext")
 		childCtx = coacontexts.InheritDiagnosticLogContextFromOriginalContext(ctx, childCtx)
-		test_logger.InfofCtx(childCtx, "else: StartSpan: InheritActivityLogContextFromOriginalContext")
 		childCtx = populateSpanContextToDiagnosticLogContext(childSpan, childCtx)
-		test_logger.InfofCtx(childCtx, "else: StartSpan: InheritActivityLogContextFromOriginalContext")
 		setSpanAttributes(childSpan, attributes)
 		return childCtx, childSpan
 	}

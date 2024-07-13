@@ -75,8 +75,8 @@ func ActivityLogContextEquals(a, b *ActivityLogContext) bool {
 	return true
 }
 
-func (ctx *ActivityLogContext) Equals(other *ActivityLogContext) bool {
-	return ActivityLogContextEquals(ctx, other)
+func (ctx ActivityLogContext) DeepEquals(other ActivityLogContext) bool {
+	return ActivityLogContextEquals(&ctx, &other)
 }
 
 func (ctx *ActivityLogContext) DeepCopy() *ActivityLogContext {
