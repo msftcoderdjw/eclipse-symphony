@@ -113,35 +113,35 @@ func (f *FederationVendor) Init(config vendors.VendorConfig, factories []manager
 		return nil
 	})
 	f.Vendor.Context.Subscribe("report", func(topic string, event v1alpha2.Event) error {
-		fLog.Debugf("V (Federation): received report event: %v", event)
+		ctx := context.TODO()
+		if event.Context != nil {
+			ctx = event.Context
+		}
+		fLog.DebugfCtx(ctx, "V (Federation): received report event: %v", event)
 		jData, _ := json.Marshal(event.Body)
 		var status model.ActivationStatus
 		err := json.Unmarshal(jData, &status)
 		if err == nil {
-			ctx := context.TODO()
-			if event.Context != nil {
-				ctx = event.Context
-			}
 			err := f.apiClient.SyncActivationStatus(ctx, status,
 				f.Vendor.Context.SiteInfo.ParentSite.Username,
 				f.Vendor.Context.SiteInfo.ParentSite.Password)
 			if err != nil {
-				fLog.Errorf("V (Federation): error while syncing activation status: %v", err)
+				fLog.ErrorfCtx(ctx, "V (Federation): error while syncing activation status: %v", err)
 				return err
 			}
 		}
 		return v1alpha2.NewCOAError(nil, "report is not an activation status", v1alpha2.BadRequest)
 	})
 	f.Vendor.Context.Subscribe("trail", func(topic string, event v1alpha2.Event) error {
+		ctx := context.TODO()
+		if event.Context != nil {
+			ctx = event.Context
+		}
 		if f.TrailsManager != nil {
 			jData, _ := json.Marshal(event.Body)
 			var trails []v1alpha2.Trail
 			err := json.Unmarshal(jData, &trails)
 			if err == nil {
-				ctx := context.TODO()
-				if event.Context != nil {
-					ctx = event.Context
-				}
 				return f.TrailsManager.Append(ctx, trails)
 			}
 		}
