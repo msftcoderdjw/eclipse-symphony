@@ -13,7 +13,7 @@ import (
 	"time"
 
 	"github.com/eclipse-symphony/symphony/coa/pkg/apis/v1alpha2"
-	"github.com/eclipse-symphony/symphony/coa/pkg/apis/v1alpha2/contexts"
+	vendorCtx "github.com/eclipse-symphony/symphony/coa/pkg/apis/v1alpha2/contexts"
 	"github.com/eclipse-symphony/symphony/coa/pkg/apis/v1alpha2/managers"
 	"github.com/eclipse-symphony/symphony/coa/pkg/apis/v1alpha2/providers"
 )
@@ -28,8 +28,8 @@ type ActivationsCleanupManager struct {
 	RetentionInMinutes int
 }
 
-func (s *ActivationsCleanupManager) Init(context *contexts.VendorContext, config managers.ManagerConfig, providers map[string]providers.IProvider) error {
-	err := s.ActivationsManager.Init(context, config, providers)
+func (s *ActivationsCleanupManager) Init(ctx *vendorCtx.VendorContext, config managers.ManagerConfig, providers map[string]providers.IProvider) error {
+	err := s.ActivationsManager.Init(ctx, config, providers)
 	if err != nil {
 		return err
 	}
