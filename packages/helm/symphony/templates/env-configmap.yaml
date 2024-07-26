@@ -16,3 +16,6 @@ data:
 {{- if .Values.api.annotationKey }}
   ANNOTATION_KEY: {{ .Values.api.annotationKey }}
 {{- end }}
+{{- if .Values.Azure.Extension.ResourceId }}
+  EXTENSION_RESOURCEID: {{ .Values.Azure.Extension.ResourceId }}
+{{- end }}
