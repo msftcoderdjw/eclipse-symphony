@@ -149,7 +149,7 @@ func PopulateActivityAndDiagnosticsContextFromAnnotations(objectId string, annot
 
 	if correlationId == "" {
 		correlationId = uuid.New().String()
-		log.Info("CorrelationId is not present in annotations, generating a new one, correlationId", correlationId)
+		log.Info("CorrelationId is not present in annotations, generating new correlationId", "correlationId", correlationId)
 	}
 
 	resourceK8SId := objectId
