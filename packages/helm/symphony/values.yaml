@@ -54,3 +54,5 @@ Azure:
     httpsProxy: ""
     noProxy: ""
     proxyCert: ""
+  Extension:
+    ResourceId: ""
