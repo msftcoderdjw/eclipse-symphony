@@ -42,7 +42,7 @@ harbor_user=$(cat $inputs_file | jq -r .harbor_user)
 source_images=$(cat $inputs_file | jq -r .source_images)
 
 # Install docker, nslookup, and skopeo
-echo "Install docker, nslookup, and skopeo" | tee -a $logFile
+echo "Install docker" | tee -a $logFile
 apt-get update
 apt-get install ca-certificates curl
 install -m 0755 -d /etc/apt/keyrings
@@ -55,8 +55,10 @@ echo \
   tee /etc/apt/sources.list.d/docker.list > /dev/null
 apt-get update
 apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+echo "Install dnsutils (nslookup)" | tee -a $logFile
 apt-get install -y dnsutils
-apt-get -y install skopeo
+echo "Install skopeo" | tee -a $logFile
+apt-get install -y skopeo
 
 # Test DNS resolution
 if ! nslookup $harbor_host > /dev/null 2>&1; then
