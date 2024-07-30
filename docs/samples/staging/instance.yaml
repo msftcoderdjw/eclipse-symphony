@@ -1,0 +1,8 @@
+apiVersion: solution.symphony/v1
+kind: Instance
+metadata:
+  name: staging-prometheus-instance
+spec: 
+  solution: staging-prometheus-server:v1
+  target:
+    name: staging-k8s-target

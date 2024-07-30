@@ -1,0 +1,21 @@
+{
+    "__activation": "staging-activation",
+    "__activationGeneration": "1",
+    "__campaign": "staging-campaign:v1",
+    "__namespace": "default",
+    "__previousStage": "staging",
+    "__site": "hq",
+    "__stage": "staging",
+    "harbor_ca_cert_url": "https://raw.githubusercontent.com/msftcoderdjw/eclipse-symphony/staging/docs/samples/staging/harbor-ca.crt",
+    "harbor_host": "harbor.contoso.com",
+    "harbor_ip": "4.147.7.144",
+    "harbor_password": "Harbor12345",
+    "harbor_port": 443,
+    "harbor_project": "library",
+    "harbor_user": "admin",
+    "source_images": [
+        "nginx:1.19.6",
+        "nginx:1.19.7",
+        "prom/prometheus:latest"
+    ]
+}

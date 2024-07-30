@@ -1,6 +1,16 @@
 apiVersion: workflow.symphony/v1
 kind: Activation
 metadata:
-  name: approval-activation
+  name: staging-activation
 spec:
-  campaign: "approval-campaign:v1"
+  campaign: "staging-campaign:v1"
+  inputs:
+    harbor_ca_cert_url: "https://raw.githubusercontent.com/msftcoderdjw/eclipse-symphony/staging/docs/samples/staging/harbor-ca.crt"
+    harbor_ip: "4.147.7.144"
+    harbor_host: "harbor.contoso.com"
+    harbor_port: 443
+    harbor_user: "admin"
+    harbor_password: "Harbor12345"
+    harbor_project: "library"
+    source_images:
+    - "prom/prometheus:latest"
