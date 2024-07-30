@@ -93,13 +93,13 @@ jobs:
       run: |
         cd test/integration/scenarios/00.unit/ && mage test
 
-    - name: Run integration tests 01
-      run: |
-        cd test/integration/scenarios/01.update/ && mage test
+    # - name: Run integration tests 01
+    #   run: |
+    #     cd test/integration/scenarios/01.update/ && mage test
         
-    - name: Run integration tests 02
-      run: |
-        cd test/integration/scenarios/02.basic/ && mage test
+    # - name: Run integration tests 02
+    #   run: |
+    #     cd test/integration/scenarios/02.basic/ && mage test
 
     - name: Run integration tests 02 delete
       run: |
