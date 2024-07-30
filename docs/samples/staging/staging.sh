@@ -77,30 +77,36 @@ if [ -n "$harbor_ca_cert_url" ]; then
 fi
 
 # echo "docker login -u $harbor_user -p $harbor_password $harbor_host:$harbor_port" | tee -a $logFile
+# docker login -u $harbor_user -p $harbor_password $harbor_host:$harbor_port
 
 # for image in $(echo $source_images | jq -r '.[]'); do
 #     echo "Processing image: $image" | tee -a $logFile
 #     echo "docker pull $image" | tee -a $logFile
 #     docker pull $image
-#     remaing="${image#*/}"
-#     echo "docker tag $image $harbor_host:$harbor_port/$harbor_project/$remaing" | tee -a $logFile
-#     docker tag $image $harbor_host:$harbor_port/$harbor_project/$remaing
-#     echo "docker push $harbor_host:$harbor_port/$harbor_project/$remaing" | tee -a $logFile
-#     docker push $harbor_host:$harbor_port/$harbor_project/$remaing
+#     remaining="${image#*/}"
+#     echo "docker tag $image $harbor_host:$harbor_port/$harbor_project/$remaining" | tee -a $logFile
+#     docker tag $image $harbor_host:$harbor_port/$harbor_project/$remaining
+#     echo "docker push $harbor_host:$harbor_port/$harbor_project/$remaining" | tee -a $logFile
+#     docker push $harbor_host:$harbor_port/$harbor_project/$remaining
 #     echo "docker rmi $image" | tee -a $logFile
 #     docker rmi $image
-#     echo "docker rmi $harbor_host:$harbor_port/$harbor_project/$remaing" | tee -a $logFile
-#     docker rmi $harbor_host:$harbor_port/$harbor_project/$remaing
+#     echo "docker rmi $harbor_host:$harbor_port/$harbor_project/$remaining" | tee -a $logFile
+#     docker rmi $harbor_host:$harbor_port/$harbor_project/$remaining
 # done
 
-echo "skopeo login --username $harbor_user --password $harbor_password docker://$harbor_host:$harbor_port" | tee -a $logFile
+echo "skopeo login --username $harbor_user --password $harbor_password $harbor_host:$harbor_port" | tee -a $logFile
+skopeo login --username $harbor_user --password $harbor_password $harbor_host:$harbor_port
 
 for image in $(echo $source_images | jq -r '.[]'); do
     echo "Processing image: $image" | tee -a $logFile
-    remaing="${image#*/}"
-    echo "skopeo copy docker://$image docker://$harbor_host:$harbor_port/$harbor_project/$remaing" | tee -a $logFile
-    skopeo copy docker://$image docker://$harbor_host:$harbor_port/$harbor_project/$remaing
+    remaining="${image#*/}"
+    echo "skopeo copy docker://$image docker://$harbor_host:$harbor_port/$harbor_project/$remaining" | tee -a $logFile
+    skopeo copy docker://$image docker://$harbor_host:$harbor_port/$harbor_project/$remaining
 done
+
+# Cleanup
+echo "docker logout $harbor_host:$harbor_port" | tee -a $logFile
+skopeo logout $harbor_host:$harbor_port
 
 # staging successful
 echo "{\"status\":200}" | jq -c '.' > "$output_file" 
