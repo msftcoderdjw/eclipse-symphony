@@ -41,10 +41,22 @@ harbor_project=$(cat $inputs_file | jq -r .harbor_project)
 harbor_user=$(cat $inputs_file | jq -r .harbor_user)
 source_images=$(cat $inputs_file | jq -r .source_images)
 
-# Install docker and nslookup
-echo "Install docker and nslookup" | tee -a $logFile
+# Install docker, nslookup, and skopeo
+echo "Install docker, nslookup, and skopeo" | tee -a $logFile
 apt-get update
-apt-get install -y docker.io dnsutils
+apt-get install ca-certificates curl
+install -m 0755 -d /etc/apt/keyrings
+curl -fsSL https://download.docker.com/linux/ubuntu/gpg -o /etc/apt/keyrings/docker.asc
+chmod a+r /etc/apt/keyrings/docker.asc
+# Add the repository to Apt sources:
+echo \
+  "deb [arch=$(dpkg --print-architecture) signed-by=/etc/apt/keyrings/docker.asc] https://download.docker.com/linux/ubuntu \
+  $(. /etc/os-release && echo "$VERSION_CODENAME") stable" | \
+  tee /etc/apt/sources.list.d/docker.list > /dev/null
+apt-get update
+apt-get install -y docker-ce docker-ce-cli containerd.io docker-buildx-plugin docker-compose-plugin
+apt-get install -y dnsutils
+apt-get -y install skopeo
 
 # Test DNS resolution
 if ! nslookup $harbor_host > /dev/null 2>&1; then
@@ -62,21 +74,30 @@ if [ -n "$harbor_ca_cert_url" ]; then
     update-ca-certificates
 fi
 
-echo "docker login -u $harbor_user -p $harbor_password $harbor_host:$harbor_port" | tee -a $logFile
+# echo "docker login -u $harbor_user -p $harbor_password $harbor_host:$harbor_port" | tee -a $logFile
+
+# for image in $(echo $source_images | jq -r '.[]'); do
+#     echo "Processing image: $image" | tee -a $logFile
+#     echo "docker pull $image" | tee -a $logFile
+#     docker pull $image
+#     remaing="${image#*/}"
+#     echo "docker tag $image $harbor_host:$harbor_port/$harbor_project/$remaing" | tee -a $logFile
+#     docker tag $image $harbor_host:$harbor_port/$harbor_project/$remaing
+#     echo "docker push $harbor_host:$harbor_port/$harbor_project/$remaing" | tee -a $logFile
+#     docker push $harbor_host:$harbor_port/$harbor_project/$remaing
+#     echo "docker rmi $image" | tee -a $logFile
+#     docker rmi $image
+#     echo "docker rmi $harbor_host:$harbor_port/$harbor_project/$remaing" | tee -a $logFile
+#     docker rmi $harbor_host:$harbor_port/$harbor_project/$remaing
+# done
+
+echo "skopeo login --username $harbor_user --password $harbor_password docker://$harbor_host:$harbor_port" | tee -a $logFile
 
 for image in $(echo $source_images | jq -r '.[]'); do
     echo "Processing image: $image" | tee -a $logFile
-    echo "docker pull $image" | tee -a $logFile
-    docker pull $image
     remaing="${image#*/}"
-    echo "docker tag $image $harbor_host:$harbor_port/$harbor_project/$remaing" | tee -a $logFile
-    docker tag $image $harbor_host:$harbor_port/$harbor_project/$remaing
-    echo "docker push $harbor_host:$harbor_port/$harbor_project/$remaing" | tee -a $logFile
-    docker push $harbor_host:$harbor_port/$harbor_project/$remaing
-    echo "docker rmi $image" | tee -a $logFile
-    docker rmi $image
-    echo "docker rmi $harbor_host:$harbor_port/$harbor_project/$remaing" | tee -a $logFile
-    docker rmi $harbor_host:$harbor_port/$harbor_project/$remaing
+    echo "skopeo copy docker://$image docker://$harbor_host:$harbor_port/$harbor_project/$remaing" | tee -a $logFile
+    skopeo copy docker://$image docker://$harbor_host:$harbor_port/$harbor_project/$remaing
 done
 
 # staging successful
