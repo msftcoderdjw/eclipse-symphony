@@ -17,13 +17,16 @@ logFile="/var/log/staging_$timestamp.log"
 
 # Function to handle errors
 error_handler() {
-    echo "Error occurred in script at line: $1" | tee -a $logFile
+    local lineno=$1
+    local msg=$2
+    echo "Error occurred in script at line: $lineno" | tee -a $logFile
+    echo "Error message: $msg" | tee -a $logFile
     echo "{\"status\":500}" | jq -c '.' > "$output_file" 
     exit 1
 }
 
 # Trap errors
-trap 'error_handler $LINENO' ERR
+trap 'error_handler $LINENO "$BASH_COMMAND"' ERR
 
 # Exit immediately if a command exits with a non-zero status
 set -e
