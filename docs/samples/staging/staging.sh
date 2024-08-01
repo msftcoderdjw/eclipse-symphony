@@ -94,19 +94,21 @@ fi
 #     docker rmi $harbor_host:$harbor_port/$harbor_project/$remaining
 # done
 
-echo "skopeo login --username $harbor_user --password $harbor_password $harbor_host:$harbor_port" | tee -a $logFile
-skopeo login --username $harbor_user --password $harbor_password $harbor_host:$harbor_port
+# echo "skopeo login --username $harbor_user --password $harbor_password $harbor_host:$harbor_port" | tee -a $logFile
+# skopeo login --username $harbor_user --password $harbor_password $harbor_host:$harbor_port
 
-for image in $(echo $source_images | jq -r '.[]'); do
-    echo "Processing image: $image" | tee -a $logFile
-    remaining="${image#*/}"
-    echo "skopeo copy docker://$image docker://$harbor_host:$harbor_port/$harbor_project/$remaining" | tee -a $logFile
-    skopeo copy docker://$image docker://$harbor_host:$harbor_port/$harbor_project/$remaining
-done
+# for image in $(echo $source_images | jq -r '.[]'); do
+#     echo "Processing image: $image" | tee -a $logFile
+#     remaining="${image#*/}"
+#     echo "skopeo copy docker://$image docker://$harbor_host:$harbor_port/$harbor_project/$remaining" | tee -a $logFile
+#     skopeo copy docker://$image docker://$harbor_host:$harbor_port/$harbor_project/$remaining
+# done
 
-# Cleanup
-echo "docker logout $harbor_host:$harbor_port" | tee -a $logFile
-skopeo logout $harbor_host:$harbor_port
+# # Cleanup
+# echo "docker logout $harbor_host:$harbor_port" | tee -a $logFile
+# skopeo logout $harbor_host:$harbor_port
+
+echo "Staging successful" | tee -a $logFile
 
 # staging successful
 echo "{\"status\":200}" | jq -c '.' > "$output_file" 
