@@ -9,7 +9,12 @@ package v1
 import (
 	"context"
 	"fmt"
+	commoncontainer "gopls-workspace/apis/model/v1"
+	"gopls-workspace/configutils"
 
+	configv1 "gopls-workspace/apis/config/v1"
+
+	observ_utils "github.com/eclipse-symphony/symphony/coa/pkg/apis/v1alpha2/observability/utils"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
 	"k8s.io/apimachinery/pkg/runtime"
 	ctrl "sigs.k8s.io/controller-runtime"
@@ -59,6 +64,12 @@ var _ webhook.Validator = &Solution{}
 func (r *Solution) ValidateCreate() (admission.Warnings, error) {
 	solutionlog.Info("validate create", "name", r.Name)
 
+	resourceK8SId := r.GetNamespace() + "/" + r.GetName()
+	operationName := fmt.Sprintf("%s/%s", constants.SolutionOperationNamePrefix, constants.ActivityOperation_Write)
+	ctx := configutils.PopulateActivityAndDiagnosticsContextFromAnnotations(resourceK8SId, r.Annotations, constants.ActivityCategory_Activity, operationName, context.TODO(), solutionlog)
+
+	observ_utils.EmitUserAuditsLogs(ctx, "Activation %s is being created on namespace %s", r.Name, r.Namespace)
+
 	return nil, r.validateCreateSolution()
 }
 
@@ -66,12 +77,24 @@ func (r *Solution) ValidateCreate() (admission.Warnings, error) {
 func (r *Solution) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	solutionlog.Info("validate update", "name", r.Name)
 
+	resourceK8SId := r.GetNamespace() + "/" + r.GetName()
+	operationName := fmt.Sprintf("%s/%s", constants.SolutionOperationNamePrefix, constants.ActivityOperation_Write)
+	ctx := configutils.PopulateActivityAndDiagnosticsContextFromAnnotations(resourceK8SId, r.Annotations, constants.ActivityCategory_Activity, operationName, context.TODO(), solutionlog)
+
+	observ_utils.EmitUserAuditsLogs(ctx, "Activation %s is being updated on namespace %s", r.Name, r.Namespace)
+
 	return nil, r.validateUpdateSolution()
 }
 
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
 func (r *Solution) ValidateDelete() (admission.Warnings, error) {
 	solutionlog.Info("validate delete", "name", r.Name)
+
+	resourceK8SId := r.GetNamespace() + "/" + r.GetName()
+	operationName := fmt.Sprintf("%s/%s", constants.SolutionOperationNamePrefix, constants.ActivityOperation_Delete)
+	ctx := configutils.PopulateActivityAndDiagnosticsContextFromAnnotations(resourceK8SId, r.Annotations, constants.ActivityCategory_Activity, operationName, context.TODO(), solutionlog)
+
+	observ_utils.EmitUserAuditsLogs(ctx, "Activation %s is being deleted on namespace %s", r.Name, r.Namespace)
 
 	return nil, nil
 }
@@ -95,4 +118,29 @@ func (r *Solution) validateUpdateSolution() error {
 		return apierrors.NewBadRequest(fmt.Sprintf("solution display name '%s' is already taken", r.Spec.DisplayName))
 	}
 	return nil
+}
+
+func (r *SolutionContainer) Default() {
+	commoncontainer.DefaultImpl(solutionlog, r)
+}
+
+func (r *SolutionContainer) ValidateCreate() (admission.Warnings, error) {
+	return commoncontainer.ValidateCreateImpl(solutionlog, r)
+}
+func (r *SolutionContainer) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
+	return commoncontainer.ValidateUpdateImpl(solutionlog, r, old)
+}
+
+func (r *SolutionContainer) ValidateDelete() (admission.Warnings, error) {
+	solutionlog.Info("validate delete solution container", "name", r.Name)
+	getSubResourceNums := func() (int, error) {
+		var solutionList SolutionList
+		err := mySolutionReaderClient.List(context.Background(), &solutionList, client.InNamespace(r.Namespace), client.MatchingLabels{"rootResource": r.Name}, client.Limit(1))
+		if err != nil {
+			return 0, err
+		} else {
+			return len(solutionList.Items), nil
+		}
+	}
+	return commoncontainer.ValidateDeleteImpl(solutionlog, r, getSubResourceNums)
 }

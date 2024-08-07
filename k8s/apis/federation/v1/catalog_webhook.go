@@ -21,6 +21,8 @@ import (
 	logf "sigs.k8s.io/controller-runtime/pkg/log"
 	"sigs.k8s.io/controller-runtime/pkg/webhook"
 	"sigs.k8s.io/controller-runtime/pkg/webhook/admission"
+
+	observ_utils "github.com/eclipse-symphony/symphony/coa/pkg/apis/v1alpha2/observability/utils"
 )
 
 // log is for logging in this package.
@@ -70,6 +72,12 @@ var _ webhook.Validator = &Catalog{}
 func (r *Catalog) ValidateCreate() (admission.Warnings, error) {
 	cataloglog.Info("validate create", "name", r.Name)
 
+	resourceK8SId := r.GetNamespace() + "/" + r.GetName()
+	operationName := fmt.Sprintf("%s/%s", constants.CatalogOperationNamePrefix, constants.ActivityOperation_Write)
+	ctx := configutils.PopulateActivityAndDiagnosticsContextFromAnnotations(resourceK8SId, r.Annotations, constants.ActivityCategory_Activity, operationName, context.TODO(), cataloglog)
+
+	observ_utils.EmitUserAuditsLogs(ctx, "Catalog %s is being created on namespace %s", r.Name, r.Namespace)
+
 	validateCreateTime := time.Now()
 	validationError := r.validateCreateCatalog()
 	if validationError != nil {
@@ -93,6 +101,12 @@ func (r *Catalog) ValidateCreate() (admission.Warnings, error) {
 func (r *Catalog) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
 	cataloglog.Info("validate update", "name", r.Name)
 
+	resourceK8SId := r.GetNamespace() + "/" + r.GetName()
+	operationName := fmt.Sprintf("%s/%s", constants.CatalogOperationNamePrefix, constants.ActivityOperation_Write)
+	ctx := configutils.PopulateActivityAndDiagnosticsContextFromAnnotations(resourceK8SId, r.Annotations, constants.ActivityCategory_Activity, operationName, context.TODO(), cataloglog)
+
+	observ_utils.EmitUserAuditsLogs(ctx, "Catalog %s is being updated on namespace %s", r.Name, r.Namespace)
+
 	validateUpdateTime := time.Now()
 	validationError := r.validateUpdateCatalog()
 	if validationError != nil {
@@ -115,6 +129,12 @@ func (r *Catalog) ValidateUpdate(old runtime.Object) (admission.Warnings, error)
 // ValidateDelete implements webhook.Validator so a webhook will be registered for the type
 func (r *Catalog) ValidateDelete() (admission.Warnings, error) {
 	cataloglog.Info("validate delete", "name", r.Name)
+
+	resourceK8SId := r.GetNamespace() + "/" + r.GetName()
+	operationName := fmt.Sprintf("%s/%s", constants.CatalogOperationNamePrefix, constants.ActivityOperation_Delete)
+	ctx := configutils.PopulateActivityAndDiagnosticsContextFromAnnotations(resourceK8SId, r.Annotations, constants.ActivityCategory_Activity, operationName, context.TODO(), cataloglog)
+
+	observ_utils.EmitUserAuditsLogs(ctx, "Catalog %s is being deleted on namespace %s", r.Name, r.Namespace)
 
 	return nil, nil
 }

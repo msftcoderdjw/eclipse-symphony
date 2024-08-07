@@ -24,6 +24,7 @@ import (
 )
 
 // ActivationReconciler reconciles a Campaign object
+
 type ActivationReconciler struct {
 	client.Client
 	Scheme    *runtime.Scheme
