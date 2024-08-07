@@ -9,10 +9,9 @@ package v1
 import (
 	"context"
 	"fmt"
-	commoncontainer "gopls-workspace/apis/model/v1"
 	"gopls-workspace/configutils"
 
-	configv1 "gopls-workspace/apis/config/v1"
+	"github.com/eclipse-symphony/symphony/k8s/constants"
 
 	observ_utils "github.com/eclipse-symphony/symphony/coa/pkg/apis/v1alpha2/observability/utils"
 	apierrors "k8s.io/apimachinery/pkg/api/errors"
@@ -118,29 +117,4 @@ func (r *Solution) validateUpdateSolution() error {
 		return apierrors.NewBadRequest(fmt.Sprintf("solution display name '%s' is already taken", r.Spec.DisplayName))
 	}
 	return nil
-}
-
-func (r *SolutionContainer) Default() {
-	commoncontainer.DefaultImpl(solutionlog, r)
-}
-
-func (r *SolutionContainer) ValidateCreate() (admission.Warnings, error) {
-	return commoncontainer.ValidateCreateImpl(solutionlog, r)
-}
-func (r *SolutionContainer) ValidateUpdate(old runtime.Object) (admission.Warnings, error) {
-	return commoncontainer.ValidateUpdateImpl(solutionlog, r, old)
-}
-
-func (r *SolutionContainer) ValidateDelete() (admission.Warnings, error) {
-	solutionlog.Info("validate delete solution container", "name", r.Name)
-	getSubResourceNums := func() (int, error) {
-		var solutionList SolutionList
-		err := mySolutionReaderClient.List(context.Background(), &solutionList, client.InNamespace(r.Namespace), client.MatchingLabels{"rootResource": r.Name}, client.Limit(1))
-		if err != nil {
-			return 0, err
-		} else {
-			return len(solutionList.Items), nil
-		}
-	}
-	return commoncontainer.ValidateDeleteImpl(solutionlog, r, getSubResourceNums)
 }

@@ -101,7 +101,7 @@ func (s *JobsManager) pollObjects() []error {
 	}
 	for _, instance := range instances {
 		var entry states.StateEntry
-		entry, err = s.StateProvider.Get(context, states.GetRequest{
+		entry, err = s.StateProvider.Get(ctx, states.GetRequest{
 			ID: "i_" + instance.ObjectMeta.Name,
 			Metadata: map[string]interface{}{
 				"namespace": instance.ObjectMeta.Namespace,
@@ -140,7 +140,7 @@ func (s *JobsManager) pollObjects() []error {
 	}
 	for _, target := range targets {
 		var entry states.StateEntry
-		entry, err = s.StateProvider.Get(context, states.GetRequest{
+		entry, err = s.StateProvider.Get(ctx, states.GetRequest{
 			ID: "t_" + target.ObjectMeta.Name,
 			Metadata: map[string]interface{}{
 				"namespace": target.ObjectMeta.Namespace,
@@ -201,7 +201,7 @@ func (s *JobsManager) pollSchedules() []error {
 
 	//TODO: use filters and continue tokens
 	var list []states.StateEntry
-	list, _, err = s.StateProvider.List(context, states.ListRequest{})
+	list, _, err = s.StateProvider.List(ctx, states.ListRequest{})
 	if err != nil {
 		return []error{err}
 	}
@@ -221,7 +221,7 @@ func (s *JobsManager) pollSchedules() []error {
 			}
 			if fire {
 				activationData.Schedule = ""
-				err = s.StateProvider.Delete(context, states.DeleteRequest{
+				err = s.StateProvider.Delete(ctx, states.DeleteRequest{
 					ID: entry.ID,
 					Metadata: map[string]interface{}{
 						"namespace": activationData.Namespace,
