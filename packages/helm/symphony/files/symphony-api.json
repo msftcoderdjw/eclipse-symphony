@@ -155,13 +155,14 @@
         "route": "backgroundjob",
         "loopInterval": 3600,
         "managers": [
+          {{- if .Values.ActivationCleanup.enabled }}
           {
             "name": "activations-cleanup-manager",
             "type": "managers.symphony.activationscleanup",
             "properties": {
               "providers.persistentstate": "k8s-state",
               "singleton": "true",
-              "RetentionInMinutes": "1440"
+              "RetentionDuration": "{{ .Values.ActivationCleanup.retentionDuration }}"
             },
             "providers": {
               "k8s-state": {
@@ -172,6 +173,7 @@
               }
             }
           }
+          {{- end }}
         ]
       },
       {
@@ -669,6 +671,9 @@
       "config": {
         "port": {{ include "symphony.apiContainerPortHttp" . }},
         "pipeline": [
+          {{- include "symphony.metricMiddleware" . | indent 10 }}
+          {{- include "symphony.logMiddleware" . | indent 10 }}
+          {{- include "symphony.traceMiddleware" . | indent 10 }}
           {{- include "symphony.zipkinMiddleware" . | indent 10 }}
           {
             "type": "middleware.http.cors",
@@ -767,6 +772,9 @@
             }
           },
           "pipeline": [
+            {{- include "symphony.metricMiddleware" . | indent 10 }}
+            {{- include "symphony.logMiddleware" . | indent 10 }}
+            {{- include "symphony.traceMiddleware" . | indent 10 }}
             {{- include "symphony.zipkinMiddleware" . | indent 10 }}
             {
               "type": "middleware.http.cors",
