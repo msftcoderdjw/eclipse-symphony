@@ -10,3 +10,4 @@ data:
   SYMPHONY_API_URL: {{ include "symphony.httpsUrl" . }}
   USE_SERVICE_ACCOUNT_TOKENS: "true"
   EXTENSION_RESOURCEID: {{ .Values.Azure.Extension.ResourceId }}
+  EMIT_TIME_FIELD_IN_USER_LOGS: {{ include "symphony.emitTimeFieldInUserLogs" . }}
