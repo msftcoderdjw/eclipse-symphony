@@ -98,7 +98,7 @@ func (r *Target) ValidateCreate() (admission.Warnings, error) {
 
 	resourceK8SId := r.GetNamespace() + "/" + r.GetName()
 	operationName := fmt.Sprintf("%s/%s", constants.TargetOperationNamePrefix, constants.ActivityOperation_Write)
-	ctx := configutils.PopulateActivityAndDiagnosticsContextFromAnnotations(resourceK8SId, r.Annotations, constants.ActivityCategory_Activity, operationName, context.TODO(), targetlog)
+	ctx := configutils.PopulateActivityAndDiagnosticsContextFromAnnotations(resourceK8SId, r.Annotations, operationName, context.TODO(), targetlog)
 
 	observ_utils.EmitUserAuditsLogs(ctx, "Target %s is being created on namespace %s", r.Name, r.Namespace)
 
@@ -129,7 +129,7 @@ func (r *Target) ValidateUpdate(old runtime.Object) (admission.Warnings, error) 
 
 	resourceK8SId := r.GetNamespace() + "/" + r.GetName()
 	operationName := fmt.Sprintf("%s/%s", constants.TargetOperationNamePrefix, constants.ActivityOperation_Write)
-	ctx := configutils.PopulateActivityAndDiagnosticsContextFromAnnotations(resourceK8SId, r.Annotations, constants.ActivityCategory_Activity, operationName, context.TODO(), targetlog)
+	ctx := configutils.PopulateActivityAndDiagnosticsContextFromAnnotations(resourceK8SId, r.Annotations, operationName, context.TODO(), targetlog)
 
 	observ_utils.EmitUserAuditsLogs(ctx, "Target %s is being updated on namespace %s", r.Name, r.Namespace)
 
@@ -160,7 +160,7 @@ func (r *Target) ValidateDelete() (admission.Warnings, error) {
 
 	resourceK8SId := r.GetNamespace() + "/" + r.GetName()
 	operationName := fmt.Sprintf("%s/%s", constants.TargetOperationNamePrefix, constants.ActivityOperation_Delete)
-	ctx := configutils.PopulateActivityAndDiagnosticsContextFromAnnotations(resourceK8SId, r.Annotations, constants.ActivityCategory_Activity, operationName, context.TODO(), targetlog)
+	ctx := configutils.PopulateActivityAndDiagnosticsContextFromAnnotations(resourceK8SId, r.Annotations, operationName, context.TODO(), targetlog)
 
 	observ_utils.EmitUserAuditsLogs(ctx, "Target %s is being deleted on namespace %s", r.Name, r.Namespace)
 

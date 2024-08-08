@@ -24,7 +24,6 @@ const (
 	K8S                          = "symphony-k8s"
 	OperationStartTimeKeyPostfix = FullGroupName + "/started-at"
 	FinalizerPostfix             = FullGroupName + "/finalizer"
-	ActivityCategory_Activity    = "Activity"
 	ActivityOperation_Write      = "Write"
 	ActivityOperation_Read       = "Read"
 	ActivityOperation_Delete     = "Delete"
