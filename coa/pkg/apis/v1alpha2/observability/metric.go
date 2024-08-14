@@ -155,6 +155,7 @@ func (c *counter) Add(
 	}
 
 	k := attribute.NewSet(convertMapToAttributes(mergeAttrs(attrs...))...)
+	fmt.Printf("Counter Add: incr: %v, k: %v\n", incr, k)
 	c.values[k] += incr
 }
 
