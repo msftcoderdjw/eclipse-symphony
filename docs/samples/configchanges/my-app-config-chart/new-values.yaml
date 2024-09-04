@@ -1,0 +1,9 @@
+config:
+  myConfigFile: |-
+    key1: value1
+    key2: value2
+    key3: value3
+  myEnvConfig:
+    MY_APP_env1: value1
+    MY_APP_env2: value2
+    MY_APP_env3: value3

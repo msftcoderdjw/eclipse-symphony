@@ -1,0 +1,11 @@
+replicaCount: 3
+
+image:
+  repository: toolchainorchestratordev.azurecr.io/my-app-config
+  tag: v1.0
+  pullPolicy: Always
+
+config:
+  myConfigName: 
+  myEnvConfigName: 
+  myEnvConfigAnnotation: 

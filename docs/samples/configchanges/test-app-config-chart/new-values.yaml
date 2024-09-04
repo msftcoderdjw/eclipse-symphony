@@ -1,0 +1,4 @@
+config:
+  myConfigName: my-config
+  myEnvConfigName: my-env-config
+  myEnvConfigAnnotation: my-env-config-v2

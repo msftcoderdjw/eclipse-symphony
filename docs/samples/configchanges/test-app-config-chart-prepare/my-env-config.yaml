@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: my-env-config
+data: 
+  MY_APP_env1: value1
+  MY_APP_env2: value2
+  MY_APP_env5: value5

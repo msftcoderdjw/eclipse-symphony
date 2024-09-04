@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: my-app-config
+  namespace: {{ .Release.Namespace }}
+spec:
+  replicas: {{ .Values.replicaCount }}
+  selector:
+    matchLabels:
+      app: my-app-config
+  template:
+    metadata:
+      labels:
+        app: my-app-config
+      annotations:
+        my-env-config-annotation: {{ .Values.config.myEnvConfigAnnotation }}
+    spec:
+      containers:
+      - name: my-app-config
+        image: "{{ .Values.image.repository }}:{{ .Values.image.tag }}"
+        imagePullPolicy: {{ .Values.image.pullPolicy }}
+        envFrom:
+        - configMapRef:
+            name: {{ .Values.config.myEnvConfigName }}
+        volumeMounts:
+        - name: config-volume
+          mountPath: /etc/config
+          readOnly: true
+      volumes:
+      - name: config-volume
+        configMap:
+          name: {{ .Values.config.myConfigName }}
