@@ -9,25 +9,17 @@ inputs_file=$1
 
 output_file="${inputs_file%.*}-output.${inputs_file##*.}"
 
-items=$(jq -r '.items[]' < "$inputs_file")
-instance_name=$(jq -r '.instanceName' < "$inputs_file")
+instance_name=$(jq -r '.instance_name' < "$inputs_file")
+instance=$(jq -r ".items[] | select(.metadata.name == \"$instance_name\")" "$inputs_file")
 
-echo "items: $items"
-echo "instance_name: $instance_name"
+echo "instance: $instance"
 
 # get the instance object
-for item in $items; do
-    if [ "$item.metadata.name" == "$instance_name" ]; then
-        status="$item.status.provisioningStatus.status"
-        if [ "$status" == "Succeeded" ]; then
-            echo "{\"status\":200}" | jq -c '.' > "$output_file"
-            exit 0
-        elif [ "$status" == "Failed" ]; then
-            echo "{\"status\":500}" | jq -c '.' > "$output_file"
-            exit 0
-        fi
-        break
-    fi
-done
-
-echo "{\"status\":202}" | jq -c '.' > "$output_file"
+status=$(echo $instance | jq -r '.status.provisioningStatus.status')
+if [ "$status" == "Succeeded" ]; then
+    echo "{\"status\":200}" | jq -c '.' > "$output_file"
+elif [ "$status" == "Failed" ]; then
+    echo "{\"status\":500}" | jq -c '.' > "$output_file"
+else
+    echo "{\"status\":202}" | jq -c '.' > "$output_file"
+fi

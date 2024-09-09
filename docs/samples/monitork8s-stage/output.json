@@ -37,7 +37,7 @@
                 "provisioningStatus": {
                     "error": {},
                     "operationId": "",
-                    "status": "Succeeded"
+                    "status": "Failed"
                 }
             }
         }
