@@ -12,15 +12,21 @@ output_file="${inputs_file%.*}-output.${inputs_file##*.}"
 items=$(jq -r '.items[]' < "$inputs_file")
 instance_name=$(jq -r '.instanceName' < "$inputs_file")
 
+echo "items: $items"
+echo "instance_name: $instance_name"
+
 # get the instance object
 for item in $items; do
-    status=$item.status.provisioningStatus.status
-    if [ "$status" == "Succeeded" ]; then
-        echo "{\"status\":200}" | jq -c '.' > "$output_file"
-        exit 0
-    elif [ "$status" == "Failed" ]; then
-        echo "{\"status\":500}" | jq -c '.' > "$output_file"
-        exit 0
+    if [ "$item.metadata.name" == "$instance_name" ]; then
+        status="$item.status.provisioningStatus.status"
+        if [ "$status" == "Succeeded" ]; then
+            echo "{\"status\":200}" | jq -c '.' > "$output_file"
+            exit 0
+        elif [ "$status" == "Failed" ]; then
+            echo "{\"status\":500}" | jq -c '.' > "$output_file"
+            exit 0
+        fi
+        break
     fi
 done
 
