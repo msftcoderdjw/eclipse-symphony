@@ -1,0 +1,33 @@
+apiVersion: workflow.symphony/v1
+kind: CampaignContainer
+metadata:
+  name: polling-campaign
+spec:  
+---
+apiVersion: workflow.symphony/v1
+kind: Campaign
+metadata:
+  name: polling-campaign-v-v1
+spec:
+  rootResource: polling-campaign
+  firstStage: "polling"
+  selfDriving: true
+  stages:
+    list:
+      name: "list"
+      provider: "providers.stage.list"     
+      inputs:
+        objectType: "instances"
+        stageSelector: "check"
+    check:
+      name: "check"
+      provider: "providers.stage.script"
+      inputs:
+        scriptFolder: "https://raw.githubusercontent.com/msftcoderdjw/eclipse-symphony/docs/samples/monitork8s-stage"
+        scriptEngine: "bash"
+        script: "verify-instance.sh"
+        stageSelector: ${{$if($equal($output(check,status), 200),'end','list')}}
+    end:
+      name: "end"
+      provider: "providers.stage.mock"      
+      stageSelector: ""
