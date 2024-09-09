@@ -18,16 +18,17 @@ spec:
       provider: "providers.stage.list"     
       inputs:
         objectType: "instance"
-        stageSelector: "check"
+      stageSelector: "check"
     check:
       name: "check"
       provider: "providers.stage.script"
-      inputs:
-        scriptFolder: "https://raw.githubusercontent.com/msftcoderdjw/eclipse-symphony/docs/samples/monitork8s-stage"
+      config:
+        scriptFolder: "https://raw.githubusercontent.com/msftcoderdjw/eclipse-symphony/configdemo/docs/samples/monitork8s-stage"
         scriptEngine: "bash"
         script: "verify-instance.sh"
+      inputs:
         items: "${{$output(list,items)}}"
-        stageSelector: ${{$if($equal($output(check,status), 200),'end','list')}}
+      stageSelector: ${{$if($equal($output(check,status), 200),'end','list')}}
     end:
       name: "end"
       provider: "providers.stage.mock"      
