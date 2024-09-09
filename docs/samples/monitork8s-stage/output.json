@@ -1,0 +1,45 @@
+{
+    "instance_name": "sample-prometheus-instance",
+    "items": [
+        {
+            "metadata": {
+                "annotations": {
+                    "instance.solution.symphony/started-at": "2024-09-09T06:22:49Z",
+                    "kubectl.kubernetes.io/last-applied-configuration": "{\"apiVersion\":\"solution.symphony/v1\",\"kind\":\"Instance\",\"metadata\":{\"annotations\":{},\"name\":\"sample-prometheus-instance\",\"namespace\":\"default\"},\"spec\":{\"scope\":\"sample-k8s-scope\",\"solution\":\"sample-prometheus-server:v1\",\"target\":{\"name\":\"sample-k8s-target\"}}}\n",
+                    "management.azure.com/correlationId": "f28380be-808e-4012-8de2-952fbe9e84cc"
+                },
+                "generation": "1",
+                "labels": {
+                    "solution": "sample-prometheus-server-v-v1",
+                    "target": "sample-k8s-target"
+                },
+                "name": "sample-prometheus-instance",
+                "namespace": "default"
+            },
+            "spec": {
+                "displayName": "sample-prometheus-instance",
+                "scope": "sample-k8s-scope",
+                "solution": "sample-prometheus-server:v1",
+                "target": {
+                    "name": "sample-k8s-target"
+                }
+            },
+            "status": {
+                "lastModified": "2024-09-09T06:22:59Z",
+                "properties": {
+                    "deployed": "1",
+                    "status": "Succeeded",
+                    "status-details": "",
+                    "targets": "1",
+                    "targets.sample-k8s-target": "OK - ",
+                    "targets.sample-k8s-target.sample-prometheus-server": "Untouched"
+                },
+                "provisioningStatus": {
+                    "error": {},
+                    "operationId": "",
+                    "status": "Succeeded"
+                }
+            }
+        }
+    ]
+}

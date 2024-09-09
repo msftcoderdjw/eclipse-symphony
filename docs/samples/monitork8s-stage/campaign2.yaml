@@ -10,14 +10,14 @@ metadata:
   name: polling-campaign-v-v1
 spec:
   rootResource: polling-campaign
-  firstStage: "polling"
+  firstStage: "list"
   selfDriving: true
   stages:
     list:
       name: "list"
       provider: "providers.stage.list"     
       inputs:
-        objectType: "instances"
+        objectType: "instance"
         stageSelector: "check"
     check:
       name: "check"
@@ -26,6 +26,7 @@ spec:
         scriptFolder: "https://raw.githubusercontent.com/msftcoderdjw/eclipse-symphony/docs/samples/monitork8s-stage"
         scriptEngine: "bash"
         script: "verify-instance.sh"
+        items: "${{$output(list,items)}}"
         stageSelector: ${{$if($equal($output(check,status), 200),'end','list')}}
     end:
       name: "end"
