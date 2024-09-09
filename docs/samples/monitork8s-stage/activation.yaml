@@ -1,0 +1,10 @@
+apiVersion: workflow.symphony/v1
+kind: Activation
+metadata:
+  name: polling-activation
+spec:
+  campaign: "polling-campaign:v1"
+  inputs:
+    instance_name: "sample-prometheus-instance"
+    namespace_name: "default"
+    max_retries: 8

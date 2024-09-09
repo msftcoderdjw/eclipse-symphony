@@ -1,0 +1,28 @@
+apiVersion: workflow.symphony/v1
+kind: CampaignContainer
+metadata:
+  name: polling-campaign
+spec:  
+---
+apiVersion: workflow.symphony/v1
+kind: Campaign
+metadata:
+  name: polling-campaign-v-v1
+spec:
+  rootResource: polling-campaign
+  firstStage: "polling"
+  selfDriving: true
+  stages:
+    polling:
+      name: "polling"
+      provider: "providers.stage.script"     
+      config: 
+        scriptFolder: "https://raw.githubusercontent.com/msftcoderdjw/eclipse-symphony/docs/samples/monitork8s-stage"
+        scriptEngine: "bash"
+        script: "monitor-instance.sh"
+        # stageSelector: ${{$if($equal($output(approval,status), 200),'deploy','end')}}     
+        stageSelector: "end"
+    end:
+      name: "end"
+      provider: "providers.stage.mock"      
+      stageSelector: ""
