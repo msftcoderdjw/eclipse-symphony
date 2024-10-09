@@ -73,7 +73,7 @@ data:
           # Rename attributes
           - type: move
             from: attributes.stream
-            to: attributes["log.iostream"]
+            to: attributes["log_iostream"]
           - type: move
             from: attributes.container_name
             to: resource["k8s.container.name"]
@@ -118,7 +118,7 @@ data:
           - type: move
             if: 'body["time"] != nil'
             from: body["time"]
-            to: attributes["log.time"]
+            to: attributes["serviceTimestamp"]
           - type: move
             if: 'body["ver"] != nil'
             from: body["ver"]
@@ -249,6 +249,9 @@ data:
           - key: container_image_tag
             action: upsert
             from_attribute: container.image.tag
+          - key: log_file_path
+            action: upsert
+            from_attribute: log.file.path
           - key: k8s.pod.name
             action: delete
           - key: k8s.pod.start_time
@@ -264,6 +267,8 @@ data:
           - key: k8s.container.name
             action: delete
           - key: k8s.namespace.name
+            action: delete
+          - key: log.file.path
             action: delete
 
       batch:
