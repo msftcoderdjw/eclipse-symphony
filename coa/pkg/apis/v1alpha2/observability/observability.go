@@ -30,6 +30,7 @@ import (
 
 	observ_utils "github.com/eclipse-symphony/symphony/coa/pkg/apis/v1alpha2/observability/utils"
 	"go.opentelemetry.io/otel/attribute"
+	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploggrpc"
 	"go.opentelemetry.io/otel/exporters/otlp/otlplog/otlploghttp"
 	resource "go.opentelemetry.io/otel/sdk/resource"
 	semconv "go.opentelemetry.io/otel/semconv/v1.12.0"
@@ -306,6 +307,35 @@ func (o *Observability) InitLog(config ObservabilityConfig) error {
 			}
 			if err != nil {
 				return err
+			}
+
+		case v1alpha2.LogExporterOTLPgRPC:
+			ctx, cancel := context.WithTimeout(
+				context.Background(),
+				time.Second*defaultExporterTimeout,
+			)
+			defer cancel()
+
+			var otelloggrpcOptions []otlploggrpc.Option
+			otelloggrpcOptions = append(
+				otelloggrpcOptions,
+				otlploggrpc.WithEndpoint(p.Exporter.CollectorUrl),
+			)
+
+			if p.Exporter.InsecureEndpoint {
+				otelloggrpcOptions = append(
+					otelloggrpcOptions,
+					otlploggrpc.WithInsecure(),
+				)
+			}
+
+			exporter, err = otlploggrpc.New(
+				ctx,
+				otelloggrpcOptions...,
+			)
+
+			if err != nil {
+				return v1alpha2.NewCOAError(nil, err.Error(), v1alpha2.BadConfig)
 			}
 
 		case v1alpha2.LogExporterOTLPhTTP:
