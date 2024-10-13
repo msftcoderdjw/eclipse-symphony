@@ -13,7 +13,12 @@ data:
           "exporter": {
             "type": "metrics.exporters.otlpgrpc",
             "collectorUrl": "{{ tpl .Values.otlpMetricsEndpointGrpc $ }}",
-            "temporality": true
+            "temporality": true,
+            {{- if eq .Values.otlpInsecureGrpc true }}
+            "insecureEndpoint": true
+            {{- else }}
+            "insecureEndpoint": false
+            {{- end }}
           }
         }
         {{- end }}
@@ -28,14 +33,16 @@ data:
         {
           "exporter": {
             "type": "log.exporters.otlphttp",
-            "collectorUrl": "http://{{- include "symphony.fullname" . -}}-otel-forwarder-service.{{ .Release.Namespace }}.svc.cluster.local:4318/v1/logs"
+            "collectorUrl": "http://{{- include "symphony.fullname" . -}}-otel-forwarder-service.{{ .Release.Namespace }}.svc.cluster.local:4318/v1/logs",
+            "insecureEndpoint": true
           }
         }
         {{- else }}
         {
           "exporter": {
             "type": "log.exporters.otlphttp",
-            "collectorUrl": "http://{{- include "symphony.fullname" . -}}-otel-collector-service.{{ .Release.Namespace }}.svc.cluster.local:4318/v1/logs"
+            "collectorUrl": "http://{{- include "symphony.fullname" . -}}-otel-collector-service.{{ .Release.Namespace }}.svc.cluster.local:4318/v1/logs",
+            "insecureEndpoint": true
           }
         }
         {{- end }}
