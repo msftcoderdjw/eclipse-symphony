@@ -48,11 +48,12 @@ type PipelineConfig struct {
 }
 
 type ExporterConfig struct {
-	Type         string        `json:"type"`
-	BackendUrl   string        `json:"backendUrl"`
-	Sampler      SamplerConfig `json:"sampler"`
-	CollectorUrl string        `json:"collectorUrl"`
-	Temporality  bool          `json:"temporality"`
+	Type             string        `json:"type"`
+	BackendUrl       string        `json:"backendUrl"`
+	Sampler          SamplerConfig `json:"sampler"`
+	CollectorUrl     string        `json:"collectorUrl"`
+	Temporality      bool          `json:"temporality"`
+	InsecureEndpoint bool          `json:"insecureEndpoint"`
 }
 
 type ProcessorConfig struct {
@@ -225,10 +226,22 @@ func (o *Observability) InitTrace(config ObservabilityConfig) error {
 			)
 			defer cancel()
 
+			var otlptracegrpcOptions []otlptracegrpc.Option
+			otlptracegrpcOptions = append(
+				otlptracegrpcOptions,
+				otlptracegrpc.WithEndpoint(p.Exporter.CollectorUrl),
+			)
+
+			if p.Exporter.InsecureEndpoint {
+				otlptracegrpcOptions = append(
+					otlptracegrpcOptions,
+					otlptracegrpc.WithInsecure(),
+				)
+			}
+
 			te, err := otlptracegrpc.New(
 				ctx,
-				otlptracegrpc.WithInsecure(),
-				otlptracegrpc.WithEndpoint(p.Exporter.CollectorUrl),
+				otlptracegrpcOptions...,
 			)
 			if err != nil {
 				return v1alpha2.NewCOAError(nil, err.Error(), v1alpha2.BadConfig)
@@ -306,8 +319,14 @@ func (o *Observability) InitLog(config ObservabilityConfig) error {
 			otelloghttpOptions = append(
 				otelloghttpOptions,
 				otlploghttp.WithEndpointURL(p.Exporter.CollectorUrl),
-				otlploghttp.WithInsecure(),
 			)
+
+			if p.Exporter.InsecureEndpoint {
+				otelloghttpOptions = append(
+					otelloghttpOptions,
+					otlploghttp.WithInsecure(),
+				)
+			}
 
 			exporter, err = otlploghttp.New(
 				ctx,
@@ -362,8 +381,14 @@ func (o *Observability) InitMetric(config ObservabilityConfig) error {
 			otlpmetricgrpcOptions = append(
 				otlpmetricgrpcOptions,
 				otlpmetricgrpc.WithEndpoint(p.Exporter.CollectorUrl),
-				otlpmetricgrpc.WithInsecure(),
 			)
+
+			if p.Exporter.InsecureEndpoint {
+				otlpmetricgrpcOptions = append(
+					otlpmetricgrpcOptions,
+					otlpmetricgrpc.WithInsecure(),
+				)
+			}
 
 			if p.Exporter.Temporality {
 				otlpmetricgrpcOptions = append(

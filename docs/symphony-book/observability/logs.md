@@ -194,14 +194,16 @@ User audits and user diganostics logs are integrated with OTLP via [log bridge A
     {
       "exporter": {
         "type": "log.exporters.otlphttp",
-        "collectorUrl": "http://{{- include "symphony.fullname" . -}}-otel-forwarder-service.{{ .Release.Namespace }}.svc.cluster.local:4318/v1/logs"
+        "collectorUrl": "http://{{- include "symphony.fullname" . -}}-otel-forwarder-service.{{ .Release.Namespace }}.svc.cluster.local:4318/v1/logs",
+        "insecureEndpoint": true
       }
     }
     {{- else }}
     {
       "exporter": {
         "type": "log.exporters.otlphttp",
-        "collectorUrl": "http://{{- include "symphony.fullname" . -}}-otel-collector-service.{{ .Release.Namespace }}.svc.cluster.local:4318/v1/logs"
+        "collectorUrl": "http://{{- include "symphony.fullname" . -}}-otel-collector-service.{{ .Release.Namespace }}.svc.cluster.local:4318/v1/logs",
+        "insecureEndpoint": true
       }
     }
     {{- end }}
