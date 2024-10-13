@@ -166,9 +166,10 @@ Symphony metrics are integarted with OTLP via [Metrics API](https://opentelemetr
     {{- if .Values.otlpMetricsEndpointGrpc }}
     {
         "exporter": {
-        "type": "metrics.exporters.otlpgrpc",
-        "collectorUrl": "{{ tpl .Values.otlpMetricsEndpointGrpc $ }}",
-        "temporality": true
+          "type": "metrics.exporters.otlpgrpc",
+          "collectorUrl": "{{ tpl .Values.otlpMetricsEndpointGrpc $ }}",
+          "temporality": true,
+          "insecureEndpoint": true
         }
     }
     {{- end }}
