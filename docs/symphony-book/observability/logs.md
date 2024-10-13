@@ -143,8 +143,8 @@ traceContext | otel-tracing trace context
 Log Type | How to emit
 --- | --- 
 Application runtime logs | All console outputs in Symphony-api and Symphony-controller. 
-User audits logs | Any places which invokes `logger.GetUserAuditsLogger.xxx` (added in essential target providers and validation webhooks)
-User diagnostics logs | Any places which invokes `logger.GetUserDiagnosticsLogger.xxx` (added in major functions, defer functions when return error is not nil)
+User audits logs | Any places which invokes `EmitUserAuditsLogs` (added in essential target providers and validation webhooks)
+User diagnostics logs | Any places which invokes `EmitUserDiagnosticsLogs` (added in major functions, defer functions when return error is not nil)
 
 ## Log context
 
@@ -190,23 +190,17 @@ User audits and user diganostics logs are integrated with OTLP via [log bridge A
   "serviceName": "symphony-k8s",
   "pipelines": [
     {{- if .Values.otlpLogsEndpointGrpc }}
-    {{- if .Values.observability.otelForwarder.enabled }}
     {
       "exporter": {
-        "type": "log.exporters.otlphttp",
-        "collectorUrl": "http://{{- include "symphony.fullname" . -}}-otel-forwarder-service.{{ .Release.Namespace }}.svc.cluster.local:4318/v1/logs",
+        "type": "log.exporters.otlpgrpc",
+        "collectorUrl": "{{ tpl .Values.otlpLogsEndpointGrpc $ }}",
+        {{- if eq .Values.otlpInsecureGrpc true }}
         "insecureEndpoint": true
+        {{- else }}
+        "insecureEndpoint": false
+        {{- end }}
       }
     }
-    {{- else }}
-    {
-      "exporter": {
-        "type": "log.exporters.otlphttp",
-        "collectorUrl": "http://{{- include "symphony.fullname" . -}}-otel-collector-service.{{ .Release.Namespace }}.svc.cluster.local:4318/v1/logs",
-        "insecureEndpoint": true
-      }
-    }
-    {{- end }}
     {{- end }}
   ]
 }
