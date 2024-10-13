@@ -283,26 +283,26 @@ data:
         logs:
           log_record:
             # - 'not IsMatch(attributes["log"], "^.*activity.*$")'
-            - attributes["type"] == nil or attributes["type"] != "userAudits"
+            - attributes["type"] == nil or attributes["type"] != "UserAudits"
       filter/userDiagnostics:
         logs:
           log_record:
             # - 'not IsMatch(attributes["log"], "^.*diagnostics.*$")'
-            - attributes["type"] == nil or attributes["type"] != "userDiagnostics"
+            - attributes["type"] == nil or attributes["type"] != "UserDiagnostics"
 
       transform/userAudits:
         error_mode: ignore
         log_statements:
           - context: log
             statements:
-              - set(instrumentation_scope.name, "userAudits")
+              - set(instrumentation_scope.name, "UserAudits")
 
       transform/userDiagnostics:
         error_mode: ignore
         log_statements:
           - context: log
             statements:
-              - set(instrumentation_scope.name, "userDiagnostics")
+              - set(instrumentation_scope.name, "UserDiagnostics")
     
     exporters:
       otlp/userAudits:
