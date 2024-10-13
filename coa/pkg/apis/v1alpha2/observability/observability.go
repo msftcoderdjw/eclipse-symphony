@@ -7,6 +7,7 @@
 package observability
 
 import (
+	"crypto/tls"
 	"fmt"
 	"os"
 	"os/signal"
@@ -27,6 +28,7 @@ import (
 	sdkmetric "go.opentelemetry.io/otel/sdk/metric"
 	"go.opentelemetry.io/otel/sdk/metric/metricdata"
 	sdktrace "go.opentelemetry.io/otel/sdk/trace"
+	"google.golang.org/grpc/credentials"
 
 	observ_utils "github.com/eclipse-symphony/symphony/coa/pkg/apis/v1alpha2/observability/utils"
 	"go.opentelemetry.io/otel/attribute"
@@ -55,6 +57,8 @@ type ExporterConfig struct {
 	CollectorUrl     string        `json:"collectorUrl"`
 	Temporality      bool          `json:"temporality"`
 	InsecureEndpoint bool          `json:"insecureEndpoint"`
+	ServerCAFilePath string        `json:"serverCAFilePath"`
+	ClientAuth       ClientAuth    `json:"clientAuth,omitempty"`
 }
 
 type ProcessorConfig struct {
@@ -238,6 +242,16 @@ func (o *Observability) InitTrace(config ObservabilityConfig) error {
 					otlptracegrpcOptions,
 					otlptracegrpc.WithInsecure(),
 				)
+			} else {
+				var credentials credentials.TransportCredentials
+				credentials, err = GetTLSCredentialsForGRPCExporter(p.Exporter.ServerCAFilePath, p.Exporter.ClientAuth)
+				if err != nil {
+					return v1alpha2.NewCOAError(nil, err.Error(), v1alpha2.BadConfig)
+				}
+				otlptracegrpcOptions = append(
+					otlptracegrpcOptions,
+					otlptracegrpc.WithTLSCredentials(credentials),
+				)
 			}
 
 			te, err := otlptracegrpc.New(
@@ -327,6 +341,16 @@ func (o *Observability) InitLog(config ObservabilityConfig) error {
 					otelloggrpcOptions,
 					otlploggrpc.WithInsecure(),
 				)
+			} else {
+				var credentials credentials.TransportCredentials
+				credentials, err = GetTLSCredentialsForGRPCExporter(p.Exporter.ServerCAFilePath, p.Exporter.ClientAuth)
+				if err != nil {
+					return v1alpha2.NewCOAError(nil, err.Error(), v1alpha2.BadConfig)
+				}
+				otelloggrpcOptions = append(
+					otelloggrpcOptions,
+					otlploggrpc.WithTLSCredentials(credentials),
+				)
 			}
 
 			exporter, err = otlploggrpc.New(
@@ -355,6 +379,16 @@ func (o *Observability) InitLog(config ObservabilityConfig) error {
 				otelloghttpOptions = append(
 					otelloghttpOptions,
 					otlploghttp.WithInsecure(),
+				)
+			} else {
+				var credentials *tls.Config
+				credentials, err = GetTLSCredentialsForHTTPExporter(p.Exporter.ServerCAFilePath, p.Exporter.ClientAuth)
+				if err != nil {
+					return v1alpha2.NewCOAError(nil, err.Error(), v1alpha2.BadConfig)
+				}
+				otelloghttpOptions = append(
+					otelloghttpOptions,
+					otlploghttp.WithTLSClientConfig(credentials),
 				)
 			}
 
@@ -417,6 +451,16 @@ func (o *Observability) InitMetric(config ObservabilityConfig) error {
 				otlpmetricgrpcOptions = append(
 					otlpmetricgrpcOptions,
 					otlpmetricgrpc.WithInsecure(),
+				)
+			} else {
+				var credentials credentials.TransportCredentials
+				credentials, err := GetTLSCredentialsForGRPCExporter(p.Exporter.ServerCAFilePath, p.Exporter.ClientAuth)
+				if err != nil {
+					return v1alpha2.NewCOAError(nil, err.Error(), v1alpha2.BadConfig)
+				}
+				otlpmetricgrpcOptions = append(
+					otlpmetricgrpcOptions,
+					otlpmetricgrpc.WithTLSCredentials(credentials),
 				)
 			}
 
