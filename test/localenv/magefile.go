@@ -39,6 +39,7 @@ const (
 	GITHUB_PAT             = "CR_PAT"
 	LOG_ROOT               = "/tmp/symphony-integration-test-logs"
 	MINIKUBE_START_OPTIONS = ""
+	ENABLE_TLS_OTEL_SETUP  = "false"
 )
 
 var platform = fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH)
@@ -54,10 +55,15 @@ func PrintParams() error {
 	fmt.Println("GHCR_VALUES_OPTIONS: ", ghcrValuesOptions())
 	fmt.Println("LOG_ROOT: ", getLogRoot())
 	fmt.Println("MINIKUBE_START_OPTIONS: ", getMinikubeStartOptions())
+	fmt.Println("SETUP_TLS_OTEL: ", enableTlsOtelSetup())
 	return nil
 }
 
 // global variables
+func enableTlsOtelSetup() bool {
+	return os.Getenv("ENABLE_TLS_OTEL_SETUP") == "true"
+}
+
 func getLogRoot() string {
 	if os.Getenv("LOG_ROOT") != "" {
 		return os.Getenv("LOG_ROOT")
@@ -140,6 +146,14 @@ type License mg.Namespace
 func (Cluster) Deploy() error {
 	fmt.Printf("Deploying symphony to minikube\n")
 	mg.Deps(ensureMinikubeUp)
+
+	if enableTlsOtelSetup() {
+		err := ensureSecureOtelCollectorPrereqs()
+		if err != nil {
+			return err
+		}
+	}
+
 	certsToVerify := []string{"symphony-api-serving-cert ", "symphony-serving-cert"}
 	commands := []shellcmd.Command{
 		shellcmd.Command(fmt.Sprintf("helm upgrade %s %s --install -n %s --create-namespace --wait -f ../../packages/helm/symphony/values.yaml %s --set symphonyImage.tag=%s --set paiImage.tag=%s", getReleaseName(), getChartPath(), getChartNamespace(), ghcrValuesOptions(), getDockerTag(), getDockerTag())),
@@ -155,6 +169,14 @@ func (Cluster) Deploy() error {
 func (Cluster) DeployWithSettings(values string) error {
 	fmt.Printf("Deploying symphony to minikube with settings, %s\n", values)
 	mg.Deps(ensureMinikubeUp)
+
+	if enableTlsOtelSetup() {
+		err := ensureSecureOtelCollectorPrereqs()
+		if err != nil {
+			return err
+		}
+	}
+
 	certsToVerify := []string{"symphony-api-serving-cert ", "symphony-serving-cert"}
 	commands := []shellcmd.Command{
 		shellcmd.Command(fmt.Sprintf("helm upgrade %s %s --install -n %s --create-namespace --wait -f ../../packages/helm/symphony/values.yaml %s --set symphonyImage.tag=%s --set paiImage.tag=%s %s", getReleaseName(), getChartPath(), getChartNamespace(), ghcrValuesOptions(), getDockerTag(), getDockerTag(), values)),
@@ -814,6 +836,51 @@ func recreateMinikube() error {
 	return ensureMinikubeUp()
 }
 
+func ensureSecureOtelCollectorPrereqs() error {
+	fmt.Printf("Deploying OSS cert-manager for otel-collector")
+	err := shellcmd.Command("kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.15.3/cert-manager.yaml --wait").Run()
+	if err != nil {
+		return err
+	}
+
+	// Path to the wait script
+	fmt.Printf("Waiting for cert-manager webhook to be ready")
+	waitCmds := []shellcmd.Command{
+		shellcmd.Command("kubectl wait --for=condition=ready pod -l app.kubernetes.io/component=webhook -n cert-manager --timeout=90s"),
+	}
+	err = shellcmd.RunAll(waitCmds...)
+	if err != nil {
+		fmt.Printf("Try second time after 30 seconds...")
+		time.Sleep(30 * time.Second)
+		err = shellcmd.RunAll(waitCmds...)
+		if err != nil {
+			return err
+		}
+	}
+
+	fmt.Printf("Deploying OSS trust-manager for otel-collector")
+	err = shellcmd.Command("helm repo add jetstack https://charts.jetstack.io --force-update").Run()
+	if err != nil {
+		return err
+	}
+
+	err = shellcmd.Command("helm upgrade trust-manager jetstack/trust-manager --install --namespace cert-manager --wait").Run()
+	if err != nil {
+		return err
+	}
+
+	fmt.Printf("Preparing certificates for otel-collector")
+	cmds := []shellcmd.Command{
+		shellcmd.Command("kubectl apply -f ./otel-certificates/0.selfsigned-issuer.yaml"),
+		shellcmd.Command("kubectl apply -f ./otel-certificates/1.root-ca.yaml"),
+		shellcmd.Command("kubectl apply -f ./otel-certificates/2.root-ca-issuer.yaml"),
+		shellcmd.Command("kubectl apply -f ./otel-certificates/3.tls-cert.yaml"),
+		shellcmd.Command("kubectl apply -f ./otel-certificates/4.trust-bundle.yaml"),
+	}
+
+	return shellcmd.RunAll(cmds...)
+}
+
 // Ensure minikube is running, otherwise install and start it
 func ensureMinikubeUp() error {
 	defer logTime(time.Now(), "start minikube")
@@ -833,30 +900,7 @@ func ensureMinikubeUp() error {
 		return err
 	}
 
-	fmt.Printf("Deploying OSS cert-manager and trust manager for otel-collector")
-	err := shellcmd.Command("kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.15.3/cert-manager.yaml --wait").Run()
-	if err != nil {
-		return err
-	}
-	err = shellcmd.Command("helm repo add jetstack https://charts.jetstack.io --force-update").Run()
-	if err != nil {
-		return err
-	}
-
-	err = shellcmd.Command("helm upgrade trust-manager jetstack/trust-manager --install --namespace cert-manager --wait").Run()
-	if err != nil {
-		return err
-	}
-
-	cmds := []shellcmd.Command{
-		shellcmd.Command("kubectl apply -f ./otel-certificates/0.selfsigned-issuer.yaml"),
-		shellcmd.Command("kubectl apply -f ./otel-certificates/1.root-ca.yaml"),
-		shellcmd.Command("kubectl apply -f ./otel-certificates/2.root-ca-issuer.yaml"),
-		shellcmd.Command("kubectl apply -f ./otel-certificates/3.tls-cert.yaml"),
-		shellcmd.Command("kubectl apply -f ./otel-certificates/4.trust-bundle.yaml"),
-	}
-
-	return shellcmd.RunAll(cmds...)
+	return nil
 }
 
 // True if minikube is active and running
