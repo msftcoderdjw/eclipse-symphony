@@ -14,3 +14,21 @@ api:
   labelKey:
   labelValue:
   annotationKey:
+observability:
+  otelCollector:
+    enabled: true
+    tlsSecretName: arc-diagnostics-extension-tls-certificate
+    caBundleLabelKey: arc-diagnostics-extension-client
+    caBundleLabelValue: true
+    caBundleConfigMap: arc-diagnostics-extension-trust-bundle
+  otelForwarder:
+    enabled: true
+Azure:
+  Extension:
+    ResourceId: "/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/fake_test_rg/providers/Microsoft.Kubernetes/ConnectedClusters/fake_arc_cluster/providers/Microsoft.KubernetesConfiguration/extensions/symphonyext"
+  Cluster:
+    Region: "fake_location"
+    ResourceId: "/subscriptions/00000000-0000-0000-0000-000000000000/resourcegroups/fake_test_rg/providers/Microsoft.Kubernetes/ConnectedClusters/fake_arc_cluster"
+otlpLogsEndpointGrpc:  symphony-otel-collector-service.default.svc.cluster.local:4317
+otlpMetricsEndpointGrpc:  symphony-otel-collector-service.default.svc.cluster.local:4317
+otlpInsecureGrpc: false

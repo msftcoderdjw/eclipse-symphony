@@ -2579,6 +2579,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
+    '{{ .Values.observability.otelCollector.caBundleLabelKey }}': '{{ include "symphony.otelcollector.caBundleLabelValue"
+      . }}'
     control-plane: '{{ include "symphony.name" . }}-controller-manager'
   name: '{{ include "symphony.fullname" . }}-controller-manager'
   namespace: '{{ .Release.Namespace }}'
@@ -2647,6 +2649,9 @@ spec:
         securityContext:
           allowPrivilegeEscalation: false
         volumeMounts:
+        - mountPath: /certs
+          name: trust-bundle
+          readOnly: true
         - mountPath: /var/run/secrets/tokens
           name: symphony-api-token
         - mountPath: '{{ include "symphony.apiServingCertsDir" . }}'
@@ -2681,6 +2686,9 @@ spec:
       serviceAccountName: '{{ include "symphony.fullname" . }}-controller-manager'
       terminationGracePeriodSeconds: 10
       volumes:
+      - configMap:
+          name: '{{ .Values.observability.otelCollector.caBundleConfigMap }}'
+        name: trust-bundle
       - name: cert
         secret:
           defaultMode: 420
