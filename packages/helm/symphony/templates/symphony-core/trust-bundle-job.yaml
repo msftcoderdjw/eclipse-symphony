@@ -1,4 +1,4 @@
-{{- if .Values.observability.otelCollector.tlsSecretName }}
+{{- if .Values.observability.tls.tlsCertSecretName }}
 apiVersion: batch/v1
 kind: Job
 metadata:
@@ -31,11 +31,11 @@ spec:
         - name: TRUST_BUNDLE_NS
           value: {{ .Release.Namespace }}
         - name: TRUST_BUNDLE_NS_LABEL_KEY
-          value: {{ .Values.observability.otelCollector.caBundleLabelKey }}
+          value: {{ .Values.observability.tls.caBundleLabelKey }}
         - name: TRUST_BUNDLE_NS_LABEL_VALUE
-          value: '{{ include "symphony.otelcollector.caBundleLabelValue" . }}'
+          value: '{{ include "symphony.tls.caBundleLabelValue" . }}'
         - name: TRUST_BUNDLE_CONFIGMAP_NAME
-          value: {{ .Values.observability.otelCollector.caBundleConfigMap }}
+          value: {{ .Values.observability.tls.caBundleConfigMap }}
         - name: TIMEOUT
           value: "60"
       restartPolicy: OnFailure
