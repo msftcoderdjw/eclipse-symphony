@@ -11,7 +11,8 @@
             {{- if eq .Values.otlpInsecureGrpc true }}
             "insecureEndpoint": true
             {{- else }}
-            "insecureEndpoint": false
+            "insecureEndpoint": false,
+            "serverCAFilePath": "/certs/root-certs.pem"
             {{- end }}
           }
         }

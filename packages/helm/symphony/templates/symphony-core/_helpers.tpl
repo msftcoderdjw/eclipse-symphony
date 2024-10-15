@@ -224,3 +224,8 @@ Symphony full url Endpoint
 {{- .Values.redis.persistentVolume.storageClass -}}
 {{- end -}}
 {{- end -}}
+
+{{/*Observability.OtelCollector.caBundleLabelValue */}}
+{{- define "symphony.otelcollector.caBundleLabelValue" -}}
+{{- default "false" .Values.observability.otelCollector.caBundleLabelValue }}
+{{- end }}

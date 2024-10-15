@@ -1,0 +1,21 @@
+apiVersion: fabric.symphony/v1
+kind: Target
+metadata:
+  name: testtarget20241013
+spec:
+  scope: testtarget20241013
+  components: 
+  - name: "simple-chart-1"
+    type: "helm.v3"
+    properties:
+      chart:
+        repo: "ghcr.io/eclipse-symphony/tests/helm/simple-chart"
+        version: "0.3.0"
+        wait: true
+        # timeout: "5m"
+  topologies:
+  - bindings:
+    - role: helm.v3
+      provider: providers.target.helm
+      config:
+        inCluster: "true"   

@@ -1,6 +1,68 @@
 {{- if .Values.observability.otelCollector.enabled }}
 ---
 apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: {{ include "symphony.fullname" . }}-otel-collector-config
+  namespace: {{ .Release.Namespace }}
+data:
+  {{- if .Values.observability.otelCollector.tlsSecretName }}
+  otel-collector-config.yaml: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+            tls:
+              cert_file: /etc/oteltls/tls.crt
+              key_file: /etc/oteltls/tls.key
+              reload_interval: 15m
+          http:
+            endpoint: 0.0.0.0:4318
+            tls:
+              cert_file: /etc/oteltls/tls.crt
+              key_file: /etc/oteltls/tls.key
+              reload_interval: 15m
+    exporters:
+      logging:
+        loglevel: debug
+    service:
+      pipelines:
+        logs:
+          receivers: [otlp]
+          exporters: [logging]
+        metrics:
+          receivers: [otlp]
+          exporters: [logging]
+        traces:
+          receivers: [otlp]
+          exporters: [logging]
+  {{- else }}
+  otel-collector-config.yaml: |
+    receivers:
+      otlp:
+        protocols:
+          grpc:
+            endpoint: 0.0.0.0:4317
+          http:
+            endpoint: 0.0.0.0:4318
+    exporters:
+      logging:
+        loglevel: debug
+    service:
+      pipelines:
+        logs:
+          receivers: [otlp]
+          exporters: [logging]
+        metrics:
+          receivers: [otlp]
+          exporters: [logging]
+        traces:
+          receivers: [otlp]
+          exporters: [logging]
+  {{- end }}
+---
+apiVersion: v1
 kind: ServiceAccount
 metadata:
   name: {{ include "symphony.fullname" . }}-otel-collector
@@ -27,10 +89,25 @@ spec:
       containers:
         - name: otel-collector
           image: "{{ .Values.observability.otelCollector.image }}"
+          command: ["/otelcol", "--config=/conf/otel-collector-config.yaml"]
+          volumeMounts:
+            - name: otel-collector-conf
+              mountPath: /conf
+          {{- if .Values.observability.otelCollector.tlsSecretName }}
+            - name: otel-tls
+              mountPath: /etc/oteltls
+          {{- end }}
       securityContext:
         runAsNonRoot: true
       serviceAccountName: '{{ include "symphony.fullname" . }}-otel-collector'
       terminationGracePeriodSeconds: 10
+      volumes:
+        - name: otel-collector-conf
+          configMap:
+            name: {{ include "symphony.fullname" . }}-otel-collector-config
+        - name: otel-tls
+          secret:
+            secretName: {{ .Values.observability.otelCollector.tlsSecretName }}
 ---
 apiVersion: v1
 kind: Service
