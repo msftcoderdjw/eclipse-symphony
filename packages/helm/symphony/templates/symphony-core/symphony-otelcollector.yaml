@@ -6,7 +6,7 @@ metadata:
   name: {{ include "symphony.fullname" . }}-otel-collector-config
   namespace: {{ .Release.Namespace }}
 data:
-  {{- if .Values.observability.tls.tlsCertSecretName }}
+  {{- if (not .Values.otlpInsecureGrpc) }}
   otel-collector-config.yaml: |
     receivers:
       otlp:
@@ -93,7 +93,7 @@ spec:
           volumeMounts:
             - name: otel-collector-conf
               mountPath: /conf
-          {{- if .Values.observability.tls.tlsCertSecretName }}
+          {{- if (not .Values.otlpInsecureGrpc) }}
             - name: otel-tls
               mountPath: /etc/oteltls
           {{- end }}
@@ -105,9 +105,11 @@ spec:
         - name: otel-collector-conf
           configMap:
             name: {{ include "symphony.fullname" . }}-otel-collector-config
+        {{- if (not .Values.otlpInsecureGrpc) }}
         - name: otel-tls
           secret:
             secretName: {{ .Values.observability.tls.tlsCertSecretName }}
+        {{- end }}
 ---
 apiVersion: v1
 kind: Service
