@@ -833,7 +833,30 @@ func ensureMinikubeUp() error {
 		return err
 	}
 
-	return nil
+	fmt.Printf("Deploying OSS cert-manager and trust manager for otel-collector")
+	err := shellcmd.Command("kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.15.3/cert-manager.yaml --wait").Run()
+	if err != nil {
+		return err
+	}
+	err = shellcmd.Command("helm repo add jetstack https://charts.jetstack.io --force-update").Run()
+	if err != nil {
+		return err
+	}
+
+	err = shellcmd.Command("helm upgrade trust-manager jetstack/trust-manager --install --namespace cert-manager --wait").Run()
+	if err != nil {
+		return err
+	}
+
+	cmds := []shellcmd.Command{
+		shellcmd.Command("kubectl apply -f ./otel-certificates/0.selfsigned-issuer.yaml"),
+		shellcmd.Command("kubectl apply -f ./otel-certificates/1.root-ca.yaml"),
+		shellcmd.Command("kubectl apply -f ./otel-certificates/2.root-ca-issuer.yaml"),
+		shellcmd.Command("kubectl apply -f ./otel-certificates/3.tls-cert.yaml"),
+		shellcmd.Command("kubectl apply -f ./otel-certificates/4.trust-bundle.yaml"),
+	}
+
+	return shellcmd.RunAll(cmds...)
 }
 
 // True if minikube is active and running
