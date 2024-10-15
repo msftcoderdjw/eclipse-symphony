@@ -871,11 +871,11 @@ func ensureSecureOtelCollectorPrereqs() error {
 
 	fmt.Printf("Preparing certificates for otel-collector")
 	cmds := []shellcmd.Command{
-		shellcmd.Command("kubectl apply -f ./otel-certificates/0.selfsigned-issuer.yaml"),
-		shellcmd.Command("kubectl apply -f ./otel-certificates/1.root-ca.yaml"),
-		shellcmd.Command("kubectl apply -f ./otel-certificates/2.root-ca-issuer.yaml"),
-		shellcmd.Command("kubectl apply -f ./otel-certificates/3.tls-cert.yaml"),
-		shellcmd.Command("kubectl apply -f ./otel-certificates/4.trust-bundle.yaml"),
+		shellcmd.Command(fmt.Sprintf("kubectl apply -f ./otel-certificates/0.selfsigned-issuer.yaml -n %s", getChartNamespace())),
+		shellcmd.Command(fmt.Sprintf("kubectl apply -f ./otel-certificates/1.root-ca.yaml -n %s", getChartNamespace())),
+		shellcmd.Command(fmt.Sprintf("kubectl apply -f ./otel-certificates/2.root-ca-issuer.yaml -n %s", getChartNamespace())),
+		shellcmd.Command(fmt.Sprintf("kubectl apply -f ./otel-certificates/3.tls-cert.yaml -n %s", getChartNamespace())),
+		shellcmd.Command(fmt.Sprintf("kubectl apply -f ./otel-certificates/4.trust-bundle.yaml -n %s", getChartNamespace())),
 	}
 
 	return shellcmd.RunAll(cmds...)
