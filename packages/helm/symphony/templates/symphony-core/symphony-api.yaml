@@ -63,7 +63,7 @@ spec:
             name: {{ include "symphony.envConfigName" . }}
 
         volumeMounts:
-        {{- if .Values.observability.tls.tlsCertSecretName }}
+        {{- if (not .Values.otlpInsecureGrpc) }}
         - name: trust-bundle
           mountPath: "/certs"
           readOnly: true
@@ -105,7 +105,7 @@ spec:
         {{- .Values.global.azure.identity.mSIAdapterYaml | nindent 8 }}
       {{- end }}
       volumes:
-        {{- if .Values.observability.tls.tlsCertSecretName }}
+        {{- if (not .Values.otlpInsecureGrpc) }}
         - name: trust-bundle
           configMap:
             name: {{ .Values.observability.tls.caBundleConfigMap }}
