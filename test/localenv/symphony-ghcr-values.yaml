@@ -22,7 +22,6 @@ observability:
     caBundleConfigMap: arc-diagnostics-extension-trust-bundle
   otelCollector:
     enabled: true
-    tls: false
   otelForwarder:
     enabled: true
 Azure:
