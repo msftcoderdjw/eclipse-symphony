@@ -2579,8 +2579,6 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   labels:
-    '{{ .Values.observability.tls.caBundleLabelKey }}': '{{ include "symphony.tls.caBundleLabelValue"
-      . }}'
     control-plane: '{{ include "symphony.name" . }}-controller-manager'
   name: '{{ include "symphony.fullname" . }}-controller-manager'
   namespace: '{{ .Release.Namespace }}'
