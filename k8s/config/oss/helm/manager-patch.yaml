@@ -10,7 +10,6 @@ metadata:
   namespace: system
   labels:
     control-plane: '{{ include "symphony.name" . }}-controller-manager'
-    "{{ .Values.observability.tls.caBundleLabelKey }}": '{{ include "symphony.tls.caBundleLabelValue" . }}'
 spec:
   selector:
     matchLabels:
