@@ -55,7 +55,7 @@ func PrintParams() error {
 	fmt.Println("GHCR_VALUES_OPTIONS: ", ghcrValuesOptions())
 	fmt.Println("LOG_ROOT: ", getLogRoot())
 	fmt.Println("MINIKUBE_START_OPTIONS: ", getMinikubeStartOptions())
-	fmt.Println("SETUP_TLS_OTEL: ", enableTlsOtelSetup())
+	fmt.Println("ENABLE_TLS_OTEL_SETUP: ", enableTlsOtelSetup())
 	return nil
 }
 
