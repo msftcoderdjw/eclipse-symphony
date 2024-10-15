@@ -6,7 +6,7 @@ metadata:
   name: {{ include "symphony.fullname" . }}-otel-forwarder-config
   namespace: {{ .Release.Namespace }}
 data:
-  {{- if .Values.observability.otelCollector.tlsSecretName }}
+  {{- if .Values.observability.tls.tlsCertSecretName }}
     otel-forwarder-config.yaml: |
       receivers:
         filelog:
@@ -621,7 +621,7 @@ spec:
             - name: varlibdockercontainers
               mountPath: /var/lib/docker/containers
               readOnly: true
-            {{- if .Values.observability.otelCollector.tlsSecretName }}
+            {{- if .Values.observability.tls.tlsCertSecretName }}
             - name: trust-bundle
               mountPath: "/certs"
               readOnly: true
@@ -640,10 +640,10 @@ spec:
         - name: varlibdockercontainers
           hostPath:
             path: /var/lib/docker/containers
-        {{- if .Values.observability.otelCollector.tlsSecretName }}
+        {{- if .Values.observability.tls.tlsCertSecretName }}
         - name: trust-bundle
           configMap:
-            name : {{ .Values.observability.otelCollector.caBundleConfigMap }}
+            name : {{ .Values.observability.tls.caBundleConfigMap }}
         {{- end }}
 ---
 apiVersion: v1

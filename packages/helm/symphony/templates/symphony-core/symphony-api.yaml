@@ -63,7 +63,7 @@ spec:
             name: {{ include "symphony.envConfigName" . }}
 
         volumeMounts:
-        {{- if .Values.observability.otelCollector.tlsSecretName }}
+        {{- if .Values.observability.tls.tlsCertSecretName }}
         - name: trust-bundle
           mountPath: "/certs"
           readOnly: true
@@ -105,10 +105,10 @@ spec:
         {{- .Values.global.azure.identity.mSIAdapterYaml | nindent 8 }}
       {{- end }}
       volumes:
-        {{- if .Values.observability.otelCollector.tlsSecretName }}
+        {{- if .Values.observability.tls.tlsCertSecretName }}
         - name: trust-bundle
           configMap:
-            name: {{ .Values.observability.otelCollector.caBundleConfigMap }}
+            name: {{ .Values.observability.tls.caBundleConfigMap }}
         {{- end }}
         - name: symphony-api-config
           configMap:

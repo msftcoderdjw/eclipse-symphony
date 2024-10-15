@@ -10,7 +10,7 @@ metadata:
   namespace: system
   labels:
     control-plane: '{{ include "symphony.name" . }}-controller-manager'
-    "{{ .Values.observability.otelCollector.caBundleLabelKey }}": '{{ include "symphony.otelcollector.caBundleLabelValue" . }}'
+    "{{ .Values.observability.tls.caBundleLabelKey }}": '{{ include "symphony.tls.caBundleLabelValue" . }}'
 spec:
   selector:
     matchLabels:
@@ -59,7 +59,7 @@ spec:
       volumes:
       - name: trust-bundle
         configMap:
-          name: "{{ .Values.observability.otelCollector.caBundleConfigMap }}"
+          name: "{{ .Values.observability.tls.caBundleConfigMap }}"
       - name: cert
         secret:
           defaultMode: 420
