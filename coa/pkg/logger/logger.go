@@ -20,9 +20,9 @@ const (
 	// LogTypeRequest is Request log type
 	LogTypeRequest = "request"
 	// LogTypeUserAudits is User Audit log type
-	LogTypeUserAudits = "userAudits"
+	LogTypeUserAudits = "UserAuditsLog"
 	// LogTypeUserDiagnostics is User Diagnostic log type
-	LogTypeUserDiagnostics = "userDiagnostics"
+	LogTypeUserDiagnostics = "UserDiagnosticsLog"
 
 	LogCategory_UserAudits      = "UserAudits"
 	LogCategory_UserDiagnostics = "UserDiagnostics"
