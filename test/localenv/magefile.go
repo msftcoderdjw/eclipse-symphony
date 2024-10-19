@@ -870,6 +870,15 @@ func ensureSecureOtelCollectorPrereqs() error {
 	}
 
 	fmt.Printf("Preparing certificates for otel-collector")
+
+	// replace the dns name and common name in 3.tls-cert.yaml
+	fmt.Printf("Replacing the dns name and common name in 3.tls-cert.yaml")
+	err = shellcmd.Command(fmt.Sprintf("sed -i.bak 's/symphony-otel-collector-service\\..*\\.svc\\.cluster\\.local/symphony-otel-collector-service.%s.svc.cluster.local/g' ./otel-certificates/3.tls-cert.yaml", getChartNamespace())).Run()
+
+	if err != nil {
+		return err
+	}
+
 	cmds := []shellcmd.Command{
 		shellcmd.Command(fmt.Sprintf("kubectl create ns %s", getChartNamespace())),
 		shellcmd.Command(fmt.Sprintf("kubectl apply -f ./otel-certificates/0.selfsigned-issuer.yaml -n %s", getChartNamespace())),
