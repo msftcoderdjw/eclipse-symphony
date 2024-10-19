@@ -837,20 +837,20 @@ func recreateMinikube() error {
 }
 
 func ensureSecureOtelCollectorPrereqs() error {
-	fmt.Printf("Deploying OSS cert-manager for otel-collector")
+	fmt.Println("Deploying OSS cert-manager for otel-collector")
 	err := shellcmd.Command("kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.15.3/cert-manager.yaml --wait").Run()
 	if err != nil {
 		return err
 	}
 
 	// Path to the wait script
-	fmt.Printf("Waiting for cert-manager webhook to be ready")
+	fmt.Println("Waiting for cert-manager webhook to be ready")
 	waitCmds := []shellcmd.Command{
 		shellcmd.Command("kubectl wait --for=condition=ready pod -l app.kubernetes.io/component=webhook -n cert-manager --timeout=90s"),
 	}
 	err = shellcmd.RunAll(waitCmds...)
 	if err != nil {
-		fmt.Printf("Try second time after 30 seconds...")
+		fmt.Println("Try second time after 30 seconds...")
 		time.Sleep(30 * time.Second)
 		err = shellcmd.RunAll(waitCmds...)
 		if err != nil {
@@ -858,7 +858,7 @@ func ensureSecureOtelCollectorPrereqs() error {
 		}
 	}
 
-	fmt.Printf("Deploying OSS trust-manager for otel-collector")
+	fmt.Println("Deploying OSS trust-manager for otel-collector")
 	err = shellcmd.Command("helm repo add jetstack https://charts.jetstack.io --force-update").Run()
 	if err != nil {
 		return err
@@ -869,18 +869,20 @@ func ensureSecureOtelCollectorPrereqs() error {
 		return err
 	}
 
-	fmt.Printf("Preparing certificates for otel-collector")
+	fmt.Println("Preparing certificates for otel-collector")
 
 	// replace the dns name and common name in 3.tls-cert.yaml
-	fmt.Printf("Replacing the dns name and common name in 3.tls-cert.yaml")
+	fmt.Println("Replacing the dns name and common name in 3.tls-cert.yaml")
 	err = shellcmd.Command(fmt.Sprintf("sed -i 's/symphony-otel-collector-service\\..*\\.svc\\.cluster\\.local/symphony-otel-collector-service.%s.svc.cluster.local/g' ./otel-certificates/3.tls-cert.yaml", getChartNamespace())).Run()
 
 	if err != nil {
 		return err
 	}
 
+	fmt.Printf("Creating namespace %s\n", getChartNamespace())
+	shellcmd.Command(fmt.Sprintf("kubectl create ns %s", getChartNamespace())).Run()
+
 	cmds := []shellcmd.Command{
-		shellcmd.Command(fmt.Sprintf("kubectl create ns %s", getChartNamespace())),
 		shellcmd.Command(fmt.Sprintf("kubectl apply -f ./otel-certificates/0.selfsigned-issuer.yaml -n %s", getChartNamespace())),
 		shellcmd.Command(fmt.Sprintf("kubectl apply -f ./otel-certificates/1.root-ca.yaml")),
 		shellcmd.Command(fmt.Sprintf("kubectl apply -f ./otel-certificates/2.root-ca-issuer.yaml -n %s", getChartNamespace())),
