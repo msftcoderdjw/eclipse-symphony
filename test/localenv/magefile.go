@@ -873,7 +873,7 @@ func ensureSecureOtelCollectorPrereqs() error {
 
 	// replace the dns name and common name in 3.tls-cert.yaml
 	fmt.Printf("Replacing the dns name and common name in 3.tls-cert.yaml")
-	err = shellcmd.Command(fmt.Sprintf("sed -i.bak 's/symphony-otel-collector-service\\..*\\.svc\\.cluster\\.local/symphony-otel-collector-service.%s.svc.cluster.local/g' ./otel-certificates/3.tls-cert.yaml", getChartNamespace())).Run()
+	err = shellcmd.Command(fmt.Sprintf("sed -i 's/symphony-otel-collector-service\\..*\\.svc\\.cluster\\.local/symphony-otel-collector-service.%s.svc.cluster.local/g' ./otel-certificates/3.tls-cert.yaml", getChartNamespace())).Run()
 
 	if err != nil {
 		return err
