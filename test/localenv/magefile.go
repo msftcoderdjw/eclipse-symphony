@@ -771,7 +771,7 @@ func waitForServiceCleanup() error {
 			parts := strings.Split(pod, "|")
 			pod = parts[1]
 			namespace := parts[0]
-			if namespace != "kube-system" {
+			if namespace != "kube-system" && namespace != "cert-manager" {
 				notReady = append(notReady, pod)
 			}
 		}
