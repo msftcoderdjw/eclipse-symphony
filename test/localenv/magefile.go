@@ -120,7 +120,11 @@ func ghcrValuesOptions() string {
 	if skipGhcrValues() {
 		return ""
 	}
-	return "-f symphony-ghcr-values.yaml"
+	if enableTlsOtelSetup() {
+		return "-f symphony-ghcr-values.otel.yaml"
+	} else {
+		return "-f symphony-ghcr-values.yaml"
+	}
 }
 
 func getMinikubeStartOptions() string {
