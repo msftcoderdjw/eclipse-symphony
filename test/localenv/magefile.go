@@ -142,13 +142,31 @@ type License mg.Namespace
 
 /******************** Targets ********************/
 
+func rebuildK8STemplate(withTrustBundle bool) error {
+	fmt.Println("Rebuilding k8s template, withTrustBundle: ", withTrustBundle)
+	if !withTrustBundle {
+		return shellExec("cd ../../k8s && mage helmTemplate", true)
+	} else {
+		return shellExec("cd ../../k8s && mage helmTemplateWithTrustBundle", true)
+	}
+}
+
 // Deploys the symphony ecosystem to your local Minikube cluster.
 func (Cluster) Deploy() error {
 	fmt.Printf("Deploying symphony to minikube\n")
 	mg.Deps(ensureMinikubeUp)
 
 	if enableTlsOtelSetup() {
-		err := ensureSecureOtelCollectorPrereqs()
+		err := rebuildK8STemplate(true)
+		if err != nil {
+			return err
+		}
+		err = ensureSecureOtelCollectorPrereqs()
+		if err != nil {
+			return err
+		}
+	} else {
+		err := rebuildK8STemplate(false)
 		if err != nil {
 			return err
 		}
@@ -171,7 +189,16 @@ func (Cluster) DeployWithSettings(values string) error {
 	mg.Deps(ensureMinikubeUp)
 
 	if enableTlsOtelSetup() {
-		err := ensureSecureOtelCollectorPrereqs()
+		err := rebuildK8STemplate(true)
+		if err != nil {
+			return err
+		}
+		err = ensureSecureOtelCollectorPrereqs()
+		if err != nil {
+			return err
+		}
+	} else {
+		err := rebuildK8STemplate(false)
 		if err != nil {
 			return err
 		}
