@@ -2647,9 +2647,6 @@ spec:
         securityContext:
           allowPrivilegeEscalation: false
         volumeMounts:
-        - mountPath: /certs
-          name: trust-bundle
-          readOnly: true
         - mountPath: /var/run/secrets/tokens
           name: symphony-api-token
         - mountPath: '{{ include "symphony.apiServingCertsDir" . }}'
@@ -2684,9 +2681,6 @@ spec:
       serviceAccountName: '{{ include "symphony.fullname" . }}-controller-manager'
       terminationGracePeriodSeconds: 10
       volumes:
-      - configMap:
-          name: '{{ .Values.observability.tls.caBundleConfigMap }}'
-        name: trust-bundle
       - name: cert
         secret:
           defaultMode: 420

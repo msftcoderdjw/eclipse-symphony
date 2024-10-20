@@ -44,9 +44,6 @@ spec:
         - configMapRef:
             name: '{{ include "symphony.envConfigName" . }}'
         volumeMounts:
-          - name: trust-bundle
-            mountPath: "/certs"
-            readOnly: true
           - mountPath: /var/run/secrets/tokens
             name: symphony-api-token
           - mountPath: '{{ include "symphony.apiServingCertsDir" . }}'
@@ -56,9 +53,6 @@ spec:
             mountPath: /etc/config/observability
             readOnly: true
       volumes:
-      - name: trust-bundle
-        configMap:
-          name: "{{ .Values.observability.tls.caBundleConfigMap }}"
       - name: cert
         secret:
           defaultMode: 420
