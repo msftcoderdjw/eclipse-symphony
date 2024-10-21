@@ -30,16 +30,17 @@ import (
 )
 
 const (
-	RELEASE_NAME           = "ecosystem"
-	LOCAL_HOST_URL         = "http://localhost"
-	OSS_CONTAINER_REGISTRY = "ghcr.io/eclipse-symphony"
-	NAMESPACE              = "default"
-	DOCKER_TAG             = "latest"
-	CHART_PATH             = "../../packages/helm/symphony"
-	GITHUB_PAT             = "CR_PAT"
-	LOG_ROOT               = "/tmp/symphony-integration-test-logs"
-	MINIKUBE_START_OPTIONS = ""
-	ENABLE_TLS_OTEL_SETUP  = "false"
+	RELEASE_NAME              = "ecosystem"
+	LOCAL_HOST_URL            = "http://localhost"
+	OSS_CONTAINER_REGISTRY    = "ghcr.io/eclipse-symphony"
+	NAMESPACE                 = "default"
+	DOCKER_TAG                = "latest"
+	CHART_PATH                = "../../packages/helm/symphony"
+	GITHUB_PAT                = "CR_PAT"
+	LOG_ROOT                  = "/tmp/symphony-integration-test-logs"
+	MINIKUBE_START_OPTIONS    = ""
+	ENABLE_TLS_OTEL_SETUP     = "false"
+	ENABLE_NON_TLS_OTEL_SETUP = "false"
 )
 
 var platform = fmt.Sprintf("%s/%s", runtime.GOOS, runtime.GOARCH)
@@ -56,12 +57,17 @@ func PrintParams() error {
 	fmt.Println("LOG_ROOT: ", getLogRoot())
 	fmt.Println("MINIKUBE_START_OPTIONS: ", getMinikubeStartOptions())
 	fmt.Println("ENABLE_TLS_OTEL_SETUP: ", enableTlsOtelSetup())
+	fmt.Println("ENABLE_NON_TLS_OTEL_SETUP: ", enableNonTlsOtelSetup())
 	return nil
 }
 
 // global variables
 func enableTlsOtelSetup() bool {
 	return os.Getenv("ENABLE_TLS_OTEL_SETUP") == "true"
+}
+
+func enableNonTlsOtelSetup() bool {
+	return os.Getenv("ENABLE_NON_TLS_OTEL_SETUP") == "true"
 }
 
 func getLogRoot() string {
@@ -122,6 +128,8 @@ func ghcrValuesOptions() string {
 	}
 	if enableTlsOtelSetup() {
 		return "-f symphony-ghcr-values.otel.yaml"
+	} else if enableNonTlsOtelSetup() {
+		return "-f symphony-ghcr-values.otel.non-tls.yaml"
 	} else {
 		return "-f symphony-ghcr-values.yaml"
 	}
