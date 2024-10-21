@@ -98,7 +98,6 @@ Descriptor:
      -> DataType: Gauge
 NumberDataPoints #0
 Data point attributes:
-     -> errorCode: Str(OK)
      -> functionName: Str(Update)
      -> operation: Str(helm.(*HelmTargetProvider).Apply)
      -> operationType: Str(Apply)
