@@ -6,61 +6,8 @@ metadata:
   name: {{ include "symphony.fullname" . }}-otel-collector-config
   namespace: {{ .Release.Namespace }}
 data:
-  {{- if (not .Values.otlpInsecureGrpc) }}
-  otel-collector-config.yaml: |
-    receivers:
-      otlp:
-        protocols:
-          grpc:
-            endpoint: 0.0.0.0:4317
-            tls:
-              cert_file: /etc/oteltls/tls.crt
-              key_file: /etc/oteltls/tls.key
-              reload_interval: 15m
-          http:
-            endpoint: 0.0.0.0:4318
-            tls:
-              cert_file: /etc/oteltls/tls.crt
-              key_file: /etc/oteltls/tls.key
-              reload_interval: 15m
-    exporters:
-      logging:
-        loglevel: debug
-    service:
-      pipelines:
-        logs:
-          receivers: [otlp]
-          exporters: [logging]
-        metrics:
-          receivers: [otlp]
-          exporters: [logging]
-        traces:
-          receivers: [otlp]
-          exporters: [logging]
-  {{- else }}
-  otel-collector-config.yaml: |
-    receivers:
-      otlp:
-        protocols:
-          grpc:
-            endpoint: 0.0.0.0:4317
-          http:
-            endpoint: 0.0.0.0:4318
-    exporters:
-      logging:
-        loglevel: debug
-    service:
-      pipelines:
-        logs:
-          receivers: [otlp]
-          exporters: [logging]
-        metrics:
-          receivers: [otlp]
-          exporters: [logging]
-        traces:
-          receivers: [otlp]
-          exporters: [logging]
-  {{- end }}
+  otel-collector-config.yaml: |-
+  {{ tpl (.Files.Get "files/otel-collector-config.yaml") . | nindent 4 }}
 ---
 apiVersion: v1
 kind: ServiceAccount
