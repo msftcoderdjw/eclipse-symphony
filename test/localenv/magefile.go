@@ -127,7 +127,7 @@ func ghcrValuesOptions() string {
 		return ""
 	}
 	if enableTlsOtelSetup() {
-		return "-f symphony-ghcr-values.otel.yaml"
+		return "-f symphony-ghcr-values.otel.yaml --skip-crds"
 	} else if enableNonTlsOtelSetup() {
 		return "-f symphony-ghcr-values.otel.non-tls.yaml"
 	} else {
