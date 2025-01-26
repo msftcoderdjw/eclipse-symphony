@@ -412,9 +412,19 @@ func formatPathForNestedJsonField(s string) string {
 	}
 }
 
+// /subscriptions/973d15c6-6c57-447e-b9c6-6d79b5b784ab/resourceGroups/xingdlitest/providers/Private.Edge/targets/target3/solutions/sol3/versions/ver1
+var solutionVersionIdPattern = regexp.MustCompile(`^/subscriptions/(?P<subscription>[^/]+)/resourceGroups/(?P<resourceGroup>[^/]+)/providers/(?P<provider>[^/]+)/targets/(?P<targetName>[^/]+)/solutions/(?P<solutionName>[^/]+)/versions/(?P<versionName>[^/]+)$`)
+
 func ConvertReferenceToObjectName(name string) string {
 	if strings.Contains(name, constants.ReferenceSeparator) {
 		name = strings.ReplaceAll(name, constants.ReferenceSeparator, constants.ResourceSeperator)
+	} else {
+		// azure pattern - solution version id
+		if solutionVersionIdPattern.MatchString(name) {
+			parsed := solutionVersionIdPattern.FindStringSubmatch(name)
+			// target - solution - version
+			name = fmt.Sprintf("%s%s%s%s%s", parsed[4], constants.ResourceSeperator, parsed[5], constants.ResourceSeperator, parsed[6])
+		}
 	}
 	return name
 }
@@ -434,6 +444,14 @@ func GetNamespaceFromContext(localContext interface{}) string {
 		}
 	}
 	return " "
+}
+
+func GetMapKeys(m map[string]any) []string {
+	keys := make([]string, 0, len(m))
+	for key := range m {
+		keys = append(keys, key)
+	}
+	return keys
 }
 
 func removeDuplicates(strSlice []string) []string {

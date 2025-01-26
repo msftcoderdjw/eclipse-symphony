@@ -1,6 +1,6 @@
 /*
  * Copyright (c) Microsoft Corporation.
- * Licensed under the MIT license.
+ * Licensed underr the MIT license.
  * SPDX-License-Identifier: MIT
  */
 
@@ -739,4 +739,13 @@ func TestReadPropertyNameWithArraySlicing(t *testing.T) {
 	m3, ok := JsonParseProperty(data, "`.a.b[] | select(.id > 2) | .id`")
 	assert.True(t, ok)
 	assert.Equal(t, val, m3)
+}
+func TestConvertReferenceToObjectName_OOSFormat(t *testing.T) {
+	name := "solution:v1"
+	assert.Equal(t, "solution-v-v1", ConvertReferenceToObjectName(name))
+}
+
+func TestConvertReferenceToObjectName_AzureFormat(t *testing.T) {
+	name := "/subscriptions/00000000-0000-0000-0000-000000000000/resourceGroups/test-rg/providers/Private.Edge/targets/target3/solutions/sol3/versions/ver1"
+	assert.Equal(t, "target3-v-sol3-v-ver1", ConvertReferenceToObjectName(name))
 }

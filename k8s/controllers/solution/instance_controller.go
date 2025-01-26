@@ -185,6 +185,7 @@ func (r *InstanceReconciler) handleSolution(ctx context.Context, obj client.Obje
 	solObj := obj.(*solution_v1.Solution)
 	var instances solution_v1.InstanceList
 
+	// oss format
 	solutionName := api_utils.ConvertObjectNameToReference(solObj.Name)
 	options := []client.ListOption{
 		client.InNamespace(solObj.Namespace),
@@ -192,11 +193,11 @@ func (r *InstanceReconciler) handleSolution(ctx context.Context, obj client.Obje
 	}
 	error := r.List(context.Background(), &instances, options...)
 	if error != nil {
-		diagnostic.ErrorWithCtx(log.Log, ctx, error, "Failed to list instances")
+		diagnostic.ErrorWithCtx(log.Log, ctx, error, "Failed to list instances by solution name")
 		return ret
 	}
 
-	updatedInstanceNames := make([]string, 0)
+	updatedInstanceNames := make(map[string]any)
 	for _, instance := range instances.Items {
 		if !utils.NeedWatchInstance(instance) {
 			continue
@@ -208,11 +209,42 @@ func (r *InstanceReconciler) handleSolution(ctx context.Context, obj client.Obje
 				Namespace: instance.Namespace,
 			},
 		})
-		updatedInstanceNames = append(updatedInstanceNames, instance.Name)
+		key := fmt.Sprintf("%s/%s", instance.Namespace, instance.Name)
+		updatedInstanceNames[key] = nil
+	}
+
+	solutionId := solObj.GetAnnotations()[constants.AzureResourceIdKey]
+	// arm format
+	if solutionId != "" {
+		options2 := []client.ListOption{
+			client.InNamespace(solObj.Namespace),
+			client.MatchingFields{"spec.solution": solutionId},
+		}
+		error2 := r.List(context.Background(), &instances, options2...)
+		if error2 != nil {
+			diagnostic.ErrorWithCtx(log.Log, ctx, error2, "Failed to list instances by solution id")
+			return ret
+		}
+		for _, instance := range instances.Items {
+			if !utils.NeedWatchInstance(instance) {
+				continue
+			}
+
+			key := fmt.Sprintf("%s/%s", instance.Namespace, instance.Name)
+			if _, exists := updatedInstanceNames[key]; !exists {
+				ret = append(ret, ctrl.Request{
+					NamespacedName: types.NamespacedName{
+						Name:      instance.Name,
+						Namespace: instance.Namespace,
+					},
+				})
+				updatedInstanceNames[key] = nil
+			}
+		}
 	}
 
 	if len(ret) > 0 {
-		diagnostic.InfoWithCtx(log.Log, ctx, fmt.Sprintf("Watched solution %s under namespace %s is updated, needs to requeue instances related, count: %d, list: %s", solObj.Name, solObj.Namespace, len(ret), strings.Join(updatedInstanceNames, ",")))
+		diagnostic.InfoWithCtx(log.Log, ctx, fmt.Sprintf("Watched solution %s under namespace %s is updated, needs to requeue instances related, count: %d, list: %s", solObj.Name, solObj.Namespace, len(ret), strings.Join(api_utils.GetMapKeys(updatedInstanceNames), ",")))
 	}
 
 	return ret
