@@ -4,5 +4,4 @@ metadata:
   name: {{ include "symphony.apiCAIssuerName" . }}
   namespace: {{ .Release.Namespace }}
 spec:
-  ca:
-    secretName: {{ include "symphony.apiServingCertName" . }}
+  selfSigned: {}
