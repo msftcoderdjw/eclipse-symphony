@@ -8,6 +8,7 @@ package v1
 
 import (
 	"context"
+	"gopls-workspace/utils/diagnostic"
 	"sync"
 
 	"github.com/go-logr/logr"
@@ -34,16 +35,16 @@ func getGlobalDiagnosticResourceInCluster(annotationFilterFunc func(diagResource
 	diagnostics := &DiagnosticList{}
 	err := k8sClient.List(ctx, diagnostics)
 	if err != nil {
-		logger.Info("Failed to list diagnostics resources", "error", err)
+		diagnostic.InfoWithCtx(logger, ctx, "Failed to list diagnostics resources", "error", err)
 		return nil, err
 	}
-	for _, diagnostic := range diagnostics.Items {
-		if filterDiagnosticResourceByAnnotationWhenListInCluster(&diagnostic, annotationFilterFunc) {
-			logger.Info("Found global diagnostics resource", "name", diagnostic.Name, "namespace", diagnostic.Namespace)
-			return &diagnostic, nil
+	for _, d := range diagnostics.Items {
+		if filterDiagnosticResourceByAnnotationWhenListInCluster(&d, annotationFilterFunc) {
+			diagnostic.InfoWithCtx(logger, ctx, "Found global diagnostics resource", "name", d.Name, "namespace", d.Namespace)
+			return &d, nil
 		}
 	}
-	logger.Info("No global diagnostics resource found")
+	diagnostic.InfoWithCtx(logger, ctx, "No global diagnostics resource found")
 	return nil, nil
 }
 
@@ -53,7 +54,7 @@ func GetDiagnosticCustomResourceFromCache(sourceResourceAnnotations map[string]s
 	if diagRes == nil {
 		diagResFromCluster, err := GetGlobalDiagnosticResourceInCluster(sourceResourceAnnotations, k8sClient, ctx, logger)
 		if err != nil {
-			logger.Error(err, "Failed to get global diagnostic resource from cluster")
+			diagnostic.ErrorWithCtx(logger, ctx, err, "Failed to get global diagnostic resource from cluster")
 			return nil, err
 		} else {
 			// update the cache
@@ -61,7 +62,7 @@ func GetDiagnosticCustomResourceFromCache(sourceResourceAnnotations map[string]s
 			return diagResFromCluster, nil
 		}
 	} else {
-		logger.Info("Found global diagnostics resource in cache", "name", diagRes.Name, "namespace", diagRes.Namespace)
+		diagnostic.InfoWithCtx(logger, ctx, "Found global diagnostics resource in cache", "name", diagRes.Name, "namespace", diagRes.Namespace)
 		return diagRes, nil
 	}
 }

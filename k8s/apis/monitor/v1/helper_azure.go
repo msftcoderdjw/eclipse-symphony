@@ -6,6 +6,7 @@ import (
 	"context"
 	"fmt"
 	"gopls-workspace/constants"
+	"gopls-workspace/utils/diagnostic"
 
 	"github.com/go-logr/logr"
 	"k8s.io/apimachinery/pkg/util/validation/field"
@@ -23,13 +24,13 @@ func GetGlobalDiagnosticResourceInCluster(sourceResourceAnnotations map[string]s
 }
 
 func GetDiagnosticCloudResourceInfo(sourceResourceAnnotations map[string]string, k8sClient client.Reader, ctx context.Context, logger logr.Logger) (string, string) {
-	diagnostic, err := GetDiagnosticCustomResourceFromCache(sourceResourceAnnotations, k8sClient, ctx, logger)
+	d, err := GetDiagnosticCustomResourceFromCache(sourceResourceAnnotations, k8sClient, ctx, logger)
 	if err != nil {
-		logger.Info("Failed to get diagnostic resource", "error", err)
+		diagnostic.InfoWithCtx(logger, ctx, "Failed to get diagnostic resource", "error", err)
 		return "", ""
 	}
-	if diagnostic != nil {
-		return diagnostic.Annotations[constants.AzureResourceIdKey], diagnostic.Annotations[constants.AzureLocationKey]
+	if d != nil {
+		return d.Annotations[constants.AzureResourceIdKey], d.Annotations[constants.AzureLocationKey]
 	}
 	return "", ""
 }
