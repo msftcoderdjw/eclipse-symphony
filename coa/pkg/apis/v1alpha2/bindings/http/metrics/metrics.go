@@ -92,20 +92,12 @@ func (m *Metrics) ApiOperationStatus(
 		return
 	}
 
-	customerResourceId := context.GetResourceCloudId()
-	locationId := context.GetResourceCloudLocation()
-
 	m.apiOperationStatus.Add(
 		1,
-		SLI(
-			customerResourceId,
-			locationId,
-		),
-		Deployment(
+		ConstructApiOperationStatusAttributes(
+			context,
 			operation,
 			operationType,
-		),
-		Status(
 			statusCode,
 			formatStatusCode,
 		),
