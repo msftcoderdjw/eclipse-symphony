@@ -6,8 +6,8 @@ metadata:
     app: {{ include "symphony.appSelector" . }}
   namespace: {{ .Release.Namespace }}
   annotations:
-  "helm.sh/hook": "post-install,post-upgrade"
-  "helm.sh/hook-weight": "-10"  # Lower number runs earlier
+    "helm.sh/hook": "post-install,post-upgrade"
+    "helm.sh/hook-weight": "-10"  # Lower number runs earlier
 spec:
   replicas: 1
   selector:
