@@ -25,5 +25,5 @@ while [ $SECONDS -lt $end ]; do
   sleep 5
 done
 
-echo "Waiting for Symphony API deployment to be ready, image name: $SYMPHONY_API_IMAGE. Still exit with 0 and not interrupt the normal deployment."
+echo "Cannot wait for Symphony API deployment to be ready, image name: $SYMPHONY_API_IMAGE. Still exit with 0 and not interrupt the normal deployment."
 exit 0
