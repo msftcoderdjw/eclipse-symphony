@@ -5,6 +5,9 @@ metadata:
     control-plane: '{{ include "symphony.name" . }}-controller-manager'
   name: '{{ include "symphony.fullname" . }}-controller-manager'
   namespace: '{{ .Release.Namespace }}'
+  annotations:
+  "helm.sh/hook": "post-install,post-upgrade"
+  "helm.sh/hook-weight": "10"  # Higher number runs later
 spec:
   replicas: 1
   selector:

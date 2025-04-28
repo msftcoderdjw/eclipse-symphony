@@ -1,0 +1,26 @@
+# this is a helm hook that runs when the chart is about to be deleted
+apiVersion: batch/v1
+kind: Job
+metadata:
+  name: {{ include "symphony.fullname" . }}-wait-api
+  namespace: {{ .Release.Namespace }}
+  annotations:
+    "helm.sh/hook": "post-install,post-upgrade"
+    "helm.sh/hook-weight": "0"  # Middle weight
+    "helm.sh/hook-delete-policy": "hook-succeeded,before-hook-creation,hook-failed"
+spec:
+  template:
+    spec:
+      containers:
+      - name: wait-api
+        image: mcr.microsoft.com/oss/kubernetes/kubectl:v1.25.10
+        command:
+        - /bin/bash
+        - -c
+        - |
+          echo "Waiting for symphony-api to be ready..."
+          sleep 3600
+          echo "symphony-api is ready!"    
+      restartPolicy: Never
+      serviceAccountName: {{ include "symphony.fullname" . }}-hook-sa
+  backoffLimit: 1
