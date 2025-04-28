@@ -8,7 +8,6 @@ package v1
 
 import (
 	"context"
-	"fmt"
 	"gopls-workspace/apis/metrics/v1"
 	"gopls-workspace/utils/diagnostic"
 	"time"
