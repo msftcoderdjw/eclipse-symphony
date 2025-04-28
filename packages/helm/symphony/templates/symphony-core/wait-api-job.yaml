@@ -17,10 +17,15 @@ spec:
         command:
         - /bin/bash
         - -c
-        - |
-          echo "Waiting for symphony-api to be ready..."
-          sleep 3600
-          echo "symphony-api is ready!"    
+        - |-       
+          {{- .Files.Get "files/oss/wait-api.sh" | nindent 12 }}
+      - env:
+        - name: TIMEOUT
+          value: "3600"
+        - name: SYMPHONY_API_IMAGE
+          value: {{ .Values.paiImage.repository }}:{{ .Values.paiImage.tag }}
+        - name: SYMPHONY_API_NAMESPACE
+          value: {{ .Release.Namespace }}
       restartPolicy: Never
-      serviceAccountName: {{ include "symphony.fullname" . }}-hook-sa
+      serviceAccountName: {{ include "symphony.fullname" . }}-wait-hook-sa
   backoffLimit: 1
