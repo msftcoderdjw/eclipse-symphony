@@ -81,8 +81,8 @@ spec:
           periodSeconds: 10
         resources:
           limits:
-            cpu: 500m
-            memory: 128Mi
+            cpu: {{ .Values.controllerManager.resources.limits.cpu }}
+            memory: {{ .Values.controllerManager.resources.limits.memory }}
           requests:
             cpu: 10m
             memory: 64Mi

@@ -7,6 +7,11 @@ paiImage:
   repository: ghcr.io/eclipse-symphony/symphony-api
   pullPolicy: IfNotPresent
   tag: "{VERSION}"
+controllerManager:
+  resources:
+    limits:
+      cpu: 500m
+      memory: 512Mi
 CUSTOM_VISION_KEY: "AAAA"
 installServiceExt: true
 global:
