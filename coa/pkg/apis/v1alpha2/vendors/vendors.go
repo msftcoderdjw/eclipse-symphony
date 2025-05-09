@@ -69,6 +69,7 @@ func (v *Vendor) RunLoop(ctx context.Context, interval time.Duration) error {
 	for {
 		select {
 		case <-ctx.Done():
+			fmt.Println("Vendor loop is shutting down")
 			return nil
 		case <-ticker.C:
 			for _, m := range v.Managers {

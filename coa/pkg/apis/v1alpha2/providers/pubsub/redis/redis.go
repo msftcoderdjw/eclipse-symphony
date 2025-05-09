@@ -28,16 +28,16 @@ import (
 var mLog = logger.NewLogger("coa.runtime")
 
 type RedisPubSubProvider struct {
-	Config      RedisPubSubProviderConfig          `json:"config"`
-	Subscribers map[string][]v1alpha2.EventHandler `json:"subscribers"`
-	Client      *redis.Client
-	Ctx         context.Context
-	Cancel      context.CancelFunc
-	Context     *contexts.ManagerContext
-	WorkerLock  *sync.Mutex
-	IdleWorkers int
-	rwLock      sync.RWMutex
-	readyFlag   bool
+	Config         RedisPubSubProviderConfig          `json:"config"`
+	Subscribers    map[string][]v1alpha2.EventHandler `json:"subscribers"`
+	Client         *redis.Client
+	Ctx            context.Context
+	innerCtxCancel context.CancelFunc
+	Context        *contexts.ManagerContext
+	WorkerLock     *sync.Mutex
+	IdleWorkers    int
+	rwLock         sync.RWMutex
+	readyFlag      bool
 }
 
 type RedisMessageWrapper struct {
@@ -144,7 +144,7 @@ func (i *RedisPubSubProvider) Init(config providers.IProviderConfig) error {
 		return v1alpha2.NewCOAError(nil, "Redis host is not supplied", v1alpha2.MissingConfig)
 	}
 
-	i.Ctx, i.Cancel = context.WithCancel(context.Background())
+	i.Ctx, i.innerCtxCancel = context.WithCancel(context.Background())
 
 	i.Subscribers = make(map[string][]v1alpha2.EventHandler)
 	options := &redis.Options{
@@ -215,8 +215,10 @@ func (i *RedisPubSubProvider) pollNewMessagesLoop(topic string, handler v1alpha2
 	for {
 		select {
 		case <-i.Ctx.Done():
+			fmt.Printf("  P (Redis PubSub) : pollNewMessagesLoop for %s is shutting down\n", topic)
 			return
 		case <-reclaimTicker.C:
+			fmt.Printf("  P (Redis PubSub) : pollNewMessagesLoop for %s is running\n", topic)
 			i.pollNewMessages(topic, handler)
 		}
 	}
@@ -241,14 +243,17 @@ func (i *RedisPubSubProvider) pollNewMessages(topic string, handler v1alpha2.Eve
 		claimWorker = false
 		workerStarted = false
 
+		fmt.Printf("  P (Redis PubSub) : blocking and subscribe for topic %s\n", topic)
 		streams, err := i.Client.XReadGroup(i.Ctx, &redis.XReadGroupArgs{
 			Group:    handler.Group,
 			Consumer: i.Config.ConsumerID,
 			Streams:  []string{topic, ">"},
 			Count:    1,
-			Block:    1 * time.Second,
 		}).Result()
+		fmt.Printf("  P (Redis PubSub) : blocking and subscribe for topic %s----> done\n", topic)
+		fmt.Printf("  P (Redis PubSub) : blocking and subscribe for topic %s----> err %v\n", topic, err)
 		if err != nil {
+			fmt.Printf("  P (Redis PubSub) : blocking and subscribe for topic %s----> break loop\n", topic)
 			break
 		}
 		if len(streams) == 1 && len(streams[0].Messages) == 1 {
@@ -457,4 +462,13 @@ func (i *RedisPubSubProvider) ReleaseWorker(msgID string) {
 	defer i.WorkerLock.Unlock()
 	i.IdleWorkers++
 	mLog.DebugfCtx(i.Ctx, "  P (Redis PubSub) : releaseWorker for message %s, remaining %d", msgID, i.IdleWorkers)
+}
+
+func (i *RedisPubSubProvider) Cancel() context.CancelFunc {
+	return func() {
+		fmt.Println("  P (Redis PubSub) : canceling provider")
+		i.innerCtxCancel()
+		fmt.Println("  P (Redis PubSub) : closing redis client")
+		i.Client.Close()
+	}
 }

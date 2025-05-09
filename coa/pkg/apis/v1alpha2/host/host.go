@@ -305,6 +305,11 @@ func (h *APIHost) WaitForShutdown(wg *sync.WaitGroup, cancel context.CancelFunc)
 	go func() {
 		<-sigCh
 		log.Debug("received interrupt signal, shutting down...")
+		pubsubProvider := h.SharedPubSubProvider.(pubsub.IPubSubProvider)
+		pubsubCancelFunc := pubsubProvider.Cancel()
+		pubsubCancelFunc()
+		log.Debug("pubsub provider cancelled")
+		log.Debug("waiting for all original vendor goroutines to finish...")
 		cancel()
 
 		<-sigCh

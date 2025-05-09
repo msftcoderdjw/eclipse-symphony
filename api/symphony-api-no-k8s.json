@@ -21,8 +21,14 @@
     "pubsub": {
       "shared": true,
       "provider": {
-        "type": "providers.pubsub.memory",
-        "config": {}
+        "type": "providers.pubsub.redis",
+        "config": {
+          "name": "redis",
+          "host": "localhost:6379",
+          "requireTLS": false,
+          "password": "",
+          "numberOfWorkers": 20
+        }
       }
     },
     "keylock": {
