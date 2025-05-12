@@ -5,6 +5,19 @@
 ## SPDX-License-Identifier: MIT
 ##
 
+# Setup logging
+script_dir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
+LOG_FILE="${script_dir}/deployment-log"
+# Initialize or clear the log file
+echo "Starting deployment at $(date)" > "$LOG_FILE"
+
+# Function for logging
+log() {
+    echo "$(date +"%Y-%m-%d %H:%M:%S") - $1" | tee -a "$LOG_FILE"
+}
+
+log "Script started with parameters: $@"
+
 deployment=$1 # first parameter file is the deployment object
 references=$2 # second parmeter file contains the reference components
 
@@ -12,21 +25,58 @@ references=$2 # second parmeter file contains the reference components
 # the references parameter
 components=$(jq -c '.[]' "$references")
 
-echo "COMPONENTS: $components"
+log "COMPONENTS: $components"
 
-while IFS= read -r line; do
-    # Extract the name and age fields from each JSON object
-    name=$(echo "$line" | jq -r '.name')
-    properties=$(echo "$line" | jq -r '.properties')
-    echo "NAME: $name"
-    echo "PROPERTIES: $properties"
-done <<< "$components"
+# Assuming there's just one component, extract its name
+component_json=$(echo "$components" | head -n 1)
+component_name=$(echo "$component_json" | jq -r '.name')
+component_properties=$(echo "$component_json" | jq -r '.properties')
+component_modelFile=$(echo "$component_json" | jq -r '.modelFile')
+
+# If component_name is empty, use a default name
+if [ -z "$component_name" ] || [ "$component_name" = "null" ]; then
+    component_name="com1"
+fi
+
+log "Using component name: $component_name"
+log "Using component properties: $component_properties"
+log "Using component model file: $component_modelFile"
+# download the model file
+if [ -n "$component_modelFile" ] && [ "$component_modelFile" != "null" ]; then
+    # Get the path to the model - use the same directory as the script
+    script_dir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
+    model_file_path="${script_dir}/iris_model.pkl"
+    
+    log "Downloading model file from: $component_modelFile to $model_file_path"
+    
+    # Check if the model file URL is valid
+    if [[ "$component_modelFile" == http://* ]] || [[ "$component_modelFile" == https://* ]]; then
+        # Download the model file using curl
+        if ! curl -s -f -o "$model_file_path" "$component_modelFile"; then
+            log "Failed to download model file from $component_modelFile"
+            exit 1
+        fi
+        log "Model file downloaded successfully"
+    else
+        # If it's a local file path, copy it
+        if [ -f "$component_modelFile" ]; then
+            cp "$component_modelFile" "$model_file_path"
+            log "Model file copied from local path"
+        else
+            log "Model file not found at $component_modelFile"
+            exit 1
+        fi
+    fi
+else
+    log "No model file specified, using default model if available"
+fi
+
 
 # optionally, you can use the deployment parameter to get additional contextual information as needed.
 # for example, you can the following query to get the instance scope. 
 
 scope=$(jq '.instance.scope' "$deployment")
-echo "SCOPE: $scope"
+log "SCOPE: $scope"
 
 # Define the Python Flask server code as an embedded script
 MODEL_SERVER_SCRIPT=$(cat <<'EOF'
@@ -40,7 +90,7 @@ from flask import Flask, request, jsonify
 app = Flask(__name__)
 
 # Load the model
-MODEL_PATH = os.path.join(os.getcwd(), 'iris_model.pkl')
+MODEL_PATH = os.path.join(os.path.dirname(os.path.realpath(__file__)), 'iris_model.pkl')
 
 print(f"Loading model from {MODEL_PATH}")
 with open(MODEL_PATH, 'rb') as f:
@@ -144,16 +194,17 @@ EOF
 MODEL_SERVER_FILE="${workspace_dir}/modelServe.py"
 echo "$MODEL_SERVER_SCRIPT" > "$MODEL_SERVER_FILE"
 chmod +x "$MODEL_SERVER_FILE"
+log "Created model server script file at: $MODEL_SERVER_FILE"
 
 # Check if the Python model endpoint is running
 model_running=false
 
 # First try a direct HTTP check which is most reliable
 if curl -s http://localhost:5000/info > /dev/null; then
-    echo "Model endpoint is already running and responding to requests."
+    log "Model endpoint is already running and responding to requests."
     model_running=true
 else
-    echo "Model endpoint is not running. Starting it..."
+    log "Model endpoint is not running. Starting it..."
     # Get the path to the model
     script_dir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
     workspace_dir=$(realpath "$script_dir/../../../..")
@@ -169,10 +220,10 @@ else
     
     # Check if server started successfully with multiple detection methods
     if curl -s http://localhost:5000/info > /dev/null; then
-        echo "Model endpoint started and responding to requests."
+        log "Model endpoint started and responding to requests."
         model_running=true
     else
-        echo "Failed to start model endpoint."
+        log "Failed to start model endpoint."
         model_running=false
     fi
 fi
@@ -190,27 +241,32 @@ fi
 if [ "$model_running" = true ]; then
     # Test the model endpoint
     if curl -s http://localhost:5000/info > /dev/null; then
-        output_results='{
-            "com1": {
-                "status": 8004,
-                "message": "Model endpoint running and responsive"
+        log "Output status: Model endpoint running and responsive (status code: 8004)"
+        output_results="{
+            \"$component_name\": {
+                \"status\": 8004,
+                \"message\": \"Model endpoint running and responsive\"
             }
-        }'
+        }"
     else
-        output_results='{
-            "com1": {
-                "status": 8001,
-                "message": "Model endpoint started but not responding"
+        log "Output status: Model endpoint started but not responding (status code: 8001)"
+        output_results="{
+            \"$component_name\": {
+                \"status\": 8001,
+                \"message\": \"Model endpoint started but not responding\"
             }
-        }'
+        }"
     fi
 else
-    output_results='{
-        "com1": {
-            "status": 8001,
-            "message": "Failed to start model endpoint"
+    log "Output status: Failed to start model endpoint (status code: 8001)"
+    output_results="{
+        \"$component_name\": {
+            \"status\": 8001,
+            \"message\": \"Failed to start model endpoint\"
         }
-    }'
+    }"
 fi
 
 echo "$output_results" > ${deployment%.*}-output.${deployment##*.}
+log "Wrote output results to ${deployment%.*}-output.${deployment##*.}"
+log "Script completed successfully"
