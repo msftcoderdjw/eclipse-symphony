@@ -159,24 +159,6 @@ else
     # Start the model server in the background
     cd "$workspace_dir" || exit 1
     
-    # Make sure required packages are installed
-    pip install flask numpy scikit-learn >/dev/null 2>&1 || {
-        echo "Failed to install required Python packages."
-        model_running=false
-        # Clean up
-        rm -f "$TEMP_SERVER_SCRIPT"
-        
-        # Set failure output
-        output_results='{
-            "com1": {
-                "status": 8001,
-                "message": "Failed to install required Python packages"
-            }
-        }'
-        echo "$output_results" > ${deployment%.*}-output.${deployment##*.}
-        exit 1
-    }
-    
     # Run the server
     nohup python3 "$TEMP_SERVER_SCRIPT" > model_server.log 2>&1 &
     
