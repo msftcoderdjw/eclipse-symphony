@@ -51,6 +51,7 @@ type ScriptProviderConfig struct {
 	ScriptFolder  string `json:"scriptFolder,omitempty"`
 	StagingFolder string `json:"stagingFolder,omitempty"`
 	ScriptEngine  string `json:"scriptEngine,omitempty"`
+	ModelFile     string `json:"modelFile,omitempty"`
 }
 
 type ScriptProvider struct {
@@ -65,6 +66,9 @@ func ScriptProviderConfigFromMap(properties map[string]string) (ScriptProviderCo
 	}
 	if v, ok := properties["stagingFolder"]; ok {
 		ret.StagingFolder = v
+	}
+	if v, ok := properties["modelFile"]; ok {
+		ret.ModelFile = v
 	}
 	if v, ok := properties["scriptFolder"]; ok {
 		ret.ScriptFolder = v
@@ -139,6 +143,11 @@ func (i *ScriptProvider) Init(config providers.IProviderConfig) error {
 		err = downloadFile(i.Config.ScriptFolder, i.Config.GetScript, i.Config.StagingFolder)
 		if err != nil {
 			sLog.ErrorfCtx(ctx, "  P (Script Target): failed to download get script %s, error: %+v", i.Config.GetScript, err)
+			return err
+		}
+		err = downloadFile(i.Config.ScriptFolder, i.Config.ModelFile, i.Config.StagingFolder)
+		if err != nil {
+			sLog.ErrorfCtx(ctx, "  P (Script Target): failed to download model file %s, error: %+v", i.Config.ModelFile, err)
 			return err
 		}
 	}
