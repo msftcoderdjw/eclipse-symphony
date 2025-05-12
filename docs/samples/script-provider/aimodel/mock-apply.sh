@@ -140,15 +140,17 @@ if __name__ == '__main__':
 EOF
 )
 
-# Create a temporary Python script file
-TEMP_SERVER_SCRIPT=$(mktemp)
-echo "$MODEL_SERVER_SCRIPT" > "$TEMP_SERVER_SCRIPT"
-chmod +x "$TEMP_SERVER_SCRIPT"
+# Create a Python script file with a fixed name
+MODEL_SERVER_FILE="${workspace_dir}/modelServe.py"
+echo "$MODEL_SERVER_SCRIPT" > "$MODEL_SERVER_FILE"
+chmod +x "$MODEL_SERVER_FILE"
 
 # Check if the Python model endpoint is running
 model_running=false
-if pgrep -f "python.*flask" > /dev/null || pgrep -f "iris.*model" > /dev/null; then
-    echo "Model endpoint is already running."
+
+# First try a direct HTTP check which is most reliable
+if curl -s http://localhost:5000/info > /dev/null; then
+    echo "Model endpoint is already running and responding to requests."
     model_running=true
 else
     echo "Model endpoint is not running. Starting it..."
@@ -160,23 +162,20 @@ else
     cd "$workspace_dir" || exit 1
     
     # Run the server
-    nohup python3 "$TEMP_SERVER_SCRIPT" > model_server.log 2>&1 &
+    nohup python3 "$MODEL_SERVER_FILE" > model_server.log 2>&1 &
     
     # Wait a moment for the server to start
     sleep 3
     
-    # Check if server started successfully
-    if pgrep -f "python.*flask" > /dev/null; then
-        echo "Model endpoint started successfully."
+    # Check if server started successfully with multiple detection methods
+    if curl -s http://localhost:5000/info > /dev/null; then
+        echo "Model endpoint started and responding to requests."
         model_running=true
     else
         echo "Failed to start model endpoint."
         model_running=false
     fi
 fi
-
-# Clean up temp script file (server will continue running)
-rm -f "$TEMP_SERVER_SCRIPT"
 
 # your script needs to generate an output file that contains a map of component results. For each
 # component result, the status code should be one of
