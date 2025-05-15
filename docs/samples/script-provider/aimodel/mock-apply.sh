@@ -206,12 +206,9 @@ if curl -s http://localhost:5000/info > /dev/null; then
     model_running=true
 else
     log "Model endpoint is not running. Starting it..."
-    # Get the path to the model
-    script_dir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
-    workspace_dir=$(realpath "$script_dir/../../../..")
     
     # Start the model server in the background
-    cd "$workspace_dir" || exit 1
+    cd "$script_dir" || exit 1
     
     # Run the server
     nohup python3 "$MODEL_SERVER_FILE" > model_server.log 2>&1 &
