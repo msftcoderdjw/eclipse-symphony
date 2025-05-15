@@ -31,7 +31,7 @@ log "COMPONENTS: $components"
 component_json=$(echo "$components" | head -n 1)
 component_name=$(echo "$component_json" | jq -r '.name')
 component_properties=$(echo "$component_json" | jq -r '.properties')
-component_modelFile=$(echo "$component_json" | jq -r '.modelFile')
+component_modelFile=$(echo "$component_properties" | jq -r '.modelFile')
 
 # If component_name is empty, use a default name
 if [ -z "$component_name" ] || [ "$component_name" = "null" ]; then
