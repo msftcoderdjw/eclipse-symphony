@@ -41,10 +41,11 @@ fi
 log "Using component name: $component_name"
 log "Using component properties: $component_properties"
 log "Using component model file: $component_modelFile"
+script_dir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
+
 # download the model file
 if [ -n "$component_modelFile" ] && [ "$component_modelFile" != "null" ]; then
     # Get the path to the model - use the same directory as the script
-    script_dir=$(realpath "$(dirname "${BASH_SOURCE[0]}")")
     model_file_path="${script_dir}/iris_model.pkl"
     
     log "Downloading model file from: $component_modelFile to $model_file_path"
@@ -191,7 +192,7 @@ EOF
 )
 
 # Create a Python script file with a fixed name
-MODEL_SERVER_FILE="${workspace_dir}/modelServe.py"
+MODEL_SERVER_FILE="${script_dir}/modelServe.py"
 echo "$MODEL_SERVER_SCRIPT" > "$MODEL_SERVER_FILE"
 chmod +x "$MODEL_SERVER_FILE"
 log "Created model server script file at: $MODEL_SERVER_FILE"
