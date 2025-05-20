@@ -1,0 +1,42 @@
+apiVersion: solution.symphony/v1
+kind: Solution
+metadata:
+  annotations:
+    kubectl.kubernetes.io/last-applied-configuration: |
+      {"apiVersion":"solution.symphony/v1","kind":"Solution","metadata":{"annotations":{"management.azure.com/apiVersion":"2025-01-01-preview","management.azure.com/bridgeLocation":"EastUS2EUAP","management.azure.com/cloudEnvironment":"AzureCloud","management.azure.com/correlationId":"4e81fb1d-b3ef-490e-81ff-38beb8efaa86","management.azure.com/customLocation":"/subscriptions/973d15c6-6c57-447e-b9c6-6d79b5b784ab/resourceGroups/jessek3s/providers/Microsoft.ExtendedLocation/customLocations/aidemocl","management.azure.com/location":"eastus2euap","management.azure.com/operationId":"1b024667-ec71-49b8-a3b6-dc5f1eea83d7*A2EDEFABE12636E07371667E8BC0014256552532F6D7713B311E4940E6D0F5AA","management.azure.com/parentResourceId":"/subscriptions/973d15c6-6c57-447e-b9c6-6d79b5b784ab/resourceGroups/jessek3s/providers/Microsoft.Edge/targets/wom-aidemo/solutions/aidemo-solution","management.azure.com/resourceId":"/subscriptions/973d15c6-6c57-447e-b9c6-6d79b5b784ab/resourceGroups/jessek3s/providers/Microsoft.Edge/targets/wom-aidemo/solutions/aidemo-solution/versions/aidemo-solution-2.0.0.1","management.azure.com/systemData":"{\"createdBy\":\"dbd6e42d-e798-4a13-a6f2-2e4c0b50385c\",\"createdByType\":\"Application\",\"createdAt\":\"2025-05-14T14:21:27.4152298Z\",\"resourceUID\":\"df0f94b8-acad-41e2-bceb-32494b5fcc70\",\"clientLocation\":\"eastus2euap\"}","management.azure.com/tenantId":"72f988bf-86f1-41af-91ab-2d7cd011db47","traceparent":"00-ef37ce60f99ed15bf82a715c36658c70-9f727605d6ce6b4a-01"},"creationTimestamp":"2025-05-14T14:21:33Z","generation":3,"labels":{"rootResourceUid":"613b8581-a3e7-4643-91e4-b17614cb15ac"},"name":"wom-aidemo-v-aidemo-solution-v-aidemo-solution-2.0.0.1","namespace":"workloadorchestration","ownerReferences":[{"apiVersion":"solution.symphony/v1","kind":"SolutionContainer","name":"wom-aidemo-v-aidemo-solution","uid":"613b8581-a3e7-4643-91e4-b17614cb15ac"}],"resourceVersion":"141623","uid":"56fcc40f-8d3a-498b-b93e-8d0c3db3bec9"},"spec":{"components":[{"name":"aidemo-solution1","properties":{"modelFile":"https://raw.githubusercontent.com/msftcoderdjw/eclipse-symphony/refs/heads/users/jesse/aidemo/docs/samples/script-provider/aimodel/iris_model.pkl","values":{"AppName":"Hotmelt","modelFile":"https://raw.githur/aimodel/iris_model.pkl"}},"type":"helm.v3"}],"displayName":"wom-aidemo-v-aidemo-solution-v-aidemo-solution-2.0.0.1","rootResource":"wom-aidemo-v-aidemo-solution","version":"aidemo-solution-2.0.0.1"}}
+    management.azure.com/apiVersion: 2025-01-01-preview
+    management.azure.com/bridgeLocation: EastUS2EUAP
+    management.azure.com/cloudEnvironment: AzureCloud
+    management.azure.com/correlationId: 4e81fb1d-b3ef-490e-81ff-38beb8efaa86
+    management.azure.com/customLocation: /subscriptions/973d15c6-6c57-447e-b9c6-6d79b5b784ab/resourceGroups/jessek3s/providers/Microsoft.ExtendedLocation/customLocations/aidemocl
+    management.azure.com/location: eastus2euap
+    management.azure.com/operationId: 1b024667-ec71-49b8-a3b6-dc5f1eea83d7*A2EDEFABE12636E07371667E8BC0014256552532F6D7713B311E4940E6D0F5AA
+    management.azure.com/parentResourceId: /subscriptions/973d15c6-6c57-447e-b9c6-6d79b5b784ab/resourceGroups/jessek3s/providers/Microsoft.Edge/targets/wom-aidemo/solutions/aidemo-solution
+    management.azure.com/resourceId: /subscriptions/973d15c6-6c57-447e-b9c6-6d79b5b784ab/resourceGroups/jessek3s/providers/Microsoft.Edge/targets/wom-aidemo/solutions/aidemo-solution/versions/aidemo-solution-2.0.0.1
+    management.azure.com/systemData: '{"createdBy":"dbd6e42d-e798-4a13-a6f2-2e4c0b50385c","createdByType":"Application","createdAt":"2025-05-14T14:21:27.4152298Z","resourceUID":"df0f94b8-acad-41e2-bceb-32494b5fcc70","clientLocation":"eastus2euap"}'
+    management.azure.com/tenantId: 72f988bf-86f1-41af-91ab-2d7cd011db47
+    traceparent: 00-ef37ce60f99ed15bf82a715c36658c70-9f727605d6ce6b4a-01
+  creationTimestamp: "2025-05-14T14:21:33Z"
+  generation: 4
+  labels:
+    rootResourceUid: 613b8581-a3e7-4643-91e4-b17614cb15ac
+  name: wom-aidemo-v-aidemo-solution-v-aidemo-solution-2.0.0.1
+  namespace: workloadorchestration
+  ownerReferences:
+  - apiVersion: solution.symphony/v1
+    kind: SolutionContainer
+    name: wom-aidemo-v-aidemo-solution
+    uid: 613b8581-a3e7-4643-91e4-b17614cb15ac
+  resourceVersion: "143653"
+  uid: 56fcc40f-8d3a-498b-b93e-8d0c3db3bec9
+spec:
+  components:
+  - name: aidemo-solution1
+    properties:
+      values:
+        AppName: Hotmelt
+        modelFile: https://raw.githubusercontent.com/msftcoderdjw/eclipse-symphony/refs/heads/users/jesse/aidemo/docs/samples/script-provider/aimodel/iris_model.pkl
+    type: helm.v3
+  displayName: wom-aidemo-v-aidemo-solution-v-aidemo-solution-2.0.0.1
+  rootResource: wom-aidemo-v-aidemo-solution
+  version: aidemo-solution-2.0.0.1

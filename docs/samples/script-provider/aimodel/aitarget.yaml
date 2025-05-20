@@ -1,0 +1,36 @@
+apiVersion: fabric.symphony/v1
+kind: Target
+metadata:
+  annotations:
+    Guid: 0bf93069-5ae5-461d-bf6a-8fe7b8e8aa0f
+    SummaryJobIdKey: "1"
+    management.azure.com/apiVersion: 2025-01-01-preview
+    management.azure.com/bridgeLocation: EastUS2EUAP
+    management.azure.com/cloudEnvironment: AzureCloud
+    management.azure.com/correlationId: 144ad21c-824a-44e6-9315-bae6cbd2d5d3
+    management.azure.com/customLocation: /subscriptions/973d15c6-6c57-447e-b9c6-6d79b5b784ab/resourceGroups/jessek3s/providers/Microsoft.ExtendedLocation/customLocations/aidemocl
+    management.azure.com/location: eastus2euap
+    management.azure.com/operationId: b5d1e3f2-e06f-4a48-906b-eb1811ac6409*ECC4D8DA9B24E975918404B242C3BC7608864186BEDD62D417DFF0B47BC49BF5
+    management.azure.com/resourceId: /subscriptions/973d15c6-6c57-447e-b9c6-6d79b5b784ab/resourceGroups/jessek3s/providers/Microsoft.Edge/targets/wom-aidemo
+    management.azure.com/runningCorrelationId: 144ad21c-824a-44e6-9315-bae6cbd2d5d3
+    management.azure.com/systemData: '{"createdBy":"29dabdb7-dac7-46c8-a985-d57bd2dd0a0c","createdByType":"User","createdAt":"2025-05-15T11:43:43.1877047Z","resourceUID":"40a310d9-a4e5-4e7b-80e3-2515c03532aa","clientLocation":"eastus2euap"}'
+    management.azure.com/tenantId: 72f988bf-86f1-41af-91ab-2d7cd011db47
+    target.fabric.symphony/started-at: "2025-05-15T11:44:11Z"
+    traceparent: 00-9051caee34296dafa789339f13bff96e-df58fa19e19aa39f-01
+  creationTimestamp: "2025-05-15T11:44:11Z"
+  finalizers:
+  - target.fabric.symphony/finalizer
+  generation: 1
+  name: wom-aidemo
+  namespace: workloadorchestration
+  resourceVersion: "206173"
+  uid: 5e5a4da9-4d1c-4c26-8a40-3626ccba63c5
+spec:
+  displayName: wom-aidemo
+  scope: default
+  solutionScope: new
+  components:
+  - name: remote-agent
+    type: remote-agent
+    properties:
+      description: this is a demo remote agent
