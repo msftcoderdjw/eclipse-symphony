@@ -8,6 +8,8 @@
 deployment=$1 # first parameter file is the deployment object
 references=$2 # second parameter file contains the reference components
 
+cp "$deployment" /tmp/deployment.json
+cp "$references" /tmp/references.json
 # read the deployment and references files
 deployment=$(cat $deployment)
 references=$(cat $references)
