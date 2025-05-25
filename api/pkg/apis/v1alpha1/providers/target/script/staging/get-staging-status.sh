@@ -186,7 +186,7 @@ echo "Image list: ${image_list[@]}"
 if [ -z "$image_list" ]; then
   echo "No images found in the references file."
   generate_output_json true "No images requested." "[]"
-  exit 1
+  exit 0 # ignore error and exit with success
 fi
 
 # convert the image list to a format suitable for the script
@@ -203,7 +203,7 @@ done
 if [ ${#image_args[@]} -eq 0 ]; then
   echo "No valid images found in the references file."
   generate_output_json false "No valid images found." "[]"
-  exit 1
+  exit 0 # ignore error and exit with success
 fi
 
 echo "Valid images to check: count: ${#image_args[@]}"
@@ -221,7 +221,8 @@ connectedRegistryNamespace=$(echo $connectedRegistryNameNS | awk '{print $2}')
 
 if [ -z "$connectedRegistryName" ] || [ -z "$connectedRegistryNamespace" ]; then
   echo "No connected registry found"
-  exit 1
+  generate_output_json false "No connected registry found." "[]"
+  exit 0 # ignore error and exit with success
 fi
 
 # get the connected registry pod name according to deployment name
@@ -259,7 +260,8 @@ fi
 
 if [ -z "$connectedRegistryPodName" ]; then
   echo "Connected registry pod not found for deployment $deploymentName in namespace $connectedRegistryNamespace."
-  exit 1
+  generate_output_json false "Connected registry pod not found." "[]"
+  exit 0 # ignore error and exit with success
 fi
 
 # move file to the CR pod and grant execute permission
