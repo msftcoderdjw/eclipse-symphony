@@ -261,6 +261,7 @@ if ! kubectl exec "$connectedRegistryPodName" -n "$connectedRegistryNamespace" -
 else
   echo "Script $remote_script_path already exists in pod. Skipping copy."
 kubectl exec $connectedRegistryPodName  -n $connectedRegistryNamespace -- chmod +x $remote_script_path
+fi
 
 successFlag=true
 message=""
