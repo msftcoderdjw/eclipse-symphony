@@ -216,7 +216,7 @@ chmod +x "$generated_script_name"
 
 # ----------------------------- MAIN SCRIPT -----------------------------
 echo "$references"
-image_list=($(echo "$references" | jq -r '.properties.imageList[]'))
+image_list=($(echo "$references" | jq -r ".[].properties.imageList"))
 echo "Image list: ${image_list[@]}"
 
 if [ -z "$image_list" ]; then
