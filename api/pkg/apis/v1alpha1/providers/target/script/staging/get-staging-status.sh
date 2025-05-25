@@ -8,6 +8,10 @@
 deployment=$1 # first parameter file is the deployment object
 references=$2 # second parameter file contains the reference components
 
+# read the deployment and references files
+deployment=$(cat $deployment)
+references=$(cat $references)
+
 # generate the script to check ACR images
 # Define the name of the script to be generated
 generated_script_name="check-acr-images.sh"
