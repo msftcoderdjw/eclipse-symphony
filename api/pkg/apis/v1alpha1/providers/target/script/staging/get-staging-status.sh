@@ -14,10 +14,11 @@ cp "$references" /tmp/references.json
 deployment_content=$(cat $deployment)
 references_content=$(cat $references)
 
+check_acr_script="check-acr-images.sh"
+
 generate_check_acr_script() {
   # generate the script to check ACR images
 # Define the name of the script to be generated
-generated_script_name="check-acr-images.sh"
 
 # Use a "here document" to define the content of the script.
 # Note the 'EOF' delimiter. It can be any string, but EOF is common.
@@ -25,6 +26,7 @@ generated_script_name="check-acr-images.sh"
 # within the here document by the parent script, ensuring the content is written literally.
 # This is crucial because variables like $ACR_BASE, $REPO_PATH, etc., are meant to be
 # interpreted when the generated script (check-acr-images.sh) itself runs.
+local generated_script_name=$1
 
 cat > "$generated_script_name" << 'EOF'
 #!/bin/bash
@@ -161,13 +163,23 @@ EOF
 
 # ----------------------------- MAIN SCRIPT -----------------------------
 echo "$references_content"
-regenerate_check_acr_script=$(echo "$references_content" | jq -r '.[0].properties.regenerateCheckAcrScript' )
-if [ "$regenerate_check_acr_script" == "true" ]; then
-  echo "Regenerating the check ACR script..."
-  generate_check_acr_script
+if 
+
+# if check_acr_script doesn't exist
+[ ! -f "$check_acr_script" ]; then
+  echo "Check ACR script not found. Generating..."
+  generate_check_acr_script "$check_acr_script"
 else
-  echo "Using existing check ACR script."
+  regenerate_check_acr_script=$(echo "$references_content" | jq -r '.[0].properties.regenerateCheckAcrScript' )
+  if [ "$regenerate_check_acr_script" == "true" ]; then
+    echo "Regenerating the check ACR script..."
+    generate_check_acr_script "$check_acr_script"
+  else
+    echo "Using existing check ACR script."
+    chmod +x "$check_acr_script"
+  fi
 fi
+
 mapfile -t image_list < <(echo "$references_content" | jq -r ".[].properties.imageList[]")
 echo "Image list: ${image_list[@]}"
 
