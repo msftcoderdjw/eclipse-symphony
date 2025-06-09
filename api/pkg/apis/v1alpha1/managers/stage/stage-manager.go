@@ -615,6 +615,15 @@ func (s *StageManager) HandleTriggerEvent(ctx context.Context, campaign model.Ca
 				} else {
 					var outputs map[string]interface{}
 					var pause bool
+					// TODO: change below implementation to iterate stage.StageSteps
+					// According to the stage option, trigger process in parallel
+					// decreate the output to
+					// output {
+					//  "step1": {outputs},
+					//  "step2": {outputs}
+					// }
+
+					// TODO: decide the status according to the stage option and outputs
 					outputs, pause, err = provider.(stage.IStageProvider).Process(ctx, *s.Manager.Context, inputCopy)
 
 					if pause {
