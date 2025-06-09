@@ -374,20 +374,46 @@ type SolutionContainerSpec struct {
 }
 
 // +kubebuilder:object:generate=true
-type StageSpec struct {
+
+type StageStepSpec struct {
 	Name     string `json:"name,omitempty"`
-	Contexts string `json:"contexts,omitempty"`
 	Provider string `json:"provider,omitempty"`
 	// +kubebuilder:pruning:PreserveUnknownFields
 	// +kubebuilder:validation:Schemaless
-	Config        runtime.RawExtension `json:"config,omitempty"`
-	StageSelector string               `json:"stageSelector,omitempty"`
+	Config runtime.RawExtension `json:"config,omitempty"`
+	Target string               `json:"target,omitempty"`
+}
+
+type ErrorActionMode string
+
+const (
+	ErrorStopOnAnyFailure ErrorActionMode = "errorStopOnAnyFailure"
+	ErrorStopOnNFailures  ErrorActionMode = "errorStopOnNFailures"
+	SilentlyContinue      ErrorActionMode = "silentlyContinue"
+)
+
+type ErrorAction struct {
+	Mode               ErrorActionMode `json:"mode,omitempty"`
+	MaxToleratedErrors int             `json:"maxToleratedErrors,omitempty"`
+}
+
+type StageOption struct {
+	ParallelDegree int         `json:"parallelDegree,omitempty"`
+	ErrorAction    ErrorAction `json:"errorAction,omitempty"`
+}
+
+type StageSpec struct {
+	Name          string `json:"name,omitempty"`
+	Contexts      string `json:"contexts,omitempty"`
+	StageSelector string `json:"stageSelector,omitempty"`
 	// +kubebuilder:pruning:PreserveUnknownFields
 	// +kubebuilder:validation:Schemaless
 	Inputs          runtime.RawExtension `json:"inputs,omitempty"`
 	TriggeringStage string               `json:"triggeringStage,omitempty"`
 	Schedule        string               `json:"schedule,omitempty"`
 	Target          string               `json:"target,omitempty"`
+	StageSteps      []StageStepSpec      `json:"stageSteps,omitempty"`
+	StageOption     StageOption          `json:"stageOption,omitempty"`
 }
 
 // UnmarshalJSON customizes the JSON unmarshalling for StageSpec
