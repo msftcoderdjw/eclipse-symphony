@@ -1,0 +1,16 @@
+apiVersion: solution.symphony/v1
+kind: Instance
+metadata:
+  annotations:
+    management.azure.com/resourceId: /subscriptions/973d15c6-6c57-447e-b9c6-6d79b5b784ab/resourceGroups/jiaxin30/providers/Private.Edge/targets/Target3a459a95fa44/solutions/ST3a459a95fa47/instances/testinsd
+  name: target3a459a95fa44-v-st3a459a95fa47-v-testinsd
+  namespace: cloudtestsite
+spec:
+  displayName: target3a459a95fa44-v-st3a459a95fa47-v-instance-a
+  reconciliationPolicy:
+    interval: 1m
+    state: active
+  scope: test
+  solution: /subscriptions/973d15c6-6c57-447e-b9c6-6d79b5b784ab/resourcegroups/jiaxin30/providers/private.edge/targets/target3a459a95fa44/solutions/st3a459a95fa47/versions/testsold
+  target:
+    name: /subscriptions/973d15c6-6c57-447e-b9c6-6d79b5b784ab/resourcegroups/jiaxin30/providers/private.edge/targets/target3a459a95fa44

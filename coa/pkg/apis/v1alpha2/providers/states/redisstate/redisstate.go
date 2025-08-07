@@ -300,6 +300,11 @@ func (r *RedisStateProvider) Get(ctx context.Context, request states.GetRequest)
 	if len(data) == 0 {
 		return states.StateEntry{}, v1alpha2.NewCOAError(nil, fmt.Sprintf("state %s not found", request.ID), v1alpha2.NotFound)
 	}
+
+	for key, value := range data {
+		rLog.InfofCtx(ctx, "  P (Redis State): key %s, value %s", key, value)
+	}
+
 	return CastRedisPropertiesToStateEntry(request.ID, data)
 }
 

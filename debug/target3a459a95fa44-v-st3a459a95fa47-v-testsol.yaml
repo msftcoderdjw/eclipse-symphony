@@ -1,0 +1,22 @@
+apiVersion: solution.symphony/v1
+kind: Solution
+metadata:
+  annotations:
+    management.azure.com/resourceId: /subscriptions/973d15c6-6c57-447e-b9c6-6d79b5b784ab/resourceGroups/jiaxin30/providers/Private.Edge/targets/Target3a459a95fa44/solutions/ST3a459a95fa47/versions/testsold
+  name: target3a459a95fa44-v-st3a459a95fa47-v-testsold
+  namespace: cloudtestsite
+spec:
+  components:
+  - name: helmcomponent
+    properties:
+      chart:
+        name: "notused"
+        repo: bvtacr.azurecr.io/helm/simple-chart
+        version: 0.4.0
+      releaseName: test456
+      values:
+        key: value
+    type: helm.v3
+  displayName: target3a459a95fa44-v-st3a459a95fa47-v-testsold
+  rootResource: target3a459a95fa44-v-st3a459a95fa47
+  version: testsol
