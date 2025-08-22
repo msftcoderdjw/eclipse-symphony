@@ -152,7 +152,11 @@ func NewLogger(name string) Logger {
 
 	logger, ok := globalLoggers[name]
 	if !ok {
-		logger = newCoaLogger(name, hooks.ContextHookOptions{DiagnosticLogContextEnabled: true, ActivityLogContextEnabled: false, Folding: true})
+		if os.Getenv("REMOTE_AGENT") != "" {
+			logger = newRemoteAgentLogger(name, hooks.ContextHookOptions{DiagnosticLogContextEnabled: true, ActivityLogContextEnabled: false, Folding: true})
+		} else {
+			logger = newCoaLogger(name, hooks.ContextHookOptions{DiagnosticLogContextEnabled: true, ActivityLogContextEnabled: false, Folding: true})
+		}
 		globalLoggers[name] = logger
 	}
 

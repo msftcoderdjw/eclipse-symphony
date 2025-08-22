@@ -22,6 +22,18 @@ import (
 	"github.com/sirupsen/logrus"
 )
 
+type RemoteAgentLogger struct {
+	CoaLogger
+
+	// temp file logging fields
+	tempFileEnabled bool
+	tempFilePath    string
+	tempFile        *os.File
+	tempFileWriter  io.Writer
+	logOffset       int64
+	offsetMutex     sync.Mutex
+}
+
 // CoaLogger is the implemention for logrus
 type CoaLogger struct {
 	// name is the name of logger that is published to log as a scope
@@ -35,14 +47,6 @@ type CoaLogger struct {
 	sharedFields logrus.Fields
 
 	callerSkip uint
-
-	// temp file logging fields
-	tempFileEnabled bool
-	tempFilePath    string
-	tempFile        *os.File
-	tempFileWriter  io.Writer
-	logOffset       int64
-	offsetMutex     sync.Mutex
 }
 
 const (
@@ -79,6 +83,13 @@ func newCoaLogger(name string, contextOptions hooks.ContextHookOptions) *CoaLogg
 	dl.EnableJSONOutput(defaultJSONOutput)
 
 	return dl
+}
+
+func newRemoteAgentLogger(name string, contextOptions hooks.ContextHookOptions) *RemoteAgentLogger {
+	coaLogger := newCoaLogger(name, contextOptions)
+	return &RemoteAgentLogger{
+		CoaLogger: *coaLogger,
+	}
 }
 
 // EnableJSONOutput enables JSON formatted output log
@@ -252,7 +263,7 @@ func (l *CoaLogger) Fatalf(format string, args ...interface{}) {
 }
 
 // enableTempFileLogging sets up temp file logging for remote agents
-func (l *CoaLogger) enableTempFileLogging() error {
+func (l *RemoteAgentLogger) enableTempFileLogging() error {
 	l.tempFileEnabled = true
 	l.tempFilePath = l.getLogFilePath()
 
@@ -276,14 +287,14 @@ func (l *CoaLogger) enableTempFileLogging() error {
 }
 
 // GetLogOffset returns the current log offset
-func (l *CoaLogger) GetLogOffset() int64 {
+func (l *RemoteAgentLogger) GetLogOffset() int64 {
 	l.offsetMutex.Lock()
 	defer l.offsetMutex.Unlock()
 	return l.logOffset
 }
 
 // SetLogOffset sets the current log offset
-func (l *CoaLogger) SetLogOffset(offset int64) {
+func (l *RemoteAgentLogger) SetLogOffset(offset int64) {
 	l.offsetMutex.Lock()
 	defer l.offsetMutex.Unlock()
 	l.logOffset = offset
@@ -292,7 +303,7 @@ func (l *CoaLogger) SetLogOffset(offset int64) {
 const maxHTTPBodySize = 1024 * 1024 // 1MB
 
 // GetLogsFromOffset reads logs from the temp file starting at the specified offset
-func (l *CoaLogger) GetLogsFromOffset(fromOffset int64) ([]string, int64, error) {
+func (l *RemoteAgentLogger) GetLogsFromOffset(fromOffset int64) ([]string, int64, error) {
 	if !l.tempFileEnabled || l.tempFile == nil {
 		return nil, 0, fmt.Errorf("temp file logging not enabled")
 	}
@@ -376,7 +387,7 @@ func (l *CoaLogger) GetLogsFromOffset(fromOffset int64) ([]string, int64, error)
 }
 
 // Close closes the temp file if it exists
-func (l *CoaLogger) Close() error {
+func (l *RemoteAgentLogger) Close() error {
 	if l.tempFile != nil {
 		return l.tempFile.Close()
 	}
@@ -384,18 +395,18 @@ func (l *CoaLogger) Close() error {
 }
 
 // IsTempFileEnabled returns whether temp file logging is enabled
-func (l *CoaLogger) IsTempFileEnabled() bool {
+func (l *RemoteAgentLogger) IsTempFileEnabled() bool {
 	return l.tempFileEnabled
 }
 
 // GetTempFilePath returns the temp file path
-func (l *CoaLogger) GetTempFilePath() string {
+func (l *RemoteAgentLogger) GetTempFilePath() string {
 	return l.tempFilePath
 }
 
 // getLogFilePath determines the log file path, checking environment variable first,
 // then falling back to a cross-platform default location
-func (l *CoaLogger) getLogFilePath() string {
+func (l *RemoteAgentLogger) getLogFilePath() string {
 	// Check environment variable first
 	if customPath := os.Getenv(envLogFilePath); customPath != "" {
 		return customPath
@@ -406,7 +417,7 @@ func (l *CoaLogger) getLogFilePath() string {
 }
 
 // ensureLogDirectory creates the directory for the log file if it doesn't exist
-func (l *CoaLogger) ensureLogDirectory() error {
+func (l *RemoteAgentLogger) ensureLogDirectory() error {
 	logDir := filepath.Dir(l.tempFilePath)
 
 	// Check if directory exists
